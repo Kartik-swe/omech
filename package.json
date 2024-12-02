@@ -1,0 +1,29 @@
+{
+  "name": "omech",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@ant-design/plots": "^2.3.2",
+    "antd": "^5.15.3",
+    "dotenv": "^16.4.5",
+    "json2csv": "^6.0.0-alpha.2",
+    "mssql": "^11.0.1",
+    "next": "^14.2.5",
+    "react": "^18",
+    "react-dom": "^18",
+    "react-router-dom": "^6.28.0",
+    "tailwindcss": "^3.4.14"
+  },
+  "devDependencies": {
+    "@types/mssql": "^9.1.5",
+    "@types/node": "22.9.0",
+    "@types/react": "^18",
+    "typescript": "5.6.3"
+  }
+}
