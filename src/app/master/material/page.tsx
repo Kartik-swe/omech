@@ -1,107 +1,160 @@
-// /pages/product-material-management/index.tsx
-"use client"
+"use client";
 import { useState } from "react";
-import { Table, Button, Form, Input, Tabs } from "antd";
+import { Tabs, Card, Button, Input, Form, message, Tooltip } from "antd";
+import { EditOutlined, DeleteOutlined, SaveOutlined, PlusOutlined } from "@ant-design/icons";
 
 const ProductMaterialManagement = () => {
-  const { TabPane } = Tabs;
-  const [pipeSizes, setPipeSizes] = useState<{ size: string }[]>([]);
-  const [materialGrades, setMaterialGrades] = useState<{ grade: string }[]>([]);
-  const [pipeFinishes, setPipeFinishes] = useState<{ finish: string }[]>([]);
-  const [newPipeSize, setNewPipeSize] = useState("");
-  const [newMaterialGrade, setNewMaterialGrade] = useState("");
-  const [newFinish, setNewFinish] = useState("");
+  const [pipeSizes, setPipeSizes] = useState<{ id: number; value: string }[]>([]);
+  const [materialGrades, setMaterialGrades] = useState<{ id: number; value: string }[]>([]);
+  const [ODs, setODs] = useState<{ id: number; value: string }[]>([]);
+  const [newValue, setNewValue] = useState<string>("");
+  const [editingItem, setEditingItem] = useState<{ id: number; value: string } | null>(null);
 
-  const handleAddPipeSize = () => {
-    setPipeSizes([...pipeSizes, { size: newPipeSize }]);
-    setNewPipeSize(""); // Clear input
+  const handleAdd = (setter: Function, items: { id: number; value: string }[]) => {
+    if (!newValue.trim()) {
+      message.error("Input cannot be empty!");
+      return;
+    }
+    setter([...items, { id: Date.now(), value: newValue.trim() }]);
+    setNewValue("");
   };
 
-  const handleAddMaterialGrade = () => {
-    setMaterialGrades([...materialGrades, { grade: newMaterialGrade }]);
-    setNewMaterialGrade(""); // Clear input
+  const handleEdit = (id: number, value: string, setter: Function, items: { id: number; value: string }[]) => {
+    setter(items.map((item) => (item.id === id ? { ...item, value } : item)));
+    setEditingItem(null);
   };
 
-  const handleAddFinish = () => {
-    setPipeFinishes([...pipeFinishes, { finish: newFinish }]);
-    setNewFinish(""); // Clear input
+  const handleDelete = (id: number, setter: Function, items: { id: number; value: string }[]) => {
+    setter(items.filter((item) => item.id !== id));
+  };
+
+  const renderCards = (
+    data: { id: number; value: string }[],
+    setter: Function
+  ) => {
+    return data.map((item) => (
+      <Card
+        key={item.id}
+        style={{ width: 300, margin: "10px" }}
+        title={
+          editingItem?.id === item.id ? (
+            <Input
+              value={editingItem.value}
+              onChange={(e) =>
+                setEditingItem((prev) => (prev ? { ...prev, value: e.target.value } : null))
+              }
+            />
+          ) : (
+            item.value
+          )
+        }
+        actions={[
+          editingItem?.id === item.id ? (
+            <Tooltip title="Save">
+              <SaveOutlined
+                key="save"
+                onClick={() =>
+                  handleEdit(editingItem.id, editingItem.value, setter, data)
+                }
+              />
+            </Tooltip>
+          ) : (
+            <Tooltip title="Edit">
+              <EditOutlined
+                key="edit"
+                onClick={() => setEditingItem({ id: item.id, value: item.value })}
+              />
+            </Tooltip>
+          ),
+          <Tooltip title="Delete">
+            <DeleteOutlined
+              key="delete"
+              onClick={() => handleDelete(item.id, setter, data)}
+            />
+          </Tooltip>,
+        ]}
+      />
+    ));
   };
 
   return (
-    <div>
-      <h1>Product & Material Management</h1>
+    <div style={{ padding: "20px" }}>
+      <h1 style={{ textAlign: "center", marginBottom: "20px" }}>Product & Material Management</h1>
       <Tabs defaultActiveKey="1">
-        {/* Pipe Sizes Tab */}
-        <TabPane tab="Pipe Sizes" key="1">
-          <Form layout="inline">
+        {/* Pipe Sizes */}
+        <Tabs.TabPane tab="Pipe Sizes" key="1">
+          <Form layout="inline" style={{ marginBottom: "20px" }}>
             <Form.Item>
               <Input
                 placeholder="Pipe Size"
-                value={newPipeSize}
-                onChange={(e) => setNewPipeSize(e.target.value)}
+                value={newValue}
+                onChange={(e) => setNewValue(e.target.value)}
               />
             </Form.Item>
             <Form.Item>
-              <Button onClick={handleAddPipeSize} type="primary">
-                Add Pipe Size
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => handleAdd(setPipeSizes, pipeSizes)}
+              >
+                Add
               </Button>
             </Form.Item>
           </Form>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
+            {renderCards(pipeSizes, setPipeSizes)}
+          </div>
+        </Tabs.TabPane>
 
-          <Table
-            columns={[{ title: 'Size', dataIndex: 'size' }]}
-            dataSource={pipeSizes}
-            rowKey="size"
-          />
-        </TabPane>
-
-        {/* Material Grades Tab */}
-        <TabPane tab="Material Grades" key="2">
-          <Form layout="inline">
+        {/* Material Grades */}
+        <Tabs.TabPane tab="Material Grades" key="2">
+          <Form layout="inline" style={{ marginBottom: "20px" }}>
             <Form.Item>
               <Input
                 placeholder="Material Grade"
-                value={newMaterialGrade}
-                onChange={(e) => setNewMaterialGrade(e.target.value)}
+                value={newValue}
+                onChange={(e) => setNewValue(e.target.value)}
               />
             </Form.Item>
             <Form.Item>
-              <Button onClick={handleAddMaterialGrade} type="primary">
-                Add Material Grade
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => handleAdd(setMaterialGrades, materialGrades)}
+              >
+                Add
               </Button>
             </Form.Item>
           </Form>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
+            {renderCards(materialGrades, setMaterialGrades)}
+          </div>
+        </Tabs.TabPane>
 
-          <Table
-            columns={[{ title: 'Material Grade', dataIndex: 'grade' }]}
-            dataSource={materialGrades}
-            rowKey="grade"
-          />
-        </TabPane>
-
-        {/* Pipe Finishes Tab */}
-        {/* <TabPane tab="Finishes" key="3">
-          <Form layout="inline">
+        {/* ODs */}
+        <Tabs.TabPane tab="OD" key="3">
+          <Form layout="inline" style={{ marginBottom: "20px" }}>
             <Form.Item>
               <Input
-                placeholder="Finish Type"
-                value={newFinish}
-                onChange={(e) => setNewFinish(e.target.value)}
+                placeholder="Outer Diameter (OD)"
+                value={newValue}
+                onChange={(e) => setNewValue(e.target.value)}
               />
             </Form.Item>
             <Form.Item>
-              <Button onClick={handleAddFinish} type="primary">
-                Add Finish Type
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => handleAdd(setODs, ODs)}
+              >
+                Add
               </Button>
             </Form.Item>
           </Form>
-
-          <Table
-            columns={[{ title: 'Finish', dataIndex: 'finish' }]}
-            dataSource={pipeFinishes}
-            rowKey="finish"
-          />
-        </TabPane> */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
+            {renderCards(ODs, setODs)}
+          </div>
+        </Tabs.TabPane>
       </Tabs>
     </div>
   );
