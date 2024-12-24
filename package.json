@@ -11,6 +11,7 @@
   "dependencies": {
     "@ant-design/plots": "^2.3.2",
     "antd": "^5.15.3",
+    "axios": "^1.7.9",
     "dotenv": "^16.4.5",
     "json2csv": "^6.0.0-alpha.2",
     "mssql": "^11.0.1",

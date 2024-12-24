@@ -7,16 +7,16 @@ const ProductMaterialManagement = () => {
   const [pipeSizes, setPipeSizes] = useState<{ id: number; value: string }[]>([]);
   const [materialGrades, setMaterialGrades] = useState<{ id: number; value: string }[]>([]);
   const [ODs, setODs] = useState<{ id: number; value: string }[]>([]);
-  const [newValue, setNewValue] = useState<string>("");
+  // const [newValue, setNewValue] = useState<string>("");
   const [editingItem, setEditingItem] = useState<{ id: number; value: string } | null>(null);
 
   const handleAdd = (setter: Function, items: { id: number; value: string }[]) => {
-    if (!newValue.trim()) {
-      message.error("Input cannot be empty!");
-      return;
-    }
-    setter([...items, { id: Date.now(), value: newValue.trim() }]);
-    setNewValue("");
+    // if (!newValue.trim()) {
+    //   message.error("Input cannot be empty!");
+    //   return;
+    // }
+    // setter([...items, { id: Date.now(), value: newValue.trim() }]);
+    // setNewValue("");
   };
 
   const handleEdit = (id: number, value: string, setter: Function, items: { id: number; value: string }[]) => {
@@ -77,6 +77,12 @@ const ProductMaterialManagement = () => {
     ));
   };
 
+  const handleAddGradde = async (values:any) => {
+    
+    console.log(values);
+    
+  }
+
   return (
     <div style={{ padding: "20px" }}>
       <h1 style={{ textAlign: "center", marginBottom: "20px" }}>Product & Material Management</h1>
@@ -87,8 +93,8 @@ const ProductMaterialManagement = () => {
             <Form.Item>
               <Input
                 placeholder="Pipe Size"
-                value={newValue}
-                onChange={(e) => setNewValue(e.target.value)}
+                // value={newValue}
+                // onChange={(e) => setNewValue(e.target.value)}
               />
             </Form.Item>
             <Form.Item>
@@ -108,19 +114,20 @@ const ProductMaterialManagement = () => {
 
         {/* Material Grades */}
         <Tabs.TabPane tab="Material Grades" key="2">
-          <Form layout="inline" style={{ marginBottom: "20px" }}>
-            <Form.Item>
+          <Form onFinish={handleAddGradde} layout="inline" style={{ marginBottom: "20px" }}>
+            <Form.Item name={"GREADE"}>
               <Input
                 placeholder="Material Grade"
-                value={newValue}
-                onChange={(e) => setNewValue(e.target.value)}
+                // value={newValue}
+                // onChange={(e) => setNewValue(e.target.value)}
               />
             </Form.Item>
             <Form.Item>
               <Button
+                htmlType="submit"
                 type="primary"
                 icon={<PlusOutlined />}
-                onClick={() => handleAdd(setMaterialGrades, materialGrades)}
+                // onClick={() => handleAdd(setMaterialGrades, materialGrades)}
               >
                 Add
               </Button>
@@ -137,8 +144,8 @@ const ProductMaterialManagement = () => {
             <Form.Item>
               <Input
                 placeholder="Outer Diameter (OD)"
-                value={newValue}
-                onChange={(e) => setNewValue(e.target.value)}
+                // value={newValue}
+                // onChange={(e) => setNewValue(e.target.value)}
               />
             </Form.Item>
             <Form.Item>

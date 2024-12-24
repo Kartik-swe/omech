@@ -19,6 +19,8 @@ const config = {
 let poolPromise: any;
 
 const getConnection = async () => {
+  console.log("SHELKE");
+  
   if (!poolPromise) {
     poolPromise = sql.connect(config);
   }
