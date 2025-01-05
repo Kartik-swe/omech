@@ -2,10 +2,10 @@ import axios from 'axios';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 
-interface If_ApiResponse {
-    MsgId: number;
-    Msg: string;
-}
+// interface If_ApiResponse {
+//     MsgId: number;
+//     Msg: string;
+// }
 
 function getAuthHeaders(contentType: string): Record<string, string> {
   const headers: Record<string, string> = {
@@ -26,6 +26,8 @@ export const apiService = {
   // GET request method
   async get<T>(endpoint: string, contentType: string, params?: object): Promise<T | If_ApiResponse> {
     try {
+        console.log(`GET DATA : ${API_BASE_URL}${endpoint}`);
+        
       const response = await axios.get<T>(`${API_BASE_URL}${endpoint}`, { // Added <T> type for response
         headers: getAuthHeaders(contentType), // Changed Content_Type to contentType
         params,
@@ -42,6 +44,8 @@ export const apiService = {
   async post<T>(endpoint: string, contentType: string, requestData: object): Promise<T | If_ApiResponse> { // Renamed data to requestData
     debugger
         try {
+        console.log(`post DATA : ${API_BASE_URL}${endpoint}`);
+
             const response = await axios.post<T>(`${API_BASE_URL}${endpoint}`, requestData, {
                 headers: getAuthHeaders(contentType),
             });
@@ -56,6 +60,8 @@ export const apiService = {
     // DELETE request method
     async delete<T>(endpoint: string, contentType: string): Promise<T | If_ApiResponse> {
         try {
+        console.log(`delete DATA : ${API_BASE_URL}${endpoint}`);
+
             const response = await axios.delete<T>(`${API_BASE_URL}${endpoint}`, {
                 headers: getAuthHeaders(contentType),
             });
@@ -81,14 +87,14 @@ function handleApiRes(resData: any): If_ApiResponse {
     debugger
     switch (apiMsgId) {
         case -1:
-            return { MsgId: -2, Msg: resData.Msg || 'Error occurred during the operation.' }; // Simplified return statement
+            return { MsgId: -2,  Msg: resData.Msg || 'Error occurred during the operation.',Data:resData.Data || [] }; // Simplified return statement
         case 0:
-            return { MsgId: -2, Msg: resData.Msg || 'No record found.' };
+            return { MsgId: -2,  Msg: resData.Msg || 'No record found.',Data:resData.Data || [] };
         case 1:
-            return { MsgId: 1, Msg: resData.Msg || 'Operation completed successfully.' };
+            return { MsgId: 1,  Msg: resData.Msg || 'Operation completed successfully.',Data:resData.Data || [] };
         case 2:
-            return { MsgId: -2, Msg: resData.Msg || 'SQL exception occurred.' };
+            return { MsgId: -2,  Msg: resData.Msg || 'SQL exception occurred.',Data:resData.Data || [] };
         default:
-            return { MsgId: -2, Msg: resData.Msg || 'No response.' };
+            return { MsgId: -2,  Msg: resData.Msg || 'No response.',Data:resData.Data || [] };
     }
 }

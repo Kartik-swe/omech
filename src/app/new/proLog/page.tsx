@@ -3,7 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { Table, Button, Modal, Form, Select, DatePicker, Input, Space, message,notification, Flex } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 
-import { fetchAPI } from '../../../../utils/apiUtils'; // Import the utility function
+import { apiService } from '../../../../utils/apiUtils'; // Import the utility function
+import { ApiResponse } from '../../../../utils/common_utils';
 
 const { Option } = Select;
 
@@ -113,8 +114,8 @@ const ProductionLogsPage: React.FC = () => {
     const fetchProductionLogs = async () => {
       setLoading(true);
       try {
-        const logs = await fetchAPI('/api/productionlog', 'GET');
-        setData(logs.data);
+        const logs:ApiResponse = await apiService.get('/productionlog', 'applicationq/json');
+        setData(logs.Msg.data);
       } catch (error) {
         notification.error({ message: 'Error fetching production logs' });
       } finally {
@@ -124,8 +125,8 @@ const ProductionLogsPage: React.FC = () => {
   
     const fetchDropdownData = async () => {
       try {
-        const dropdownData = await fetchAPI('/api/productionlog', 'GET');
-        setDropdownData(dropdownData.data);
+        const dropdownData:ApiResponse = await apiService.get('/productionlog', 'application/json');
+        setDropdownData(dropdownData.Msg.data);
       } catch (error) {
         notification.error({ message: 'Error fetching dropdown data' });
       }

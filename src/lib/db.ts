@@ -1,4 +1,4 @@
-// lib/db.js
+// lib/db.ts
 const sql = require('mssql');
 
 // Define the configuration for your database connection
@@ -19,7 +19,6 @@ const config = {
 let poolPromise: any;
 
 const getConnection = async () => {
-  console.log("SHELKE");
   
   if (!poolPromise) {
     poolPromise = sql.connect(config);
