@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Upload, Button, Table, Modal, message } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import axios from "axios";
+import { log } from "node:console";
 
 const SheetPage = () => {
   const [fileData, setFileData] = useState<any[]>([]);
@@ -47,6 +48,8 @@ const SheetPage = () => {
       });
 
       const result = await response.json();
+      console.log(result);
+      
       if (response.ok) {
         setNewEntries(result.newEntries);
         setUpdatedEntries(result.updatedEntries);
@@ -69,6 +72,7 @@ const SheetPage = () => {
       const response = await axios.post("/api/Matarials/sheet/finalize", {
         payload
       });
+      console.log("kartik",response);
       if (response.status === 200) {
         message.success("Entries successfully updated!");
         setIsModalVisible(false);
@@ -77,9 +81,11 @@ const SheetPage = () => {
       }
     } catch (error) {
       console.error(error);
-      message.error("An error occurred while updating entries.");
+      // message.error("An error occurred while updating entries.");
     } finally {
       setConfirmLoading(false);
+      setIsModalVisible(false);
+
     }
     message.success("Changes confirmed successfully!");
     // Optional: Call an API to finalize the changes here
