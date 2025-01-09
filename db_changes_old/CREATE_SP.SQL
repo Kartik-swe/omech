@@ -1,0 +1,73 @@
+
+-- Description: This script is used to create a stored procedure in the database.
+CREATE PROCEDURE [dbo].[PLD_COMMON]
+	@USER_SRNO INT, -- Associated Hospital ID
+    @TBL_SRNO NVARCHAR(25)  -- Input as string: "1", "1,2", "3,4", etc.
+AS
+BEGIN
+    SET NOCOUNT ON;
+	-- reseved space for T0-if requreid 
+    SELECT GRADE_SRNO as value , GRADE as label
+    FROM M_GRADE 
+    WHERE CHARINDEX('0', @TBL_SRNO) > 0 AND DEL_FLAG = 0 AND GRADE_SRNO  > 100; -- Just to return empty data -- T0 for any requirement
+
+	-- Table 1: Return data if '1' is in the list, else empty
+    SELECT GRADE_SRNO as value , GRADE as label
+    FROM M_GRADE
+    WHERE CHARINDEX('1', @TBL_SRNO) > 0 AND DEL_FLAG = 0;
+
+	-- Table 2:
+    SELECT OD_SRNO as value , OD as label
+    FROM M_OD
+    WHERE CHARINDEX('2', @TBL_SRNO) > 0 AND DEL_FLAG = 0;
+
+	-- Table 2: 
+    SELECT THICKNESS_SRNO AS value , THICKNESS as label
+    FROM M_THICKNESS
+    WHERE CHARINDEX('3', @TBL_SRNO) > 0 AND DEL_FLAG = 0;
+END;
+
+
+--INSERT AND UPDATE PROCEDURE FOR RAW MATERIAL
+GO
+/****** Object:  StoredProcedure [dbo].[IU_RAW_MATERIALS]    Script Date: 07-01-2025 06:37:39 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROCEDURE [dbo].[IU_RAW_MATERIALS]
+    @IU_FLAG CHAR(1), -- 'I' for Insert, 'U' for Update
+    @MATERIAL_SRNO INT = NULL, -- Required for Update
+    @VENDOR_SRNO INT,
+    @CHALLAN_NO VARCHAR(100),
+    @MATERIAL_GRADE_SRNO INT,
+    @MATERIAL_THICKNESS_SRNO INT,
+    @MATERIAL_WIDTH VARCHAR(10),
+    @MATERIAL_WEIGHT DECIMAL(10, 2),
+    @RECEIVED_DATE DATETIME,
+    @MATERIAL_STATUS_SRNO INT,
+    @USER_SRNO VARCHAR(255)
+AS
+BEGIN
+    IF @IU_FLAG = 'I'
+    BEGIN
+        INSERT INTO RAW_MATERIALS (VENDOR_SRNO, CHALLAN_NO, MATERIAL_GRADE_SRNO, MATERIAL_THICKNESS_SRNO, MATERIAL_WIDTH, MATERIAL_WEIGHT, RECEIVED_DATE, MATERIAL_STATUS_SRNO, CREATED_AT, CREATED_BY)
+        VALUES (@VENDOR_SRNO, @CHALLAN_NO, @MATERIAL_GRADE_SRNO, @MATERIAL_THICKNESS_SRNO, @MATERIAL_WIDTH, @MATERIAL_WEIGHT, @RECEIVED_DATE, @MATERIAL_STATUS_SRNO, GETDATE(), @USER_SRNO);
+    END
+    ELSE IF @IU_FLAG = 'U'
+    BEGIN
+        UPDATE RAW_MATERIALS
+        SET VENDOR_SRNO = @VENDOR_SRNO,
+            CHALLAN_NO = @CHALLAN_NO,
+            MATERIAL_GRADE_SRNO = @MATERIAL_GRADE_SRNO,
+            MATERIAL_THICKNESS_SRNO = @MATERIAL_THICKNESS_SRNO,
+            MATERIAL_WIDTH = @MATERIAL_WIDTH,
+            MATERIAL_WEIGHT = @MATERIAL_WEIGHT,
+            RECEIVED_DATE = @RECEIVED_DATE,
+            MATERIAL_STATUS_SRNO = @MATERIAL_STATUS_SRNO,
+            MODIFIED_AT = GETDATE(),
+            MODIFIED_BY = @USER_SRNO
+        WHERE MATERIAL_SRNO = @MATERIAL_SRNO;
+    END
+END;
+----------------------------------------------------------------

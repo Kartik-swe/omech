@@ -2,8 +2,8 @@
 "use client"
 import { useState, useEffect } from "react";
 import { Table, Button, Form, Input, Tabs, Select, Modal } from "antd";
-import { apiService } from "../../../../utils/apiUtils";
-import { ApiResponse } from "../../../../utils/common_utils";
+import { apiService } from "../../../../utils-old/apiUtils";
+import { ApiResponse } from "../../../../utils-old/common_utils";
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
 
 const SystemUserManagement = () => {

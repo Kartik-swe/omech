@@ -4,9 +4,9 @@ import React, { useEffect, useState } from 'react';
 import {Table,Button,Modal,Form,Select,DatePicker,Input,Space,message,notification} from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 
-import { apiService } from '../../../utils/apiUtils'; // Utility function for API calls
+import { apiService } from '../../../utils-old/apiUtils'; // Utility function for API calls
 // import { ApiResponse } from '../../../utils/common_utils';
-import { fetchPl_Common } from '../../../utils/commonAPI';
+import { fetchPl_Common } from '../../../utils-old/commonAPI';
 
 const { Option } = Select;
 

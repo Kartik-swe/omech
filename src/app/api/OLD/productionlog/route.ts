@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { apiHandler } from '../../../lib/apiHandler';
-import { sql } from '../../../lib/db';
+import { apiHandler } from '../../../../lib/apiHandler';
+import { sql } from '../../../../lib/db';
 
 // Define a POST method for creating/updating a production log
-import { getConnection } from '../../../lib/db';
+import { getConnection } from '../../../../lib/db';
 
 export async function POST(req: Request) {
   try {
