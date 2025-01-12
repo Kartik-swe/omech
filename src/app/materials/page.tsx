@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Row, Col, Table, DatePicker, Select, Button, Card, Statistic, Typography } from 'antd';
 import { Line, Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
+import Link from 'next/link';
 
 // Register necessary components for Chart.js
 ChartJS.register(
@@ -103,8 +104,20 @@ const Dashboard = () => {
 
   return (
     <div>
+      <Row gutter={16}>
+      <Col span={21}>
       <AntTitle level={2}>Advanced Dashboard</AntTitle>
 
+      </Col>
+    
+      <Col span={3}>
+        <Link href="/new-materials">
+          <Button type="primary" danger>
+            Add Raw Materials
+          </Button>
+        </Link>
+      </Col>
+      </Row>
       <Row gutter={16}>
         <Col span={8}>
           <Card>
