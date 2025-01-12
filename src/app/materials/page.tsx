@@ -1,340 +1,169 @@
-"use client";
+"use client"
+import React, { useState } from 'react';
+import { Row, Col, Table, DatePicker, Select, Button, Card, Statistic, Typography } from 'antd';
+import { Line, Doughnut } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
 
-import React, { useState } from "react";
-import { Table, Upload, Button, message } from "antd";
-import { UploadOutlined } from "@ant-design/icons";
-import * as XLSX from "xlsx";
-import { log } from "node:console";
+// Register necessary components for Chart.js
+ChartJS.register(
+  CategoryScale,  // For x-axis
+  LinearScale,    // For y-axis
+  BarElement,     // For bar elements (useful for Line chart too)
+  PointElement,   // For points (used in Line chart)
+  LineElement,    // For line elements (used in Line chart)
+  Title,          // For chart title
+  Tooltip,        // For tooltips
+  Legend,         // For chart legend
+  ArcElement      // For pie/doughnut chart elements
+);
 
-const Page = () => {
-  const [data, setData] = useState<any>([]);
+const { Title: AntTitle } = Typography;
 
-  // Columns for the main table
-  const mainColumns = [
-    { title: "CH. NO", dataIndex: "CH. NO", key: "CH. NO" },
-    { title: "DATE", dataIndex: "DATE", key: "DATE", render: (date: any) => formatDate(date) },
-    { title: "GR", dataIndex: "GR", key: "GR" },
-    { title: "THIK", dataIndex: "THIK", key: "THIK" },
-    { title: "WIDTH", dataIndex: "WIDTH", key: "WIDTH" },
-    { title: "LEGNTH", dataIndex: "LEGNTH", key: "LEGNTH" },
-    { title: "QTY", dataIndex: "QTY", key: "QTY" },
-    { title: "SCRAP", dataIndex: "SCRAP", key: "SCRAP" },
-    { title: "BALANCE QTY", dataIndex: "BALANCE QTY", key: "BALANCE QTY" },
+
+const Dashboard = () => {
+  const [filters, setFilters] = useState<{
+    startDate: string | null;
+    endDate: string | null;
+    grade: string | null;
+    thickness: string | null;
+    vendor: string | null;
+    status: string | null;
+    machine: string | null;
+  }>({
+    startDate: null, endDate: null, grade: null, thickness: null, vendor: null, status: null, machine: null,
+  });
+
+  // Dummy Data for Raw Materials and Slitting Processes
+  const rawMaterials = [
+    { material_srno: 'RM001', vendor: 'Vendor A', challan_no: '12345', grade: 'MS', weight: 120, received_date: '2025-01-01' },
+    { material_srno: 'RM002', vendor: 'Vendor B', challan_no: '12346', grade: 'SS', weight: 150, received_date: '2025-01-02' },
+    { material_srno: 'RM003', vendor: 'Vendor C', challan_no: '12347', grade: 'MS', weight: 100, received_date: '2025-01-03' },
   ];
 
-  // Columns for the nested table (PROGRAMS)
-  const nestedColumns = [
-    { title: "PROGRAM", dataIndex: "PROGRAM", key: "PROGRAM" },
-    { title: "RECD QTY", dataIndex: "RECD_QTY", key: "RECD_QTY" },
-    { title: "DC NO", dataIndex: "DC_NO", key: "DC_NO" },
-    { title: "DATE", dataIndex: "DATE", key: "DATE", render: (date: any) => formatDate(date) },
-    { title: "REF", dataIndex: "REF", key: "REF" },
+  const slittingProcesses = [
+    { slitting_srno: 'SP001', material_srno: 'RM001', slitting_date: '2025-01-05', weight: 120, status: 'Completed' },
+    { slitting_srno: 'SP002', material_srno: 'RM002', slitting_date: '2025-01-06', weight: 150, status: 'Pending' },
+    { slitting_srno: 'SP003', material_srno: 'RM003', slitting_date: '2025-01-07', weight: 100, status: 'Completed' },
   ];
 
-   // Format date function
-   const formatDate = (date: any) => {
-    if (!date) return null;
-    // If date is a JavaScript Date object, format it
-    return new Date(date).toLocaleDateString("en-IN"); // Adjust the format as per your requirement
-    // Or use moment.js for custom formatting
-    // return moment(date).format("DD/MM/YYYY"); 
+  // Key Metrics Data
+  const keyMetrics = [
+    { title: 'Total Raw Materials Received', value: rawMaterials.length },
+    { title: 'Total Weight Processed', value: slittingProcesses.reduce((acc, item) => acc + item.weight, 0) },
+    { title: 'Pending Slitting Tasks', value: slittingProcesses.filter(p => p.status === 'Pending').length },
+    { title: 'Low Stock Alerts', value: rawMaterials.filter(m => m.weight < 10).length },
+  ];
+
+  // Chart Data
+  const slittingWeightData = {
+    labels: ['Grade A', 'Grade B', 'Grade C'],
+    datasets: [
+      {
+        data: [120, 150, 100],
+        backgroundColor: ['#FF5733', '#FFBD33', '#33FF57'],
+      },
+    ],
   };
-  const handleFileUpload = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const arrayBuffer = e.target?.result;
-      const workbook = XLSX.read(arrayBuffer, { type: "array" });
-      const sheetName = workbook.SheetNames[0];
-      const sheet = workbook.Sheets[sheetName];
-      const jsonData: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-      // Log the entire sheet data for inspection
-      console.log("Sheet Data:", jsonData);
+  const rawMaterialData = {
+    labels: ['2025-01-01', '2025-01-02', '2025-01-03'],
+    datasets: [
+      {
+        label: 'Raw Materials Received',
+        data: [120, 150, 100],
+        borderColor: '#4CAF50',
+        backgroundColor: 'rgba(76, 175, 80, 0.2)',
+        fill: true,
+      },
+    ],
+  };
 
-      // Ensure data has at least 4 rows to process
-      if (jsonData.length < 4) {
-        message.error("Invalid file format!");
-        return;
-      }
+  // Table Columns
+  const columns = [
+    { title: 'Material SRNO', dataIndex: 'material_srno' },
+    { title: 'Vendor', dataIndex: 'vendor' },
+    { title: 'Challan No', dataIndex: 'challan_no' },
+    { title: 'Grade', dataIndex: 'grade' },
+    { title: 'Weight', dataIndex: 'weight' },
+    { title: 'Received Date', dataIndex: 'received_date' },
+  ];
 
-      // Define headers manually (you can adjust as needed)
-      const headers = (jsonData[0] as any[]).map((header: any) =>
-        typeof header === "string" ? header.trim() : header
-      );
+  const slittingColumns = [
+    { title: 'Slitting SRNO', dataIndex: 'slitting_srno' },
+    { title: 'Material SRNO', dataIndex: 'material_srno' },
+    { title: 'Slitting Date', dataIndex: 'slitting_date' },
+    { title: 'Weight', dataIndex: 'weight' },
+    { title: 'Status', dataIndex: 'status' },
+  ];
 
-      const requiredHeaders = [
-        "CH. NO",
-        "CH. DATE",
-        "GR",
-        "THIK",
-        "WIDTH",
-        "LEGNTH",
-        "QTY",
-        "PROGRAM",
-        "RECD QTY",
-        "DC NO",
-        "DATE",
-        "REF",
-        "SCRAP",
-        "BALANCE QTY",
-      ];
-
-      const missingHeaders = requiredHeaders.filter(
-        (header) => !headers.includes(header)
-      );
-      if (missingHeaders.length > 0) {
-        message.error(`Missing columns: ${missingHeaders.join(", ")}`);
-        return;
-      }
-
-       // Check for extra headers (columns that are not in requiredHeaders)
-       const extraHeaders = headers.filter(
-        (header) => !requiredHeaders.includes(header)
-      );
-      if (extraHeaders.length > 0) {
-        message.warning(`Extra columns detected: ${extraHeaders.join(", ")}`);
-      }
-
-        // Function to convert Excel date number to JavaScript Date
-        const excelDateToJsDate = (excelDate: number) => {
-            const epoch = new Date(Date.UTC(1900, 0, 1)); // Excel's epoch date
-            // console.log(new Date(epoch.getTime() + (excelDate - 2) * 86400000));
-            // console.log(excelDate);
-            
-            
-            return new Date(epoch.getTime() + (excelDate - 2) * 86400000); // Subtract 2 to adjust for Excel's leap year bug
-          };
-
-      // Process the rows manually
-      const rows = jsonData.slice(1).map((row: any[]) => {
-        // Create an object with your custom structure
-        const rowData: Record<string, any> = {};
-
-        // Manually define the structure of the row based on headers
-        rowData["CH. NO"] = row[headers.indexOf("CH. NO")] || null;
-        // Convert Excel date to JavaScript date if it's a number
-        const dateValue = row[headers.indexOf("CH. DATE")];
-        rowData["DATE"] = typeof dateValue === "number" ? excelDateToJsDate(dateValue) : dateValue || null;
-        rowData["GR"] = row[headers.indexOf("GR")] || null;
-        rowData["THIK"] = row[headers.indexOf("THIK")] || null;
-        rowData["WIDTH"] = row[headers.indexOf("WIDTH")] || null;
-        rowData["LEGNTH"] = row[headers.indexOf("LEGNTH")] || null;
-        rowData["QTY"] = row[headers.indexOf("QTY")] || null;
-        rowData["SCRAP"] = row[headers.indexOf("SCRAP")] || null;
-        rowData["BALANCE QTY"] = row[headers.indexOf("BALANCE QTY")] || null;
-
-        // Extract PROGRAM data if needed
-        const programs = [];
-        let i = headers.indexOf("PROGRAM");
-        while (i !== -1 && headers[i]) {
-          programs.push({
-            PROGRAM: row[i] || null,
-            RECD_QTY: row[i + 1] || null,
-            DC_NO: row[i + 2] || null,
-            DATE: typeof row[i + 3] === "number" ? excelDateToJsDate(row[i + 3]) : row[i + 3] || null,
-            REF: row[i + 4] || null,
-          });
-          i = headers.indexOf("PROGRAM", i + 1);
-        }
-
-        rowData["PROGRAMS"] = programs.filter((p) => p.PROGRAM);
-
-        // Remove individual program fields
-        // delete rowData["PROGRAM"];
-        // delete rowData["RECD QTY"];
-        // delete rowData["DC NO"];
-        // delete rowData["DATE"];
-        // delete rowData["REF"];
-
-        console.log("Row Data:", rowData);
-        return rowData;
-      });
-
-      // After the data is structured, set it to state
-      console.log(rows);
-      
-      setData(rows);
-      message.success("File uploaded and processed successfully!");
-    };
-    reader.readAsArrayBuffer(file); // Use ArrayBuffer instead of BinaryString
+  // Date Change Handler
+  const handleDateChange = (date:any, dateString:any) => {
+    setFilters(prev => ({ ...prev, startDate: dateString[0], endDate: dateString[1] }));
   };
 
   return (
     <div>
-      <h1>File Upload and Table Display</h1>
-      <Upload
-        accept=".xlsx, .xls"
-        beforeUpload={(file) => {
-          handleFileUpload(file);
-          return false; // Prevent auto-upload
-        }}
-        showUploadList={false}
-      >
-        <Button icon={<UploadOutlined />}>Upload Excel File</Button>
-      </Upload>
-      <Table
-        dataSource={data}
-        columns={mainColumns}
-        rowKey={(record) => record["CH. NO"] || Math.random()}
-        expandable={{
-          expandedRowRender: (record: any) => (
-            <Table
-              dataSource={record.PROGRAMS}
-              columns={nestedColumns}
-              pagination={false}
-              rowKey={(program: any) => program.PROGRAM || Math.random()}
-            />
-          ),
-        }}
-      />
+      <AntTitle level={2}>Advanced Dashboard</AntTitle>
+
+      <Row gutter={16}>
+        <Col span={8}>
+          <Card>
+            <DatePicker.RangePicker onChange={handleDateChange} />
+          </Card>
+        </Col>
+        <Col span={8}>
+          <Card>
+            <Select
+              placeholder="Select Grade"
+              onChange={value => setFilters(prev => ({ ...prev, grade: value }))}
+              style={{ width: '100%' }}
+            >
+              <Select.Option value="GradeA">Grade A</Select.Option>
+              <Select.Option value="GradeB">Grade B</Select.Option>
+              <Select.Option value="GradeC">Grade C</Select.Option>
+            </Select>
+          </Card>
+        </Col>
+        <Col span={8}>
+          <Card>
+            <Button type="primary" onClick={() => setFilters({ ...filters, status: 'Completed' })}>Completed Slitting</Button>
+          </Card>
+        </Col>
+      </Row>
+
+      <Row gutter={16} style={{ marginTop: '20px' }}>
+        {keyMetrics.map(metric => (
+          <Col span={6} key={metric.title}>
+            <Card>
+              <Statistic title={metric.title} value={metric.value} />
+            </Card>
+          </Col>
+        ))}
+      </Row>
+
+      <Row gutter={16} style={{ marginTop: '20px' }}>
+        <Col span={12}>
+          <Card title="Slitting Weight Distribution">
+            <Doughnut data={slittingWeightData} />
+          </Card>
+        </Col>
+        <Col span={12}>
+          <Card title="Raw Materials Over Time">
+            <Line data={rawMaterialData} />
+          </Card>
+        </Col>
+      </Row>
+
+      <Row gutter={16} style={{ marginTop: '20px' }}>
+        <Col span={12}>
+          <Table columns={columns} dataSource={rawMaterials} rowKey="material_srno" />
+        </Col>
+        <Col span={12}>
+          <Table columns={slittingColumns} dataSource={slittingProcesses} rowKey="slitting_srno" />
+        </Col>
+      </Row>
     </div>
   );
 };
 
-export default Page;
-
-
-// import React, { useState } from "react";
-// import { Table, Upload, Button, message } from "antd";
-// import { UploadOutlined } from "@ant-design/icons";
-// import * as XLSX from "xlsx";
-
-// const Page = () => {
-//   const [data, setData] = useState<any>([]);
-
-//   // Columns for the main table
-//   const mainColumns = [
-//     { title: "CH. NO", dataIndex: "CH. NO", key: "CH. NO" },
-//     { title: "DATE", dataIndex: "DATE", key: "DATE" },
-//     { title: "GR", dataIndex: "GR", key: "GR" },
-//     { title: "THIK", dataIndex: "THIK", key: "THIK" },
-//     { title: "WIDTH", dataIndex: "WIDTH", key: "WIDTH" },
-//     { title: "LEGNTH", dataIndex: "LEGNTH", key: "LEGNTH" },
-//     { title: "QTY", dataIndex: "QTY", key: "QTY" },
-//     { title: "SCRAP", dataIndex: "SCRAP", key: "SCRAP" },
-//     { title: "BALANCE QTY", dataIndex: "BALANCE QTY", key: "BALANCE QTY" },
-//   ];
-
-//   // Columns for the nested table (PROGRAMS)
-//   const nestedColumns = [
-//     { title: "PROGRAM", dataIndex: "PROGRAM", key: "PROGRAM" },
-//     { title: "RECD QTY", dataIndex: "RECD_QTY", key: "RECD_QTY" },
-//     { title: "DC NO", dataIndex: "DC_NO", key: "DC_NO" },
-//     { title: "DATE", dataIndex: "DATE", key: "DATE" },
-//     { title: "REF", dataIndex: "REF", key: "REF" },
-//   ];
-
-//   const handleFileUpload = (file: File) => {
-//     const reader = new FileReader();
-//     reader.onload = (e) => {
-//       const binaryStr = e.target?.result;
-//       const workbook = XLSX.read(binaryStr, { type: "binary" });
-//       const sheetName = workbook.SheetNames[0];
-//       const sheet = workbook.Sheets[sheetName];
-//       const jsonData: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-
-//       console.log(sheet);
-      
-
-//       // Validate and process data
-//       if (jsonData.length < 4) {
-//         message.error("Invalid file format!");
-        
-//       }
-//       const headers = (jsonData[3] as any[]).map((header: any) =>
-//         typeof header === "string" ? header.trim() : header
-//       );
-//       const requiredHeaders = [
-//         "CH. NO",
-//         "DATE",
-//         "GR",
-//         "THIK",
-//         "WIDTH",
-//         "LEGNTH",
-//         "QTY",
-//         "PROGRAM",
-//         "RECD QTY",
-//         "DC NO",
-//         "DATE",
-//         "REF",
-//         "SCRAP",
-//         "BALANCE QTY",
-//       ];
-//       const missingHeaders = requiredHeaders.filter(
-//         (header) => !headers.includes(header)
-//       );
-//       if (missingHeaders.length > 0) {
-//         message.error(`Missing columns: ${missingHeaders.join(", ")}`);
-//         return;
-//       }
-
-//       const rows = jsonData.slice(4).map((row: any[]) => {
-//         const rowData: Record<string, any> = {};
-//         headers.forEach((header, index) => {
-//           rowData[header] = row[index] || null;
-//         });
-
-//         const programs = [];
-//         let i = headers.indexOf("PROGRAM");
-//         while (i !== -1 && headers[i]) {
-//           programs.push({
-//             PROGRAM: row[i] || null,
-//             RECD_QTY: row[i + 1] || null,
-//             DC_NO: row[i + 2] || null,
-//             DATE: row[i + 3] || null,
-//             REF: row[i + 4] || null,
-//           });
-//           i = headers.indexOf("PROGRAM", i + 1);
-//         }
-
-//         rowData["PROGRAMS"] = programs.filter((p) => p.PROGRAM);
-
-//         // Remove individual program fields from top level
-//         delete rowData["PROGRAM"];
-//         delete rowData["RECD QTY"];
-//         delete rowData["DC NO"];
-//         delete rowData["DATE"];
-//         delete rowData["REF"];
-
-//         return rowData;
-//       });
-
-//       setData(rows);
-//       message.success("File uploaded and processed successfully!");
-//     };
-//     reader.readAsBinaryString(file);
-//   };
-
-//   return (
-//     <div>
-//       <h1>File Upload and Table Display</h1>
-//       <Upload
-//         accept=".xlsx, .xls"
-//         beforeUpload={(file) => {
-//           handleFileUpload(file);
-//           return false;
-//         }}
-//         showUploadList={false}
-//       >
-//         <Button icon={<UploadOutlined />}>Upload Excel File</Button>
-//       </Upload>
-//       <Table
-//         dataSource={data}
-//         columns={mainColumns}
-//         rowKey={(record) => record["CH. NO"] || Math.random()}
-//         expandable={{
-//           expandedRowRender: (record:any) => (
-//             <Table
-//               dataSource={record.PROGRAMS}
-//               columns={nestedColumns}
-//               pagination={false}
-//               rowKey={(program:any) => program.PROGRAM || Math.random()}
-//             />
-//           ),
-//         }}
-//       />
-//     </div>
-//   );
-// };
-
-// export default Page;
+export default Dashboard;
