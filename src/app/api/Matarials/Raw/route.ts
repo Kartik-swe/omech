@@ -18,7 +18,10 @@ export async function GET(req: Request) {
     if (!recordsets || recordsets.length === 0) {
         return NextResponse.json(createResponse(RESPONSE_CODES.NO_RECORD, RESPONSE_MESSAGES.NO_RECORD));
     }
-    const data = { RAW_MATERIALS: recordsets[0]};
+    const data = { 
+      RAW_MATERIALS: recordsets[0],
+      SLIT_PROCESSES: recordsets[1],
+    };
 
     // Return appropriate response
     // if (data.length === 0) {

@@ -6,10 +6,7 @@ import moment from 'moment';
 import { apiClient } from '@/utils/apiClient';
 import { getCookieData } from '@/utils/common';
 import SlitTable from '@/app/components/slitTable';
-// import slitTable from '@/app/components/slitTable copy';
-
 // import { useRouter } from 'next/router';
-
 
 const RawMaterialDashboard = () => {
   interface RawMaterial {
@@ -25,7 +22,6 @@ const RawMaterialDashboard = () => {
   }
 
   const [rawMaterials, setRawMaterials] = useState<RawMaterial[]>([]);
-  const [slittingData, setslittingData] = useState<any[]>([]);
   const [slittingHistory1, setSlittingHistory] = useState<{ [key: number]: any[] }>({});
   const [form] = Form.useForm();
   const [slitForm] = Form.useForm();
@@ -50,11 +46,11 @@ const RawMaterialDashboard = () => {
     const response = await apiClient<Record<string, any>>(`${API_BASE_URL}Pl_Common?USER_SRNO=${USER_SRNO}&UT_SRNO=${UT_SRNO}&TBL_SRNO=1,3,4`, 'GET');
     if (response.msgId === 200) {
       if (!response.data) {
-        
+        console.log('No data found');
         return;
       }
       // Destructure the fields (M_GRADE, M_GENDER, M_PRODUCT)
-      
+      console.log(response.data, 'response');
       
       const { Table1,Table3,Table4 } = response.data;
       setOptGrades(Table1)
@@ -66,32 +62,17 @@ const RawMaterialDashboard = () => {
     }
   };
 
-  const updateSlittedStatus = (id: number) => {
-    console.log("id", id);
-    
-    // Find the record by SLITTING_SRNO and set IS_SLITTED to true
-    const updatedData = [...slittingData]; // Assuming slittingData is a state
-    const record = updatedData.find((item) => item.SLITTING_SRNO === id);
-    if (record) {
-      record.IS_SLITTED = true;
-      setSlittingHistory(updatedData); // Update state to re-render table
-    }
-  };
-  
-
 //  fUNCTION TO FETCH RAW MATERIALS
   const FetchRawMaterials = async () => {
     try {
       const response = await apiClient('/api/Matarials/Raw', 'GET');
-      
+      console.log(response, 'response');
       
       if (response.msgId === 1) {
         if (!response.data) {
-          
+          console.log('No data found');
           return;
         }
-        console.log(response.data, "response.data");  
-        
         const RAW_MATERIALS_DATA = response.data.RAW_MATERIALS.map((material: any, index: number) => ({
           key: material.MATERIAL_SRNO,
           CHALLAN_NO: material.CHALLAN_NO,
@@ -121,11 +102,9 @@ const RawMaterialDashboard = () => {
             MATERIAL_SRNO: slit.MATERIAL_SRNO,
             SLITTING_LEVEL: slit.SLITTING_LEVEL,
             SLITTING_SRNO_FK : slit.SLITTING_SRNO,
-            IS_SLITTED: slit.IS_SLITTED,
           }));
         });
-        
-        setslittingData(response.data.SLIT_PROCESSES)
+        console.log(SLIT_DATA, 'SLIT_DATA'); 
 
         // const slittingHistory = {
         //   1: [{ DC_NO: "DC123", SLITTING_DATE: "2025-01-10" }],
@@ -179,7 +158,7 @@ const RawMaterialDashboard = () => {
           MATERIAL_SRNO: response.data.Table[0].MATERIAL_SRNO, // Assuming the response contains MATERIAL_SRNO
         }]);
         form.resetFields();
-        
+        console.log(response.data.Table[0].MATERIAL_SRNO);
         
       } else {
         message.error(`Error: ${response.msg}`);
@@ -193,8 +172,8 @@ const RawMaterialDashboard = () => {
   // Adjusted function to handle slitting operation with API request
   const handleSlitMaterial = async (values: any) => {
     alert("")
-    
-    
+    console.log(values);
+    console.log(selectedMaterial);
     
     if (!selectedMaterial) return;
 
@@ -211,9 +190,9 @@ const RawMaterialDashboard = () => {
         SlitDetails : values.SLITTING_DTL,
       }
       
-      
+      console.log(payload);
       const response = await apiClient(`${API_BASE_URL}IuRawSlitArr`, 'POST', payload);
-      
+      console.log(response);
       if (response.msgId === 200) {
         message.success('Material slit successfully!');
         const updatedMaterials = rawMaterials.map((material) =>
@@ -336,12 +315,11 @@ const RawMaterialDashboard = () => {
   ];
 // function setSlitingLevvel
   const setSlitingLevvel = (record: any) => {
-    console.log("record", record);
-    
+    console.log(record, 'record');
     
     slitForm.setFieldsValue({
       MATERIAL_SRNO: record.MATERIAL_SRNO,
-      SLITTING_SRNO_FK: record.SLITTING_SRNO,
+      SLITTING_SRNO_FK: record.SLITTING_SRNO_FK,
       SLITTING_LEVEL :record.SLITTING_LEVEL + 1,
     });
   };
@@ -399,31 +377,21 @@ const RawMaterialDashboard = () => {
         </Row>
       </Form>
 
-     {/* Render Raw Material Table */}
-     {/* <Table
-        columns={[
-          { title: 'Challan No', dataIndex: 'CHALLAN_NO', key: 'CHALLAN_NO' },
-          { title: 'Received Date', dataIndex: 'RECEIVED_DATE', key: 'RECEIVED_DATE' },
-          { title: 'Material Grade', dataIndex: 'MATERIAL_GRADE', key: 'MATERIAL_GRADE' },
-          { title: 'Material Thickness', dataIndex: 'MATERIAL_THICKNESS', key: 'MATERIAL_THICKNESS' },
-          { title: 'Material Width', dataIndex: 'MATERIAL_WIDTH', key: 'MATERIAL_WIDTH' },
-          { title: 'Weight', dataIndex: 'MATERIAL_WEIGHT', key: 'MATERIAL_WEIGHT' },
-          { title: 'Action', key: 'action', render: (_, record) => (
-            <Space size="middle">
-              <Button onClick={() => setSelectedMaterial(record)}>Slit</Button>
-            </Space>
-          ) },
-        ]}
+      {/* <SlitTable /> */}
+      {/* <Table
         dataSource={rawMaterials}
-        rowKey="MATERIAL_SRNO"
-        pagination={false}
-      />
-
-      {selectedMaterial && slittingHistory1[selectedMaterial.MATERIAL_SRNO] && (
-        <RecursiveNestedTable data={slittingHistory1[selectedMaterial.MATERIAL_SRNO]} />
-      )} */}
-
-<SlitTable mainTableData={rawMaterials} slittingData={slittingData} setSlitingLevvel={setSlitingLevvel} setSelectedMaterial={setSelectedMaterial} setModalVisible={setModalVisible} updateSlittedStatus={updateSlittedStatus} />
+        columns={columns}
+        expandable={{
+          expandedRowRender: (record) => (
+            <Table
+              dataSource={slittingHistory1[record.key] || []}
+              columns={slittingColumns}
+              pagination={false}
+              rowKey="SLITTING_SRNO"
+            />
+          ),
+        }}
+      /> */}
        <Modal
       title="Slit Material"
       visible={modalVisible}
