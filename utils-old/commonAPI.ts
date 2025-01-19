@@ -1,5 +1,4 @@
-import { Url } from "next/dist/shared/lib/router/router";
-import { apiService } from "./apiUtils";
+// import { apiService } from "./apiUtils";
 
 // export const fetchPl_Common = async ( USER_SRNO : Number, TBL_SRNO : String) => {
 //     try {
