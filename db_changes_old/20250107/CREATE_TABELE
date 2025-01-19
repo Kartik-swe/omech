@@ -1,0 +1,182 @@
+-- CREATE TABLE M_USER (
+--     USER_SRNO INT IDENTITY(1,1) PRIMARY KEY,  -- Auto-incrementing unique user serial number
+--     USERNAME VARCHAR(255) NOT NULL,           -- Username of the user
+--     F_NAME VARCHAR(255),                      -- First name of the user
+--     L_NAME VARCHAR(255),                      -- Last name of the user
+--     ROLE VARCHAR(255),                        -- Role of the user (e.g., Admin, User)
+--     IS_ACTIVE BIT NOT NULL,                   -- Flag indicating if the user is active (1 = Active, 0 = Inactive)
+--     DEL_FLAG BIT NOT NULL DEFAULT 0,          -- Flag indicating if the user is marked for deletion (1 = Deleted, 0 = Not deleted)
+--     DEL_BY VARCHAR(255),                      -- User who marked the record for deletion
+--     DEL_AT DATETIME,                          -- Timestamp when the record was marked for deletion
+--     CREATED_BY VARCHAR(255) NOT NULL,         -- User who created the record
+--     CREATED_AT DATETIME DEFAULT GETDATE(),    -- Timestamp when the record was created
+--     MODIFIED_BY VARCHAR(255),                 -- User who last modified the record
+--     MODIFIED_AT DATETIME                      -- Timestamp when the record was last modified
+-- );
+
+-- Add Proper comments
+-- Vendors Table
+CREATE TABLE M_VENDORS (
+    VENDOR_SRNO INT PRIMARY KEY IDENTITY, -- Unique identifier for each vendor
+    VENDOR_NAME VARCHAR(255) NOT NULL, -- Vendor's name
+    VENDOR_CONTACT_NO VARCHAR(255), -- Vendor's contact number
+    VENDOR_ADD VARCHAR(255), -- Vendor's address
+    VENDOR_EMAIL VARCHAR(255), -- Vendor's email address
+    CREATED_AT DATETIME DEFAULT GETDATE(), -- Record creation timestamp
+    CREATED_BY VARCHAR(255), -- Record created by user
+    MODIFIED_AT DATETIME, -- Last modification timestamp
+    MODIFIED_BY VARCHAR(255), -- Last modified by user
+    DEL_FLAG BIT DEFAULT 0, -- Deletion flag (0 = active, 1 = deleted)
+    DEL_AT DATETIME, -- Deleted timestamp
+    DEL_BY VARCHAR(255), -- Deleted modified by user
+);
+
+-- Raw Materials Table
+CREATE TABLE RAW_MATERIALS (
+    MATERIAL_SRNO INT PRIMARY KEY IDENTITY, -- Unique identifier for each material
+    VENDOR_SRNO INT FOREIGN KEY REFERENCES M_VENDORS(VENDOR_SRNO), -- Vendor source
+    CHALLAN_NO VARCHAR(100) NOT NULL, -- Challan number for material receipt
+    MATERIAL_GRADE_SRNO INT FOREIGN KEY REFERENCES M_GRADE(GRADE_SRNO), -- Material grade reference
+    MATERIAL_THICKNESS_SRNO INT FOREIGN KEY REFERENCES M_THICKNESS(THICKNESS_SRNO), -- Material thickness reference
+    MATERIAL_WIDTH VARCHAR(10), -- Material width reference
+    MATERIAL_WEIGHT DECIMAL(10, 2) NOT NULL, -- Weight of the material
+    RECEIVED_DATE DATETIME NOT NULL, -- Date the material was received
+    MATERIAL_STATUS_SRNO INT FOREIGN KEY REFERENCES M_STATUS(STATUS_SRNO), -- Current status of the material
+    CREATED_AT DATETIME DEFAULT GETDATE(), -- Record creation timestamp
+    TEMP_FIELD1 VARCHAR(255), -- Temporary field for future use
+    TEMP_FIELD2 VARCHAR(255), -- Temporary field for future use
+    TEMP_FIELD3 VARCHAR(255), -- Temporary field for future use
+    CREATED_BY VARCHAR(255), -- Record created by user
+    MODIFIED_AT DATETIME, -- Last modification timestamp
+    MODIFIED_BY VARCHAR(255), -- Last modified by user
+    DEL_FLAG BIT DEFAULT 0, -- Deletion flag (0 = active, 1 = deleted)
+    DEL_AT DATETIME, -- Deleted timestamp
+    DEL_BY VARCHAR(255), -- Deleted modified by user
+);
+
+-- Slitting Processes Table
+CREATE TABLE SLITTING_PROCESSES (
+    SLITTING_SRNO INT PRIMARY KEY IDENTITY, -- Unique identifier for slitting process
+    MATERIAL_SRNO INT FOREIGN KEY REFERENCES RAW_MATERIALS(MATERIAL_SRNO), -- Material being slit
+    SLITTING_SRNO_FK INT , -- Material being slit
+    SLITTING_LEVEL INT, -- Slitting level (e.g., 1, 2, 3)
+    SLITTING_DATE DATETIME NOT NULL, -- Date of slitting
+    DC_NO VARCHAR(100), -- Delivery challan number post-slitting
+    STATUS_SRNO INT FOREIGN KEY REFERENCES M_STATUS(STATUS_SRNO), -- Status of the process
+    IS_SLITTED BIT DEFAULT 0, -- Flag indicating if the material has been slit
+    TEMP_FIELD1 VARCHAR(255), -- Temporary field for future use
+    TEMP_FIELD2 VARCHAR(255), -- Temporary field for future use
+    TEMP_FIELD3 VARCHAR(255), -- Temporary field for future use
+    CREATED_AT DATETIME DEFAULT GETDATE(), -- Record creation timestamp
+    CREATED_BY VARCHAR(255), -- Record created by user
+    MODIFIED_AT DATETIME, -- Last modification timestamp
+    MODIFIED_BY VARCHAR(255), -- Last modified by user
+    DEL_FLAG BIT DEFAULT 0, -- Deletion flag (0 = active, 1 = deleted)
+    DEL_AT DATETIME, -- Deleted timestamp
+    DEL_BY VARCHAR(255), -- Deleted modified by user
+);
+
+-- Insert dummy data into M_VENDORS
+INSERT INTO M_VENDORS (VENDOR_NAME, VENDOR_CONTACT_NO, VENDOR_ADD, VENDOR_EMAIL, CREATED_BY)
+VALUES
+('Vendor A', '1234567890', 'Address A', 'vendorA@example.com', 'Admin'),
+('Vendor B', '9876543210', 'Address B', 'vendorB@example.com', 'Admin'),
+('Vendor C', '5678901234', 'Address C', 'vendorC@example.com', 'Admin');
+
+-- Insert dummy data into RAW_MATERIALS
+INSERT INTO RAW_MATERIALS (VENDOR_SRNO, CHALLAN_NO, MATERIAL_GRADE_SRNO, MATERIAL_THICKNESS_SRNO, WIDTH, MATERIAL_WEIGHT, RECEIVED_DATE, MATERIAL_STATUS_SRNO, CREATED_BY)
+VALUES
+(1, 'CH001', 1, 1, '100', 500.00, GETDATE(), 1, 'Admin'),
+(2, 'CH002', 2, 2, '150', 750.50, GETDATE(), 1, 'Admin'),
+(3, 'CH003', 3, 3, '200', 1000.00, GETDATE(), 1, 'Admin');
+
+-- Insert dummy data into SLITTING_PROCESSES
+INSERT INTO SLITTING_PROCESSES (MATERIAL_SRNO, SLITTING_DATE, DC_NO, STATUS_SRNO, CREATED_BY)
+VALUES
+(1, GETDATE(), 'DC001', 1, 'Admin'),
+(2, GETDATE(), 'DC002', 1, 'Admin'),
+(3, GETDATE(), 'DC003', 1, 'Admin');
+
+---------------
+
+-- Tube Machine Processes Table
+CREATE TABLE TUBE_MACHINE_PROCESSES (
+    TUBE_PROC_SRNO INT PRIMARY KEY IDENTITY, -- Unique identifier for tube process
+    MATERIAL_SRNO INT FOREIGN KEY REFERENCES RAW_MATERIALS(MATERIAL_SRNO), -- Material used in the tube process
+    MACHINE_SRNO INT FOREIGN KEY REFERENCES M_MACHINES(MACHINE_SRNO), -- Machine used for the process
+    STAFF_SRNO INT FOREIGN KEY REFERENCES M_STAFF(STAFF_SRNO), -- Staff operating the machine
+    SHIFT_SRNO INT FOREIGN KEY REFERENCES M_SHIFT(SHIFT_SRNO), -- Shift during the process
+    GRADE_SRNO INT FOREIGN KEY REFERENCES M_GRADE(GRADE_SRNO), -- Material grade used
+    THICKNESS_SRNO INT FOREIGN KEY REFERENCES M_THICKNESS(THICKNESS_SRNO), -- Material thickness used
+    OD_SRNO INT FOREIGN KEY REFERENCES M_OD(OD_SRNO), -- Outer diameter of the pipe
+    DC_NO VARCHAR(100), -- Delivery challan number for the process
+    LENGTH DECIMAL(10, 2), -- Length of the product
+    QUANTITY INT, -- Quantity produced
+    STATUS_SRNO INT FOREIGN KEY REFERENCES M_STATUS(STATUS_SRNO), -- Process status
+    CREATED_AT DATETIME DEFAULT GETDATE(), -- Record creation timestamp
+    CREATED_BY VARCHAR(255), -- Record created by user
+    MODIFIED_AT DATETIME, -- Last modification timestamp
+    MODIFIED_BY VARCHAR(255), -- Last modified by user
+    DEL_FLAG BIT DEFAULT 0, -- Deletion flag (0 = active, 1 = deleted)
+    DEL_AT DATETIME, -- Deleted timestamp
+    DEL_BY VARCHAR(255), -- Deleted modified by user
+);
+
+-- Laser Machine Processes Table
+CREATE TABLE LASER_MACHINE_PROCESSES (
+    LASER_PROC_SRNO INT PRIMARY KEY IDENTITY, -- Unique identifier for laser process
+    TUBE_PROC_SRNO INT FOREIGN KEY REFERENCES TUBE_MACHINE_PROCESSES(TUBE_PROC_SRNO), -- Reference to tube process
+    MACHINE_SRNO INT FOREIGN KEY REFERENCES M_MACHINES(MACHINE_SRNO), -- Machine used for the process
+    STAFF_SRNO INT FOREIGN KEY REFERENCES M_STAFF(STAFF_SRNO), -- Staff operating the machine
+    SHIFT_SRNO INT FOREIGN KEY REFERENCES M_SHIFT(SHIFT_SRNO), -- Shift during the process
+    GRADE_SRNO INT FOREIGN KEY REFERENCES M_GRADE(GRADE_SRNO), -- Material grade used
+    THICKNESS_SRNO INT FOREIGN KEY REFERENCES M_THICKNESS(THICKNESS_SRNO), -- Material thickness used
+    OD_SRNO INT FOREIGN KEY REFERENCES M_OD(OD_SRNO), -- Outer diameter of the pipe
+    DC_NO VARCHAR(100), -- Delivery challan number for the process
+    CUT_LENGTH DECIMAL(10, 2), -- Length of the cut product
+    QUANTITY INT, -- Quantity produced
+    STATUS_SRNO INT FOREIGN KEY REFERENCES M_STATUS(STATUS_SRNO), -- Process status
+    CREATED_AT DATETIME DEFAULT GETDATE(), -- Record creation timestamp
+    CREATED_BY VARCHAR(255), -- Record created by user
+    MODIFIED_AT DATETIME, -- Last modification timestamp
+    MODIFIED_BY VARCHAR(255), -- Last modified by user
+    DEL_FLAG BIT DEFAULT 0, -- Deletion flag (0 = active, 1 = deleted)
+    DEL_AT DATETIME, -- Deleted timestamp
+    DEL_BY VARCHAR(255), -- Deleted modified by user
+);
+
+-- Inventory Table
+CREATE TABLE INVENTORY (
+    INVENTORY_SRNO INT PRIMARY KEY IDENTITY, -- Unique identifier for inventory item
+    MATERIAL_SRNO INT FOREIGN KEY REFERENCES RAW_MATERIALS(MATERIAL_SRNO), -- Material in the inventory
+    STOCK_QUANTITY INT NOT NULL, -- Quantity available in stock
+    OD DECIMAL(10, 2), -- Outer diameter of the stock
+    THICKNESS DECIMAL(10, 2), -- Thickness of the stock
+    LENGTH DECIMAL(10, 2), -- Length of the stock
+    GRADE VARCHAR(50), -- Grade of the stock
+    STATUS VARCHAR(50), -- Current status of the stock
+    CREATED_AT DATETIME DEFAULT GETDATE(), -- Record creation timestamp
+    CREATED_BY VARCHAR(255), -- Record created by user
+    MODIFIED_AT DATETIME, -- Last modification timestamp
+    MODIFIED_BY VARCHAR(255), -- Last modified by user
+    DEL_FLAG BIT DEFAULT 0, -- Deletion flag (0 = active, 1 = deleted)
+    DEL_AT DATETIME, -- Deleted timestamp
+    DEL_BY VARCHAR(255), -- Deleted modified by user
+);
+
+-- Inventory Transactions Table
+CREATE TABLE INVENTORY_TRANSACTIONS (
+    TRANSACTION_ID INT PRIMARY KEY IDENTITY, -- Unique identifier for transaction
+    INVENTORY_SRNO INT FOREIGN KEY REFERENCES INVENTORY(INVENTORY_SRNO), -- Reference to inventory
+    TRANSACTION_TYPE VARCHAR(50) NOT NULL, -- Type of transaction (e.g., addition, deduction)
+    QUANTITY INT NOT NULL, -- Quantity involved in the transaction
+    TRANSACTION_DATE DATETIME NOT NULL, -- Date of the transaction
+    TRANSACTION_DETAILS VARCHAR(255), -- Additional details about the transaction
+    CREATED_AT DATETIME DEFAULT GETDATE(), -- Record creation timestamp
+    CREATED_BY VARCHAR(255), -- Record created by user
+    MODIFIED_AT DATETIME, -- Last modification timestamp
+    MODIFIED_BY VARCHAR(255), -- Last modified by user
+    DEL_FLAG BIT DEFAULT 0, -- Deletion flag (0 = active, 1 = deleted)
+    DEL_AT DATETIME, -- Deleted timestamp
+    DEL_BY VARCHAR(255), -- Deleted modified by user
+);

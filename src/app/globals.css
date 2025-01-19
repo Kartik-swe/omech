@@ -19,3 +19,57 @@ body {
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+
+
+/* give 4 different color codes for 4 different levels */
+.ant-table-row.ant-table-row-level-1 {
+  background-color: #d731a5;
+}
+.ant-table-row.ant-table-row-level-1:hover,
+.ant-table-row-level-1 .ant-table-cell-row-hover {
+  background-color: #e062c1 !important;
+}
+
+.ant-table-row.ant-table-row-level-2 {
+  background-color: #31a5d7;
+}
+.ant-table-row.ant-table-row-level-2:hover,
+.ant-table-row-level-2 .ant-table-cell-row-hover {
+  background-color: #62c1e0 !important;
+}
+
+.ant-table-row.ant-table-row-level-3 {
+  background-color: #a5d731;
+}
+.ant-table-row.ant-table-row-level-3:hover,
+.ant-table-row-level-3 .ant-table-cell-row-hover {
+  background-color: #c1e062 !important;
+}
+
+.ant-table-row.ant-table-row-level-4 {
+  background-color: #d7a531;
+}
+.ant-table-row.ant-table-row-level-4:hover,
+.ant-table-row-level-4 .ant-table-cell-row-hover {
+  background-color: #e0c162 !important;
+}
+
+.ant-table-row.ant-table-row-level-5 {
+  background-color: #a531d7;
+}
+.ant-table-row.ant-table-row-level-5:hover,
+.ant-table-row-level-5 .ant-table-cell-row-hover {
+  background-color: #c162e0 !important;
+}
+
+
+.row-slitted {
+background-color: rgb(32, 28, 28) !important;
+color: white;
+} 
+.row-slitted:hover .ant-table-cell {
+background-color: rgb(32, 28, 28) !important;
+color: white;
+} 
+

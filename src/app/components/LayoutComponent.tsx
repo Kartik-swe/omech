@@ -24,7 +24,38 @@ const menuItems = [
     key: 'dashboard',
     icon: <DashboardOutlined />,
     label: 'Dashboard',
-    link: '/dashboard',
+    subMenu: [
+      {
+        key: 'Dashboard',
+        label: 'Dashboard',
+        link: '/dashboard',
+      },
+      {
+        key: 'Raw_Materials',
+        label: 'Raw Materials',
+        link: '/materials',
+      },
+      {
+        key: 'Raw_Materials12',
+        label: 'Raw Materials',
+        link: '/materials/dash1',
+      },
+      {
+        key: 'Raw_Materials2',
+        label: 'Raw Materials 2',
+        link: '/materials/dash2',
+      },
+      {
+        key: 'slitting_process',
+        label: 'Slitting Process',
+        link: '/materials/dash3',
+      },
+      {
+        key: 'slitting_process2',
+        label: 'Slitting History',
+        link: '/materials/dash4',
+      },
+    ]
   },
   {
     key: 'management',
