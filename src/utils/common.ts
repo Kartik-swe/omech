@@ -16,3 +16,9 @@ export const getCookieData = () => ({
     API_BASE_URL:'https://localhost:7135/api/omech/',
     AUTH_TOKEN: 'SDEDF3FVXR45',
 });
+
+
+export const getSelectedText = (value: number, options: any[]): string => {
+    const selectedOption = options.find((option:any) => option.value === value);
+    return selectedOption ? selectedOption.label : '';
+};

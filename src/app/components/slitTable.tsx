@@ -31,14 +31,14 @@ function transformToNestedData(flatData: any[]) {
 const RecursiveNestedTable = ({ data, setSlitingLevvel, setSelectedMaterial , setModalVisible, updateSlittedStatus}: { data: any[], setSlitingLevvel:any, setSelectedMaterial:any, setModalVisible:any , updateSlittedStatus:any}) => {
 
     const confirm: PopconfirmProps['onConfirm'] = (e:any) => {
-        console.log(e.SLITTING_SRNO, "SLITTING_SRNO");
+        // console.log(e.SLITTING_SRNO, "SLITTING_SRNO");
         updateSlittedStatus(e.SLITTING_SRNO);
         message.success('Click on Yes');
       };
       
       const cancel: PopconfirmProps['onCancel'] = (e:any) => {
-        console.log(e);
-        //message.error('Click on No');
+        // console.log(e);
+        message.error('Click on No');
       };
       
   const slittingColumns = [
@@ -63,10 +63,20 @@ const RecursiveNestedTable = ({ data, setSlitingLevvel, setSelectedMaterial , se
        key: 'SLITTING_WIDTH',
      },
      {
+      title: 'Remaining Width (mm)',
+      dataIndex: 'remainingWidth',
+      key: 'remainingWidth',
+    },
+     {
        title: 'Slit Weight (kg)',
        dataIndex: 'SLITTING_WEIGHT',
        key: 'SLITTING_WEIGHT',
      },
+     {
+      title: 'Remaining Weight (kg)',
+      dataIndex: 'remainingWeight',
+      key: 'remainingWeight',
+    },
      {
        title: 'DC No',
        dataIndex: 'DC_NO',
@@ -124,6 +134,7 @@ const RecursiveNestedTable = ({ data, setSlitingLevvel, setSelectedMaterial , se
       columns={slittingColumns}
       dataSource={data}
       rowKey="SLITTING_SRNO"
+      rowClassName={(record) => (record.IS_SLITTED ? 'row-slitted' : '')}
     //   expandable={{
     //     expandedRowRender: (record) =>
     //       record.children && record.children.length > 0 ? (
@@ -138,8 +149,61 @@ const RecursiveNestedTable = ({ data, setSlitingLevvel, setSelectedMaterial , se
 
 // Main Table Component
 const SlittingTable = ({ mainTableData, slittingData ,setSlitingLevvel, setSelectedMaterial,setModalVisible, updateSlittedStatus}: { mainTableData: any[], slittingData: any[], setSlitingLevvel :any ,setSelectedMaterial:any, setModalVisible :any, updateSlittedStatus :any }) => {
-    console.log(slittingData, "slittingData");
+    // console.log(slittingData, "slittingData");
+      // Calculate remaining weight and width
+      // console.log(mainTableData, "mainTableData");
+      console.log(slittingData, "slittingData");
+      
+  const mainTableDataWithRemainingValues = mainTableData.map((record) => {
+    // debugger
+    const filteredSlittingData = slittingData.filter(
+      (item) => (item.MATERIAL_SRNO === record.MATERIAL_SRNO && item.SLITTING_LEVEL === 1 && item.SLITTING_SRNO_FK === null)  
+    );
+    console.log(filteredSlittingData, "filteredSlittingData");
     
+    // Calculate total slitted weight and width
+    const totalSlittedWeight = filteredSlittingData.reduce((sum, item) => sum + (item.SLITTING_WEIGHT || 0), 0);
+    const totalSlittedWidth = filteredSlittingData.reduce((sum, item) => sum + (item.SLITTING_WIDTH || 0), 0);
+
+    // Calculate remaining values
+    const remainingWeight = (record.MATERIAL_WEIGHT || 0) - totalSlittedWeight;
+    const remainingWidth = (record.MATERIAL_WIDTH || 0) - totalSlittedWidth;
+
+    return {
+      ...record,
+      remainingWeight: remainingWeight > 0 ? remainingWeight : 0, // Ensure no negative weights
+      remainingWidth: remainingWidth > 0 ? remainingWidth : 0,   // Ensure no negative widths
+    };
+  });
+
+
+  const slittingWithRemainingValues = slittingData.map((record) => {
+
+    debugger
+    const filteredSlittingData = slittingData.filter(
+      (item) => (item.SLITTING_SRNO_FK === record.SLITTING_SRNO && item.SLITTING_LEVEL > record.SLITTING_LEVEL)  
+    );
+
+    // Calculate total slitted weight and width
+    const totalSlittedWeight = filteredSlittingData.reduce((sum, item) => sum + (item.SLITTING_WEIGHT || 0), 0);
+    const totalSlittedWidth = filteredSlittingData.reduce((sum, item) => sum + (item.SLITTING_WIDTH || 0), 0);
+
+    // Calculate remaining values
+    const remainingWeight = (record.SLITTING_WEIGHT || 0) - totalSlittedWeight;
+    const remainingWidth = (record.SLITTING_WIDTH || 0) - totalSlittedWidth;
+
+    return {
+      ...record,
+      remainingWeight: remainingWeight > 0 ? remainingWeight : 0, // Ensure no negative weights
+      remainingWidth: remainingWidth > 0 ? remainingWidth : 0,   // Ensure no negative widths
+    };
+  });
+  
+
+  console.log(mainTableDataWithRemainingValues, "mainTableDataWithRemainingValues");  
+  console.log(slittingWithRemainingValues, "slittingWithRemainingValues");
+  
+
     const mainTableColumns = [
         {
           title: 'Challan No',
@@ -167,6 +231,11 @@ const SlittingTable = ({ mainTableData, slittingData ,setSlitingLevvel, setSelec
           key: 'MATERIAL_WIDTH',
         },
         {
+          title: 'Remaining Width (mm)',
+          dataIndex: 'remainingWidth',
+          key: 'remainingWidth',
+        },
+        {
           title: 'Weight (kg)',
           dataIndex: 'MATERIAL_WEIGHT',
           key: 'MATERIAL_WEIGHT',
@@ -187,7 +256,7 @@ const SlittingTable = ({ mainTableData, slittingData ,setSlitingLevvel, setSelec
                 setModalVisible(true);
               }}
             >
-              Slit
+              Slit 1
             </Button>
           ), 
         },
@@ -199,13 +268,14 @@ const SlittingTable = ({ mainTableData, slittingData ,setSlitingLevvel, setSelec
     <div>
       <h1>Main Table</h1>
       <Table
+      className="raw-material-table"
         columns={mainTableColumns}
-        dataSource={mainTableData}
+        dataSource={mainTableDataWithRemainingValues}
         rowKey="MATERIAL_SRNO"
         expandable={{
           expandedRowRender: (record) => {
             // Create a copy of slittingData filtered for the current MATERIAL_SRNO
-            const filteredSlittingData = slittingData.filter(
+            const filteredSlittingData = slittingWithRemainingValues.filter(
               (item) => item.MATERIAL_SRNO === record.MATERIAL_SRNO
             );
 

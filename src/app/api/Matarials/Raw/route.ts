@@ -12,15 +12,15 @@ import { NextResponse } from 'next/server';
 export async function GET(req: Request) {
   try {
     // Call stored procedure
-    const result = await executeStoredProcedure('DT_RAW_MATERIALS', {});
+    const result = await executeStoredProcedure('DT_RAW_MATERIALS', {USER_SRNO:1});
     const { recordsets } = result as { recordsets: IRecordSet<any>[] };
 
     if (!recordsets || recordsets.length === 0) {
         return NextResponse.json(createResponse(RESPONSE_CODES.NO_RECORD, RESPONSE_MESSAGES.NO_RECORD));
     }
     const data = { 
-      RAW_MATERIALS: recordsets[0],
-      SLIT_PROCESSES: recordsets[1],
+      Table: recordsets[0],
+      Table1: recordsets[1],
     };
 
     // Return appropriate response
