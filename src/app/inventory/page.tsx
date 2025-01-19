@@ -6,7 +6,9 @@ import { PlusOutlined } from '@ant-design/icons';
 
 import { apiService } from '../../../utils-old/apiUtils'; // Utility function for API calls
 // import { ApiResponse } from '../../../utils/common_utils';
-import { fetchPl_Common } from '../../../utils-old/commonAPI';
+import { apiClient } from '@/utils/apiClient';
+import { getCookieData } from '@/utils/common';
+import { table } from 'console';
 
 const { Option } = Select;
 
@@ -59,6 +61,9 @@ const ProductionLogsPage: React.FC = () => {
   const [logs, setLogs] = useState([]);
   const [pipeLogs, setPipeLogs] = useState<PipeData[]>([]);
 
+    const cookiesData = getCookieData();
+    const {USER_SRNO, API_BASE_URL, UT_SRNO} = cookiesData;
+    
   const tubeMachineProducts = [
     { productId: '1', od: '50mm', thickness: '3mm', grade: 'SS304' },
     { productId: '2', od: '75mm', thickness: '5mm', grade: 'SS316' },
@@ -165,22 +170,13 @@ console.log(response, "Response api post");
   const fetchPlCommon = async ( ) => {
     try{
       const TBL_SRNO = '1,2,3,4,5,6,7'
-     
-      const apiResponse = await fetchPl_Common(1, TBL_SRNO) as If_ApiResponse;
-      debugger
-      switch (apiResponse.MsgId) {
-        case -1:
-          throw new Error(apiResponse.Msg || 'Resource not found.');
-          break;
-
-        case 0:
-        alert('No data found');
-        break;
-
-        case 1:
-          // Resource not found
-          const apiResData = apiResponse.Data; 
+      const response = await apiClient<Record<string, any>>(`${API_BASE_URL}Pl_Common?USER_SRNO=${USER_SRNO}&UT_SRNO=${UT_SRNO}&TBL_SRNO=${TBL_SRNO}`, 'GET');
+      if (response.msgId === 200) {
+      
+       
+          const apiResData = response.data; 
           console.log(apiResData, "apiResData");
+          if (apiResData == null) {return;}
           const  {M_MACHINE,STAFF,M_SHIFT,M_GRADE,M_OD,M_THICKNESS,M_PRODUCT} = apiResData;
           console.log(M_THICKNESS,M_PRODUCT, "apiResData");  
           console.log(apiResData, "apiResData");
@@ -191,23 +187,6 @@ console.log(response, "Response api post");
           setThicknessOpt(M_THICKNESS);
           setGradeOpt(M_GRADE);
           setproductOpt(M_PRODUCT);
-          break;
-
-        case 2:
-          // Forbidden: Permission error
-          throw new Error(apiResponse.Msg|| 'Forbidden: You do not have permission.');
-          break;
-
-        case 500:
-          // Internal Server Error: Something went wrong
-          throw new Error(apiResponse.Msg || 'Internal Server Error: Something went wrong.');
-          break;
-
-        default:
-          // Unknown Error
-          throw new Error(apiResponse.Msg || 'Unknown Error');
-          break;
-
       }
 
 
