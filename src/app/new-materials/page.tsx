@@ -237,6 +237,7 @@ const RawMaterialDashboard = () => {
 
   // Adjusted function to handle slitting operation with API request
   const handleSlitMaterial = async (values: any) => {
+    debugger
     alert("")
     
     
@@ -252,6 +253,8 @@ const RawMaterialDashboard = () => {
         SLITTING_LEVEL: values.SLITTING_LEVEL, // Example: replace with actual vendor ID
         SLITTING_DATE: values.SLITTING_DATE.format('YYYY-MM-DD'),
         DC_NO: values.DC_NO,
+        SHIFT_TO: values.SHIFT_TO,
+        SCRAP: values.SCRAP,
         USER_SRNO: USER_SRNO,
         SlitDetails : values.SLITTING_DTL,
       }
@@ -290,7 +293,8 @@ const RawMaterialDashboard = () => {
 
       // Update slittingData with the new entries
       // setslittingData([...slittingData, ...newSlittings]);
-      FetchRawMaterials();
+      slitForm.resetFields();
+        FetchRawMaterials();
         setModalVisible(false);
       } else {
         message.error(response.msg);
@@ -456,18 +460,7 @@ const RawMaterialDashboard = () => {
           <Input />
         </Form.Item>
     
-        {/* Vendor Dropdown */}
-        <Form.Item
-          name="VENDOR_SRNO"
-          label="Vendor"
-          rules={[{ required: true, message: 'Please select a vendor' }]}
-        >
-          <Select placeholder="Select Vendor" options={optVendors} showSearch   filterOption={(input:any, option:any) =>
-              option?.label.toLowerCase().includes(input.toLowerCase())
-            }></Select>
-        </Form.Item>
-
-        {/* Date Picker */}
+      
         <Form.Item
           name="SLITTING_DATE"
           label="Date"
@@ -479,8 +472,71 @@ const RawMaterialDashboard = () => {
           />
         </Form.Item>
 
-        {/* Dynamic Fields for Width and Nos */}
-        <Form.List name="SLITTING_DTL">
+        {/* Date Picker */}
+        <Row gutter={16}>
+        <Col span={12}>
+          {/* Vendor Dropdown */}
+          <Form.Item
+          name="VENDOR_SRNO"
+          label="Vendor"
+          rules={[{ required: true, message: 'Please select a vendor' }]}
+        >
+          <Select placeholder="Select Vendor" options={optVendors} showSearch   filterOption={(input:any, option:any) =>
+              option?.label.toLowerCase().includes(input.toLowerCase())
+            }></Select>
+        </Form.Item>
+
+  
+        </Col>
+        <Col span={12}>
+
+        <Form.Item
+          name="SHIFT_TO"
+          label="Shift To"
+          rules={[{ required: true, message: 'Please enter DC number' }]}
+        >
+           <Select
+            showSearch
+            placeholder="Select"
+            options={optVendors}
+            filterOption={(input:any, option:any) =>
+              option?.label.toLowerCase().includes(input.toLowerCase())
+            }
+            ></Select>
+        </Form.Item>
+
+        </Col>
+        </Row>
+        {/* Other Fields */}
+        
+      
+
+      
+        <Row gutter={16}>
+          <Col span={12}>
+          <Form.Item
+          name="DC_NO"
+          label="DC No"
+          rules={[{ required: true, message: 'Please enter DC number' }]}
+        >
+          <Input placeholder="Enter DC No" />
+        </Form.Item>
+          </Col>
+          <Col span={12}>
+           
+        <Form.Item
+          name="SCRAP"
+          label="Scrap"
+          rules={[{ required: false, message: 'Please Enter Scrap' }]}
+        >
+          <Input placeholder="Enter Scrap" />
+        </Form.Item>
+          </Col>
+        </Row>
+
+
+          {/* Dynamic Fields for Width and Nos */}
+          <Form.List name="SLITTING_DTL">
           {(fields, { add, remove }) => (
             <div>
               {fields.map(({ key, name, fieldKey, ...restField }) => (
@@ -597,16 +653,6 @@ const RawMaterialDashboard = () => {
             </div>
           )}
         </Form.List>
-
-        {/* Other Fields */}
-        
-        <Form.Item
-          name="DC_NO"
-          label="DC No"
-          rules={[{ required: true, message: 'Please enter DC number' }]}
-        >
-          <Input placeholder="Enter DC No" />
-        </Form.Item>
 
         {/* Submit Button */}
         <Button

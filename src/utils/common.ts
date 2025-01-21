@@ -13,7 +13,7 @@ export const getCookieData = () => ({
     USER_SRNO: 1,
     UT_SRNO: 1,
     // USER_SRNO: Cookies.load('USER_SRNO'),
-    API_BASE_URL:'https://localhost:7135/api/omech/',
+    API_BASE_URL:`${process.env.NEXT_PUBLIC_API_BASE_URL}api/omech/`,
     AUTH_TOKEN: 'SDEDF3FVXR45',
 });
 

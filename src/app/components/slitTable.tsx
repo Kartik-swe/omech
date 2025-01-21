@@ -42,16 +42,21 @@ const RecursiveNestedTable = ({ data, setSlitingLevvel, setSelectedMaterial , se
       };
       
   const slittingColumns = [
-     {
-       title: 'SLITTING_SRNO',
-       dataIndex: 'SLITTING_SRNO',
-       key: 'SLITTING_SRNO',
-     },
-     {
-       title: 'SLITTING_SRNO_FK',
-       dataIndex: 'SLITTING_SRNO_FK',
-       key: 'SLITTING_SRNO_FK',
-     },
+    //  {
+    //    title: 'SLITTING_SRNO',
+    //    dataIndex: 'SLITTING_SRNO',
+    //    key: 'SLITTING_SRNO',
+    //  },
+    //  {
+    //    title: 'SLITTING_SRNO_FK',
+    //    dataIndex: 'SLITTING_SRNO_FK',
+    //    key: 'SLITTING_SRNO_FK',
+    //  },
+    {
+      title: 'DC No',
+      dataIndex: 'DC_NO',
+      key: 'DC_NO',
+    },
      {
        title: 'Date',
        dataIndex: 'SLITTING_DATE',
@@ -77,22 +82,18 @@ const RecursiveNestedTable = ({ data, setSlitingLevvel, setSelectedMaterial , se
       dataIndex: 'remainingWeight',
       key: 'remainingWeight',
     },
-     {
-       title: 'DC No',
-       dataIndex: 'DC_NO',
-       key: 'DC_NO',
-     },
-     {
-       title: 'IS_SLITTED',
-       key: 'IS_SLITTED',
-       render: (text: any, record: any) => (
-        <>
+  
+    //  {
+    //    title: 'IS_SLITTED',
+    //    key: 'IS_SLITTED',
+    //    render: (text: any, record: any) => (
+    //     <>
         
-        {record.IS_SLITTED ? "Yes" : "No"}
+    //     {record.IS_SLITTED ? "Yes" : "No"}
 
-         </>
-       ),
-     },
+    //      </>
+    //    ),
+    //  },
       {
            title: 'Actions',
            key: 'actions',
