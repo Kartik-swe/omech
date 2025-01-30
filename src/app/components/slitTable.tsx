@@ -1,5 +1,6 @@
 import React from "react";
-import { Button, message, Popconfirm, PopconfirmProps, Table } from "antd";
+import { Button, message, Popconfirm, PopconfirmProps, Space, Table, Tooltip } from "antd";
+import { EditOutlined, ScissorOutlined, CheckCircleOutlined } from '@ant-design/icons';
 
 // Transform flat data into nested structure
 function transformToNestedData(flatData: any[]) {
@@ -28,7 +29,7 @@ function transformToNestedData(flatData: any[]) {
 }
 
 // Recursive Nested Table Component
-const RecursiveNestedTable = ({ data, setSlitingLevvel, setSelectedMaterial , setModalVisible, updateSlittedStatus}: { data: any[], setSlitingLevvel:any, setSelectedMaterial:any, setModalVisible:any , updateSlittedStatus:any}) => {
+const RecursiveNestedTable = ({ data, setSlitingLevvel, setSelectedMaterial , setModalVisible, updateSlittedStatus, setIsSlitMaterialEdit}: { data: any[], setSlitingLevvel:any, setSelectedMaterial:any, setModalVisible:any , updateSlittedStatus:any,setIsSlitMaterialEdit:any}) => {
 
     const confirm: PopconfirmProps['onConfirm'] = (e:any) => {
         // console.log(e.SLITTING_SRNO, "SLITTING_SRNO");
@@ -68,7 +69,7 @@ const RecursiveNestedTable = ({ data, setSlitingLevvel, setSelectedMaterial , se
        key: 'SLITTING_WIDTH',
      },
      {
-      title: 'Remaining Width (mm)',
+      title: 'Rem. Width (mm)',
       dataIndex: 'remainingWidth',
       key: 'remainingWidth',
     },
@@ -78,9 +79,19 @@ const RecursiveNestedTable = ({ data, setSlitingLevvel, setSelectedMaterial , se
        key: 'SLITTING_WEIGHT',
      },
      {
-      title: 'Remaining Weight (kg)',
+      title: 'Rem. Weight (kg)',
       dataIndex: 'remainingWeight',
       key: 'remainingWeight',
+    },
+    {
+      title: 'Scrap (mm)',
+      dataIndex: 'SLITTING_SCRAP',
+      key: 'SLITTING_SCRAP',
+    },
+     {
+      title: 'Location',
+      dataIndex: 'C_LOCATION',
+      key: 'C_LOCATION',
     },
   
     //  {
@@ -99,33 +110,56 @@ const RecursiveNestedTable = ({ data, setSlitingLevvel, setSelectedMaterial , se
            key: 'actions',
            render: (text: any, record: any) => (
             record.IS_SLITTED ? <Button color="default" variant="solid">Slitted</Button> :
-            <>
+               <Space>
+                 <Tooltip title="Edit">
 
-             <Button
-               type="primary"
-               onClick={() => {
-                 setSlitingLevvel(record);
-                 setSelectedMaterial(record);
-                 setModalVisible(true);
-               }}
-             >
-               Slit
-             </Button>
+                   <Button
+                     type="primary"
+                     icon={<EditOutlined />}
+                     onClick={() => {
+                       console.log(record, "record");
+                       
+                       setIsSlitMaterialEdit(true);
+                       setSelectedMaterial(record);
+                       setModalVisible(true);
+                     }}
+                   >
+                     {/* Edit */}
+                   </Button>
+                 </Tooltip>
 
-             <Popconfirm
-             className="ms-3"
-                title="Slitted done"
-                description="Are you sure to confirm?"
-                onConfirm={() => confirm(record)}
-                onCancel={cancel}
-                okText="Yes"
-                cancelText="No"
-            >
-                <Button color="primary" variant="solid">
-            Slitted
-          </Button>
-            </Popconfirm>
-             </>
+                 <Tooltip title="Slit">
+                   <Button
+                     type="primary"
+                     icon={<ScissorOutlined />}
+
+                     onClick={() => {
+                       setSlitingLevvel(record);
+                       setSelectedMaterial(record);
+                       setModalVisible(true);
+                     }}
+                   >
+                     {/* Slit */}
+                   </Button>
+                 </Tooltip>
+                 {record.SLITTING_WIDTH > record.remainingWidth || record.SLITTING_WEIGHT > record.remainingWeight ? null : (
+                 <Tooltip title="Mark as Slitted">
+                   <Popconfirm
+                     className=""
+                     title="Slitted done"
+                     description="Are you sure to confirm?"
+                     onConfirm={() => confirm(record)}
+                     onCancel={cancel}
+                     okText="Yes"
+                     cancelText="No"
+                   >
+                     <Button color="primary" variant="solid" icon={<CheckCircleOutlined />}>
+                       {/* Slitted */}
+                     </Button>
+                   </Popconfirm>
+                 </Tooltip>
+                )}
+               </Space>
            ),
          },
    ];
@@ -149,38 +183,41 @@ const RecursiveNestedTable = ({ data, setSlitingLevvel, setSelectedMaterial , se
 // const SlittingTable = ({ mainTableData, slittingData }: { mainTableData: any[], slittingData: any[] }) => {
 
 // Main Table Component
-const SlittingTable = ({ mainTableData, slittingData ,setSlitingLevvel, setSelectedMaterial,setModalVisible, updateSlittedStatus}: { mainTableData: any[], slittingData: any[], setSlitingLevvel :any ,setSelectedMaterial:any, setModalVisible :any, updateSlittedStatus :any }) => {
+const SlittingTable = ({ mainTableData, slittingData ,setSlitingLevvel, setSelectedMaterial,setModalVisible, updateSlittedStatus,setIsRawMaterialEdit , setIsSlitMaterialEdit}: { mainTableData: any[], slittingData: any[], setSlitingLevvel :any ,setSelectedMaterial:any, setModalVisible :any, updateSlittedStatus :any, setIsRawMaterialEdit:any,setIsSlitMaterialEdit:any }) => {
     // console.log(slittingData, "slittingData");
       // Calculate remaining weight and width
       // console.log(mainTableData, "mainTableData");
-      console.log(slittingData, "slittingData");
+      // console.log(slittingData, "slittingData");
       
   const mainTableDataWithRemainingValues = mainTableData.map((record) => {
     // debugger
     const filteredSlittingData = slittingData.filter(
       (item) => (item.MATERIAL_SRNO === record.MATERIAL_SRNO && item.SLITTING_LEVEL === 1 && item.SLITTING_SRNO_FK === null)  
     );
-    console.log(filteredSlittingData, "filteredSlittingData");
+    // console.log(filteredSlittingData, "filteredSlittingData");
     
     // Calculate total slitted weight and width
     const totalSlittedWeight = filteredSlittingData.reduce((sum, item) => sum + (item.SLITTING_WEIGHT || 0), 0);
     const totalSlittedWidth = filteredSlittingData.reduce((sum, item) => sum + (item.SLITTING_WIDTH || 0), 0);
 
     // Calculate remaining values
-    const remainingWeight = (record.MATERIAL_WEIGHT || 0) - totalSlittedWeight;
-    const remainingWidth = (record.MATERIAL_WIDTH || 0) - totalSlittedWidth;
+    const remainingWeight = (record.MATERIAL_WEIGHT || 0) - totalSlittedWeight - ((record.MATERIAL_SCRAP * record.MATERIAL_WEIGHT / record.MATERIAL_WIDTH) || 0);
+    const remainingWidth = (record.MATERIAL_WIDTH || 0) - totalSlittedWidth - (record.MATERIAL_SCRAP || 0);
 
     return {
       ...record,
-      remainingWeight: remainingWeight > 0 ? remainingWeight : 0, // Ensure no negative weights
-      remainingWidth: remainingWidth > 0 ? remainingWidth : 0,   // Ensure no negative widths
+      IS_SEMI_SLITTED: totalSlittedWeight > 0,
+      // remainingWeight: remainingWeight > 0 ? remainingWeight : 0, // Ensure no negative weights
+      // remainingWidth: remainingWidth > 0 ? remainingWidth : 0,   // Ensure no negative widths
+      remainingWeight: remainingWeight,
+      remainingWidth: remainingWidth,
     };
   });
 
 
   const slittingWithRemainingValues = slittingData.map((record) => {
 
-    debugger
+    // debugger
     const filteredSlittingData = slittingData.filter(
       (item) => (item.SLITTING_SRNO_FK === record.SLITTING_SRNO && item.SLITTING_LEVEL > record.SLITTING_LEVEL)  
     );
@@ -191,18 +228,22 @@ const SlittingTable = ({ mainTableData, slittingData ,setSlitingLevvel, setSelec
 
     // Calculate remaining values
     const remainingWeight = (record.SLITTING_WEIGHT || 0) - totalSlittedWeight;
-    const remainingWidth = (record.SLITTING_WIDTH || 0) - totalSlittedWidth;
+    const remainingWidth = (record.SLITTING_WIDTH || 0) - totalSlittedWidth - (record.SLITTING_SCRAP || 0);
 
     return {
       ...record,
-      remainingWeight: remainingWeight > 0 ? remainingWeight : 0, // Ensure no negative weights
-      remainingWidth: remainingWidth > 0 ? remainingWidth : 0,   // Ensure no negative widths
+      IS_SEMI_SLITTED: totalSlittedWeight > 0,
+      // remainingWeight: remainingWeight > 0 ? remainingWeight : 0, // Ensure no negative weights
+      // remainingWidth: remainingWidth > 0 ? remainingWidth : 0,   // Ensure no negative widths
+      remainingWeight: remainingWeight,
+      remainingWidth: remainingWidth,
+
     };
   });
   
 
-  console.log(mainTableDataWithRemainingValues, "mainTableDataWithRemainingValues");  
-  console.log(slittingWithRemainingValues, "slittingWithRemainingValues");
+  // console.log(mainTableDataWithRemainingValues, "mainTableDataWithRemainingValues");  
+  // console.log(slittingWithRemainingValues, "slittingWithRemainingValues");
   
 
     const mainTableColumns = [
@@ -232,7 +273,7 @@ const SlittingTable = ({ mainTableData, slittingData ,setSlitingLevvel, setSelec
           key: 'MATERIAL_WIDTH',
         },
         {
-          title: 'Remaining Width (mm)',
+          title: 'Rem. Width (mm)',
           dataIndex: 'remainingWidth',
           key: 'remainingWidth',
         },
@@ -242,23 +283,53 @@ const SlittingTable = ({ mainTableData, slittingData ,setSlitingLevvel, setSelec
           key: 'MATERIAL_WEIGHT',
         },
         {
-          title: 'Remaining Weight (kg)',
+          title: 'Rem. Weight (kg)',
           dataIndex: 'remainingWeight',
           key: 'remainingWeight',
+        },
+        {
+          title: 'Scrap (mm)',
+          dataIndex: 'MATERIAL_SCRAP',
+          render: (text: any,record:any) => `${record.MATERIAL_SCRAP || 0} + ${record.SLIT_MATERIAL_SCRAP || 0} `,
+        },
+        {
+          title: 'Location',
+          dataIndex: 'MATERIAL_C_LOCATION',
+          key: 'MATERIAL_C_LOCATION',
         },
         {
           title: 'Actions',
           key: 'actions',
           render: (text: any, record: any) => (
+            <Space>
+              <Tooltip title="Edit">
+
+            <Button
+               type="primary"
+                icon={<EditOutlined />}
+               onClick={() => {
+                 //  setSlitingLevvel(record);
+                 setIsRawMaterialEdit(true);
+                 setSelectedMaterial(record);
+                 //  setModalVisible(true);
+                }}
+                >
+               {/* Edit */}
+             </Button>
+                  </Tooltip>
+            <Tooltip title="Slit">
             <Button
               type="primary"
+              icon={<ScissorOutlined />}
               onClick={() => {
                 setSelectedMaterial(record);
                 setModalVisible(true);
               }}
-            >
-              Slit 1
+              >
+              {/* Slit */}
             </Button>
+            </Tooltip>
+              </Space>
           ), 
         },
       ];
@@ -267,7 +338,7 @@ const SlittingTable = ({ mainTableData, slittingData ,setSlitingLevvel, setSelec
 
   return (
     <div>
-      <h1>Main Table</h1>
+      {/* <h1>Main Table</h1> */}
       <Table
       className="raw-material-table"
         columns={mainTableColumns}
@@ -286,7 +357,7 @@ const SlittingTable = ({ mainTableData, slittingData ,setSlitingLevvel, setSelec
             return (
               <div>
                 {/* <h2>Slitting Details</h2> */}
-                <RecursiveNestedTable data={nestedSlittingData} setSlitingLevvel={setSlitingLevvel} setSelectedMaterial={setSelectedMaterial} setModalVisible={setModalVisible} updateSlittedStatus={updateSlittedStatus} />
+                <RecursiveNestedTable data={nestedSlittingData} setSlitingLevvel={setSlitingLevvel} setSelectedMaterial={setSelectedMaterial} setModalVisible={setModalVisible} updateSlittedStatus={updateSlittedStatus} setIsSlitMaterialEdit={setIsSlitMaterialEdit} />
               </div>
             );
           },
