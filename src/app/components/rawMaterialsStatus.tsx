@@ -188,7 +188,7 @@ const RecursiveNestedTable = ({ data, setSlitingLevvel, setSelectedMaterial , se
 // const SlittingTable = ({ mainTableData, slittingData }: { mainTableData: any[], slittingData: any[] }) => {
 
 // Main Table Component
-const SlittingTable = ({ mainTableData, slittingData ,setSlitingLevvel, setSelectedMaterial,setModalVisible, updateSlittedStatus,setIsRawMaterialEdit , setIsSlitMaterialEdit}: { mainTableData: any[], slittingData: any[], setSlitingLevvel :any ,setSelectedMaterial:any, setModalVisible :any, updateSlittedStatus :any, setIsRawMaterialEdit:any,setIsSlitMaterialEdit:any }) => {
+const rawMaterialsStatus = ({ mainTableData, slittingData ,setSlitingLevvel, setSelectedMaterial,setModalVisible, updateSlittedStatus,setIsRawMaterialEdit , setIsSlitMaterialEdit}: { mainTableData: any[], slittingData: any[], setSlitingLevvel :any ,setSelectedMaterial:any, setModalVisible :any, updateSlittedStatus :any, setIsRawMaterialEdit:any,setIsSlitMaterialEdit:any }) => {
     // console.log(slittingData, "slittingData");
       // Calculate remaining weight and width
       // console.log(mainTableData, "mainTableData");
@@ -378,4 +378,4 @@ const SlittingTable = ({ mainTableData, slittingData ,setSlitingLevvel, setSelec
   );
 };
 
-export default SlittingTable;
+export default rawMaterialsStatus;

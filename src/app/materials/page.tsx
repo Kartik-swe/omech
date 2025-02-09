@@ -36,22 +36,22 @@ const Dashboard = () => {
 
   // Dummy Data for Raw Materials and Slitting Processes
   const rawMaterials = [
-    { material_srno: 'RM001', vendor: 'Vendor A', challan_no: '12345', grade: 'MS', weight: 120, received_date: '2025-01-01' },
-    { material_srno: 'RM002', vendor: 'Vendor B', challan_no: '12346', grade: 'SS', weight: 150, received_date: '2025-01-02' },
-    { material_srno: 'RM003', vendor: 'Vendor C', challan_no: '12347', grade: 'MS', weight: 100, received_date: '2025-01-03' },
+    { material_srno: 'RM001', vendor: 'Vendor A', challan_no: '12345', grade: 'MS', weight: 7000, received_date: '2025-01-01' },
+    { material_srno: 'RM002', vendor: 'Vendor B', challan_no: '12346', grade: 'SS', weight: 15000, received_date: '2025-01-02' },
+    { material_srno: 'RM003', vendor: 'Vendor C', challan_no: '12347', grade: 'MS', weight: 12500, received_date: '2025-01-03' },
   ];
 
   const slittingProcesses = [
-    { slitting_srno: 'SP001', material_srno: 'RM001', slitting_date: '2025-01-05', weight: 120, status: 'Completed' },
-    { slitting_srno: 'SP002', material_srno: 'RM002', slitting_date: '2025-01-06', weight: 150, status: 'Pending' },
-    { slitting_srno: 'SP003', material_srno: 'RM003', slitting_date: '2025-01-07', weight: 100, status: 'Completed' },
+    { slitting_srno: 'SP001', material_srno: 'RM001', slitting_date: '2025-01-05', weight: 1200, status: 'Completed' },
+    { slitting_srno: 'SP002', material_srno: 'RM002', slitting_date: '2025-01-06', weight: 1500, status: 'Pending' },
+    { slitting_srno: 'SP003', material_srno: 'RM003', slitting_date: '2025-01-07', weight: 1000, status: 'Completed' },
   ];
 
   // Key Metrics Data
   const keyMetrics = [
-    { title: 'Total Raw Materials Received', value: rawMaterials.length },
-    { title: 'Total Weight Processed', value: slittingProcesses.reduce((acc, item) => acc + item.weight, 0) },
-    { title: 'Pending Slitting Tasks', value: slittingProcesses.filter(p => p.status === 'Pending').length },
+    { title: 'Mother coil weight', value: rawMaterials.reduce((acc:any, item:any) => acc + item.weight, 0)} ,
+    { title: 'Semi-slitted weight', value: slittingProcesses.reduce((acc, item) => acc + item.weight, 0) },
+    { title: 'Slit production weight', value: slittingProcesses.filter(p => p.status === 'Pending').reduce((acc, item) => acc + item.weight, 0) },
     { title: 'Low Stock Alerts', value: rawMaterials.filter(m => m.weight < 10).length },
   ];
 
