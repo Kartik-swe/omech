@@ -212,45 +212,46 @@ const RawMaterialDashboard = () => {
       if (response.msgId === 200) {
         if (values.MATERIAL_SRNO > 0) {
           message.success('Raw material Updated successfully!');
-          setRawMaterials(rawMaterials.map((material) =>
-            material.MATERIAL_SRNO === values.MATERIAL_SRNO
-              ? {
-            ...material,
-            CHALLAN_NO: values.CHALLAN_NO,
-            RECEIVED_DATE: values.RECEIVED_DATE.format('YYYY-MM-DD'),
-            MATERIAL_GRADE: getSelectedText(values.MATERIAL_GRADE_SRNO, optGrades),
-            MATERIAL_C_LOCATION: getSelectedText(values.MATERIAL_C_LOCATION_SRNO, optVendors),
-            MATERIAL_THICKNESS: getSelectedText(values.MATERIAL_THICKNESS_SRNO, optThickNess),
-            MATERIAL_WIDTH: values.MATERIAL_WIDTH,
-            MATERIAL_WEIGHT: values.MATERIAL_WEIGHT,
-            MATERIAL_THICKNESS_SRNO: values.MATERIAL_THICKNESS_SRNO,
-            MATERIAL_GRADE_SRNO: values.MATERIAL_GRADE_SRNO,
-            MATERIAL_C_LOCATION_SRNO: values.MATERIAL_C_LOCATION_SRNO,
-          }
-              : material
-          ));
+          // setRawMaterials(rawMaterials.map((material) =>
+          //   material.MATERIAL_SRNO === values.MATERIAL_SRNO
+          //     ? {
+          //   ...material,
+          //   CHALLAN_NO: values.CHALLAN_NO,
+          //   RECEIVED_DATE: values.RECEIVED_DATE.format('YYYY-MM-DD'),
+          //   MATERIAL_GRADE: getSelectedText(values.MATERIAL_GRADE_SRNO, optGrades),
+          //   MATERIAL_C_LOCATION: getSelectedText(values.MATERIAL_C_LOCATION_SRNO, optVendors),
+          //   MATERIAL_THICKNESS: getSelectedText(values.MATERIAL_THICKNESS_SRNO, optThickNess),
+          //   MATERIAL_WIDTH: values.MATERIAL_WIDTH,
+          //   MATERIAL_WEIGHT: values.MATERIAL_WEIGHT,
+          //   MATERIAL_THICKNESS_SRNO: values.MATERIAL_THICKNESS_SRNO,
+          //   MATERIAL_GRADE_SRNO: values.MATERIAL_GRADE_SRNO,
+          //   MATERIAL_C_LOCATION_SRNO: values.MATERIAL_C_LOCATION_SRNO,
+          // }
+          //     : material
+          // ));
         } else {
           message.success('Raw material Added successfully!');
-          setRawMaterials([...rawMaterials, {
-            key: rawMaterials.length + 1,
-            CHALLAN_NO: values.CHALLAN_NO,
-            RECEIVED_DATE: values.RECEIVED_DATE.format('YYYY-MM-DD'),
-            MATERIAL_GRADE: getSelectedText(values.MATERIAL_GRADE_SRNO, optGrades),
-            MATERIAL_C_LOCATION: getSelectedText(values.MATERIAL_C_LOCATION_SRNO, optVendors),
-            MATERIAL_THICKNESS: getSelectedText(values.MATERIAL_THICKNESS_SRNO, optThickNess),
-            MATERIAL_WIDTH: values.MATERIAL_WIDTH,
-            MATERIAL_WEIGHT: values.MATERIAL_WEIGHT,
-            remainingWeight: 0,
-            remainingWidth: 0,
-            MATERIAL_SCRAP: 0,
-            SLIT_MATERIAL_SCRAP: 0,
-            MATERIAL_SRNO: response.data.Table[0].MATERIAL_SRNO, 
-            MATERIAL_THICKNESS_SRNO: values.MATERIAL_THICKNESS_SRNO,
-            MATERIAL_GRADE_SRNO: values.MATERIAL_GRADE_SRNO,
-            MATERIAL_C_LOCATION_SRNO: values.MATERIAL_C_LOCATION_SRNO,
-          }]);
+          // setRawMaterials([...rawMaterials, {
+          //   key: rawMaterials.length + 1,
+          //   CHALLAN_NO: values.CHALLAN_NO,
+          //   RECEIVED_DATE: values.RECEIVED_DATE.format('YYYY-MM-DD'),
+          //   MATERIAL_GRADE: getSelectedText(values.MATERIAL_GRADE_SRNO, optGrades),
+          //   MATERIAL_C_LOCATION: getSelectedText(values.MATERIAL_C_LOCATION_SRNO, optVendors),
+          //   MATERIAL_THICKNESS: getSelectedText(values.MATERIAL_THICKNESS_SRNO, optThickNess),
+          //   MATERIAL_WIDTH: values.MATERIAL_WIDTH,
+          //   MATERIAL_WEIGHT: values.MATERIAL_WEIGHT,
+          //   remainingWeight: 0,
+          //   remainingWidth: 0,
+          //   MATERIAL_SCRAP: 0,
+          //   SLIT_MATERIAL_SCRAP: 0,
+          //   MATERIAL_SRNO: response.data.Table[0].MATERIAL_SRNO, 
+          //   MATERIAL_THICKNESS_SRNO: values.MATERIAL_THICKNESS_SRNO,
+          //   MATERIAL_GRADE_SRNO: values.MATERIAL_GRADE_SRNO,
+          //   MATERIAL_C_LOCATION_SRNO: values.MATERIAL_C_LOCATION_SRNO,
+          // }]);
         }
         handleResetRawMaterial();
+        FetchRawMaterials();
       } else {
         message.error(`Error: ${response.msg}`);
       }
