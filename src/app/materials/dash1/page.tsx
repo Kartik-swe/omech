@@ -187,7 +187,7 @@ const RawMaterialsShiftHis = () => {
       { title: "is slitetd", dataIndex: "IS_RAW_SLITTED", key: "IS_RAW_SLITTED" },
     ];
 
-    if (flag === 'p' || flag === 'S') {
+    if (flag === 'P' || flag === 'S') {
       baseColumns.splice(1, 0, { title: "DC No", dataIndex: "DC_NO", key: "DC_NO" });
     }
 
@@ -224,17 +224,17 @@ const RawMaterialsShiftHis = () => {
   return (
     <Card title="Material Shift">
       <Tabs activeKey={activeTab} onChange={onTabChange}>
-        <TabPane tab="Slitted Materials" key="MOTHER">
+        <TabPane tab="Mother Coils" key="MOTHER">
           <Spin spinning={loading}>
             <Table dataSource={MotherData} columns={generateTableColumns('M')} pagination={false} />
           </Spin>
         </TabPane>
-        <TabPane tab="Semi-Slitted Materials" key="SEMI_SLITTED">
+        <TabPane tab="Semi-Slitted Coils" key="SEMI_SLITTED">
           <Spin spinning={loading}>
             <Table dataSource={SemiSlittedData} columns={generateTableColumns('P')} pagination={false} />
           </Spin>
         </TabPane>
-        <TabPane tab="Slitted Materials" key="SLITTED">
+        <TabPane tab="Slitted Coils" key="SLITTED">
           <Spin spinning={loading}>
             <Table dataSource={SlittedData} columns={generateTableColumns('S')} pagination={false} />
           </Spin>
