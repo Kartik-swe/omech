@@ -4,7 +4,6 @@ import { Layout, Row, Col, Card, Select, DatePicker, Input, Button, Radio, Table
 import { SearchOutlined } from '@ant-design/icons';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { apiClient } from '@/utils/apiClient';
-import moment from 'moment';
 import { getCookieData } from '@/utils/common';
 import RawInventoryDtl from '@/app/components/RawInvetoryDtl';
 
@@ -12,16 +11,7 @@ const { RangePicker } = DatePicker;
 const { Option } = Select;
 
 const Dashboard = () => {
-  const [filters, setFilters] = useState({
-    dateRange: [null, null],
-    C_LOCATION: null,
-    GRADE_SRNO: null,
-    width: null,
-    thickness: null,
-    status: null,
-    searchText: '',
-    isSlitted: null,
-  });
+  // States for data and loading
   const [DT_DATA, setDT_DATA] = useState<any>([]);
   const [loading, setLoading] = useState(true);
  // state for grade options with interface
@@ -103,6 +93,11 @@ const Dashboard = () => {
 
   // Table columns for data
   const columns = [
+    {
+      title: 'Challan No.',
+      dataIndex: 'CHALLAN_NO',
+      key: 'CHALLAN_NO',
+    },
     {
       title: 'Location',
       dataIndex: 'C_LOCATION',
@@ -261,7 +256,28 @@ const Dashboard = () => {
                 rowKey="name"
                 pagination={{ pageSize: 10 }}
                 style={{ marginTop: 20 }}
-                />
+                summary={(pageData) => {
+                  let totalWeight = 0;
+                  pageData.forEach(({ BALANCE_WEIGHT, QUANTITY }) => {
+                    totalWeight += BALANCE_WEIGHT * QUANTITY;
+                    totalWeight = Number(totalWeight.toFixed(2));
+                  });
+                  return (
+                    <Table.Summary.Row>
+                      <Table.Summary.Cell index={0} colSpan={1}>
+                        <strong>Total</strong>
+                      </Table.Summary.Cell>
+                      <Table.Summary.Cell index={1}>
+                        {/* <strong>{totalWeightstr} kg</strong> */}
+                      </Table.Summary.Cell>
+                      <Table.Summary.Cell index={1}>
+                        <strong>{totalWeight} kg</strong>
+                      </Table.Summary.Cell>
+                     
+                    </Table.Summary.Row>
+                  );
+                }}
+              />
               
             </Card>
           </Col>

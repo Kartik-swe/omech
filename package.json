@@ -21,6 +21,7 @@
     "react": "^18",
     "react-chartjs-2": "^5.3.0",
     "react-dom": "^18",
+    "react-highlight-words": "^0.21.0",
     "react-router-dom": "^6.28.0",
     "recharts": "^2.15.0",
     "tailwindcss": "^3.4.14",
@@ -30,6 +31,7 @@
     "@types/mssql": "^9.1.5",
     "@types/node": "22.9.0",
     "@types/react": "^18",
+    "@types/react-highlight-words": "^0.20.0",
     "typescript": "5.6.3"
   }
 }

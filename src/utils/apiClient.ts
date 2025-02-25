@@ -1,3 +1,4 @@
+
 export interface ApiResponse<T = any> {
     msgId: number;
     msg: string;
@@ -19,15 +20,28 @@ export interface ApiResponse<T = any> {
     headers: Record<string, string> = {}
   ): Promise<ApiResponse<T>> => {
     try {
+      // Get JWT token from localStorage
+    const token = localStorage.getItem("token");
       const response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}), // Add token if available
           ...headers,
         },
         body: body ? JSON.stringify(body) : undefined,
       });
   
+       // Check if token is expired (Unauthorized response)
+    if (response.status === 401) {
+      console.warn("Token expired or invalid. Logging out...");
+      handleLogout();
+      return {
+        msgId: -1,
+        msg: "Session expired. Please log in again.",
+      };
+    }
+
       if (!response.ok) {
         throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
       }
@@ -45,3 +59,9 @@ export interface ApiResponse<T = any> {
     }
   };
   
+  // Function to handle logout
+const handleLogout = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  window.location.href = "/login"; // Redirect to login page
+};
