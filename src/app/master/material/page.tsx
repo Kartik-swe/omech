@@ -1,170 +1,213 @@
 "use client";
-import { useState } from "react";
-import { Tabs, Card, Button, Input, Form, message, Tooltip } from "antd";
-import { EditOutlined, DeleteOutlined, SaveOutlined, PlusOutlined } from "@ant-design/icons";
+import { useState, useEffect } from "react";
+import { Card, Button, Modal, Form, Input, Tabs, Spin, Row, Col, message } from "antd";
+import { EditOutlined, DeleteOutlined, PlusOutlined } from "@ant-design/icons";
+import { apiClient } from "@/utils/apiClient";
+import { getCookieData } from "@/utils/common";
 
-const ProductMaterialManagement = () => {
-  const [pipeSizes, setPipeSizes] = useState<{ id: number; value: string }[]>([]);
-  const [materialGrades, setMaterialGrades] = useState<{ id: number; value: string }[]>([]);
-  const [ODs, setODs] = useState<{ id: number; value: string }[]>([]);
-  // const [newValue, setNewValue] = useState<string>("");
-  const [editingItem, setEditingItem] = useState<{ id: number; value: string } | null>(null);
+const { TabPane } = Tabs;
 
-  const handleAdd = (setter: Function, items: { id: number; value: string }[]) => {
-    // if (!newValue.trim()) {
-    //   message.error("Input cannot be empty!");
-    //   return;
-    // }
-    // setter([...items, { id: Date.now(), value: newValue.trim() }]);
-    // setNewValue("");
-  };
+const EPage = () => {
+  const [activeTab, setActiveTab] = useState("GRADE");
+  const [loading, setLoading] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<any | null>(null);
+  const [tabData, setTabData] = useState<string[]>([]);
+  const [masterForm] = Form.useForm();
 
-  const handleEdit = (id: number, value: string, setter: Function, items: { id: number; value: string }[]) => {
-    setter(items.map((item) => (item.id === id ? { ...item, value } : item)));
-    setEditingItem(null);
-  };
+  const cookiesData = getCookieData();
+  const { USER_SRNO, API_BASE_URL, UT_SRNO } = cookiesData;
 
-  const handleDelete = (id: number, setter: Function, items: { id: number; value: string }[]) => {
-    setter(items.filter((item) => item.id !== id));
-  };
+  // Function to fetch data for each tab
+  
+  const fetchTabData = async (tabKey: string) => {
+    setLoading(true);
 
-  const renderCards = (
-    data: { id: number; value: string }[],
-    setter: Function
-  ) => {
-    return data.map((item) => (
-      <Card
-        key={item.id}
-        style={{ width: 300, margin: "10px" }}
-        title={
-          editingItem?.id === item.id ? (
-            <Input
-              value={editingItem.value}
-              onChange={(e) =>
-                setEditingItem((prev) => (prev ? { ...prev, value: e.target.value } : null))
-              }
-            />
-          ) : (
-            item.value
-          )
-        }
-        actions={[
-          editingItem?.id === item.id ? (
-            <Tooltip title="Save">
-              <SaveOutlined
-                key="save"
-                onClick={() =>
-                  handleEdit(editingItem.id, editingItem.value, setter, data)
-                }
-              />
-            </Tooltip>
-          ) : (
-            <Tooltip title="Edit">
-              <EditOutlined
-                key="edit"
-                onClick={() => setEditingItem({ id: item.id, value: item.value })}
-              />
-            </Tooltip>
-          ),
-          <Tooltip title="Delete">
-            <DeleteOutlined
-              key="delete"
-              onClick={() => handleDelete(item.id, setter, data)}
-            />
-          </Tooltip>,
-        ]}
-      />
-    ));
-  };
+    try {
+      let TBL_SRNO = 0;
+      if (tabKey === "GRADE") {
+        TBL_SRNO = 1;
+      } else if (tabKey === "THICKNESS") {
+        TBL_SRNO = 2;
+      } else if (tabKey === "OD") {
+        TBL_SRNO = 3;
+      } else {  
+        TBL_SRNO = 0;
+      }
+      const response = await apiClient(`${API_BASE_URL}Pl_Common?USER_SRNO=${USER_SRNO}&UT_SRNO=${UT_SRNO}&TBL_SRNO=${TBL_SRNO}`, "GET");
 
-  const handleAddGradde = async (values:any) => {
+      if (response.msgId === 200) {
+        if (!response.data) return;
+        if (tabKey === "GRADE") {
+          setTabData(response.data.Table1);
+        } else if (tabKey === "THICKNESS") {
+          setTabData(response.data.Table2);
+        } else if (tabKey === "OD") {
+          setTabData(response.data.Table3);
+        }     
+        
+      } else {
+        message.error(response.msg);
+        console.error("API Error:", response.msg);
+      }
+    } catch (error: any) {
+      console.error("Error fetching Users:", error);
+      message.error(error.message);
+    } finally {
+      setLoading(false);
+    }
+
     
-    console.log(values);
-    
+   
+  };
+
+  // Handle tab change and load data
+  const handleTabChange = (key: string) => {
+    setActiveTab(key);
+    fetchTabData(key);
+  };
+
+  // Fetch initial data on mount
+  useEffect(() => {
+    fetchTabData(activeTab);
+  }, []);
+
+  const handleCancel = () => {
+    setEditingRecord(null);
+    masterForm.resetFields();
+    setModalVisible(false);
   }
 
+  const handleAdd = () => {
+    setEditingRecord(null);
+    setModalVisible(true);
+  };
+
+  const handleEdit = (record: any) => {
+    setEditingRecord(record);
+    masterForm.setFieldsValue({ name: record.label }); // Set form values dynamically
+    setModalVisible(true);
+  };
+
+
+const handleDelete = (record: any) => {
+  Modal.confirm({
+    title: "Are you sure you want to delete this record?",
+    content: `This action cannot be undone.`,
+    okText: "Yes, Delete",
+    okType: "danger",
+    cancelText: "Cancel",
+    onOk: async () => {
+      try {
+        // Call API to delete the record
+        const response = await apiClient(`${API_BASE_URL}DelM${activeTab}?PK_SRNO=${record.value}&USER_SRNO=${USER_SRNO}&UT_SRNO=${UT_SRNO}`,"DELETE");
+
+        if (response.msgId === 200) {
+          message.success("Record deleted successfully!");
+          setTabData((prevData) => prevData.filter((item:any) => item.value !== record.value));
+        } else {
+          message.error(response.msg);
+        }
+      } catch (error) {
+        console.error("Error deleting record:", error);
+        message.error("Failed to delete the record.");
+      }
+    },
+  });
+};
+
+
+  const handleSubmit = async (values: { name: string }) => {
+    if (!values.name) return;
+    const payload = {
+      IU_FLAG: editingRecord ? "U" : "I",
+      M_NAME : values.name,
+      UOM : null,
+      USER_SRNO : USER_SRNO,
+      UT_SRNO : UT_SRNO,
+      PK_SRNO : editingRecord ? editingRecord.value : 0
+    };
+
+    
+    try {
+      const response = await apiClient(`${API_BASE_URL}IuM${activeTab}`, "POST", payload); 
+      if (response.msgId === 200) {
+        // record saved / updated sucessfully msg
+        message.success("Record saved successfully!");
+        setTabData((prevData) =>
+          editingRecord
+        ? prevData.map((item:any) =>
+            item.value === editingRecord.value ? { ...item, label: values.name } : item
+          )
+        : [...prevData, { value: response.data.Table[0].PK_SRNO, label: values.name }]
+        );
+        handleCancel();
+        
+      } else {
+        message.success(response.msg);
+      }
+    } catch (err) {
+      alert('Failed to submit data.');
+    }
+
+    
+  };
+
   return (
-    <div style={{ padding: "20px" }}>
-      <h1 style={{ textAlign: "center", marginBottom: "20px" }}>Product & Material Management</h1>
-      <Tabs defaultActiveKey="1">
-        {/* Pipe Sizes */}
-        <Tabs.TabPane tab="Pipe Sizes" key="1">
-          <Form layout="inline" style={{ marginBottom: "20px" }}>
-            <Form.Item>
-              <Input
-                placeholder="Pipe Size"
-                // value={newValue}
-                // onChange={(e) => setNewValue(e.target.value)}
-              />
-            </Form.Item>
-            <Form.Item>
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => handleAdd(setPipeSizes, pipeSizes)}
-              >
-                Add
-              </Button>
-            </Form.Item>
-          </Form>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
-            {renderCards(pipeSizes, setPipeSizes)}
-          </div>
-        </Tabs.TabPane>
+    <div>
+      <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd} style={{ marginBottom: 16 }}>
+        Add New
+      </Button>
 
-        {/* Material Grades */}
-        <Tabs.TabPane tab="Material Grades" key="2">
-          <Form onFinish={handleAddGradde} layout="inline" style={{ marginBottom: "20px" }}>
-            <Form.Item name={"GREADE"}>
-              <Input
-                placeholder="Material Grade"
-                // value={newValue}
-                // onChange={(e) => setNewValue(e.target.value)}
-              />
-            </Form.Item>
-            <Form.Item>
-              <Button
-                htmlType="submit"
-                type="primary"
-                icon={<PlusOutlined />}
-                // onClick={() => handleAdd(setMaterialGrades, materialGrades)}
-              >
-                Add
-              </Button>
-            </Form.Item>
-          </Form>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
-            {renderCards(materialGrades, setMaterialGrades)}
-          </div>
-        </Tabs.TabPane>
-
-        {/* ODs */}
-        <Tabs.TabPane tab="OD" key="3">
-          <Form layout="inline" style={{ marginBottom: "20px" }}>
-            <Form.Item>
-              <Input
-                placeholder="Outer Diameter (OD)"
-                // value={newValue}
-                // onChange={(e) => setNewValue(e.target.value)}
-              />
-            </Form.Item>
-            <Form.Item>
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => handleAdd(setODs, ODs)}
-              >
-                Add
-              </Button>
-            </Form.Item>
-          </Form>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
-            {renderCards(ODs, setODs)}
-          </div>
-        </Tabs.TabPane>
+      <Tabs activeKey={activeTab} onChange={handleTabChange}>
+        {["GRADE", "THICKNESS", "OD"].map((tabKey) => (
+          <TabPane tab={tabKey} key={tabKey}>
+            {/* show data in json */}
+            {/* {JSON.stringify(tabData)} */}
+            <Spin spinning={loading}>
+              <Row gutter={[16, 16]}>
+                {tabData.map((item:any, index) => (
+                  <Col span={6} key={index}>
+                    <Card
+                      title={`${activeTab}: ${item.label}`}
+                      actions={[
+                        <EditOutlined key="edit" onClick={() => handleEdit(item)} />,
+                        <DeleteOutlined key="delete" onClick={() => handleDelete(item)} />,
+                      ]}
+                    />
+                  </Col>
+                ))}
+              </Row>
+            </Spin>
+          </TabPane>
+        ))}
       </Tabs>
+
+      {/* Add/Edit Modal */}
+      <Modal
+        title={editingRecord ? "Edit Record" : "Add Record"}
+        open={modalVisible}
+        onCancel={() => handleCancel()}
+        footer={null}
+      >
+        <Form
+          layout="vertical"
+          onFinish={handleSubmit}
+          // init ialValues={editingRecord ? { name: editingRecord.label } : {}}
+          form={masterForm}
+        >
+          <Form.Item name="name" label="Value" rules={[{ required: true, message: "Please enter a value!" }]}>
+            <Input placeholder="Enter value" />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit">
+              {editingRecord ? "Update" : "Add"}
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 };
 
-export default ProductMaterialManagement;
+export default EPage;

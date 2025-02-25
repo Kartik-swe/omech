@@ -17,7 +17,19 @@ export const getCookieData = () => ({
     AUTH_TOKEN: 'SDEDF3FVXR45',
 });
 
+export const getToken = () => {
+    return localStorage.getItem("token");
+  };
+  
+  export const isAuthenticated = () => {
+    return !!getToken();
+  };
+  
+  export const logout = () => {
+    localStorage.removeItem("token");
+  };
 
+  
 export const getSelectedText = (value: number, options: any[]): string => {
     const selectedOption = options.find((option:any) => option.value === value);
     return selectedOption ? selectedOption.label : '';

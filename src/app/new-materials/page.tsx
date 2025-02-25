@@ -6,6 +6,7 @@ import { PlusCircleOutlined, MinusCircleOutlined } from '@ant-design/icons';
 import { apiClient } from '@/utils/apiClient';
 import { getCookieData, getSelectedText } from '@/utils/common';
 import SlitTable from '@/app/components/slitTable';
+import ProtectedRoute from '../components/ProtectedRoute';
 
 //MAIN COMPONENT
 const RawMaterialDashboard = () => {
@@ -54,7 +55,9 @@ const RawMaterialDashboard = () => {
   const [slittingData, setslittingData] = useState<SlitMaterial[]>([]);
   const [form] = Form.useForm();
   const [slitForm] = Form.useForm();
+  const [SearchForm] = Form.useForm();
   const [modalVisible, setModalVisible] = useState(false);
+  const [motherModalVisible, setMotherModalVisible] = useState(false);
   const [isRawMaterialEdit, setIsRawMaterialEdit] = useState(false);
   const [isSlitMaterialEdit, setIsSlitMaterialEdit] = useState(false);
   const [selectedMaterial, setSelectedMaterial] = useState<RawMaterial | SlitMaterial | null>(null);
@@ -74,9 +77,10 @@ const RawMaterialDashboard = () => {
   React.useEffect(() => {
     if (isRawMaterialEdit) {
       if (selectedMaterial && 'RECEIVED_DATE' in selectedMaterial) {
+        // alert(dayjs(selectedMaterial.RECEIVED_DATE,"DD/MM/YYYY"));
         form.setFieldsValue({
           ...selectedMaterial,
-          RECEIVED_DATE: dayjs(selectedMaterial.RECEIVED_DATE), // Format date if required
+          RECEIVED_DATE: dayjs(selectedMaterial.RECEIVED_DATE, "DD/MM/YYYY"), // Format date if required
         });
       }
     }
@@ -86,7 +90,7 @@ const RawMaterialDashboard = () => {
       if (selectedMaterial && 'SLITTING_DATE' in selectedMaterial) {
         slitForm.setFieldsValue({
           ...selectedMaterial,
-          SLITTING_DATE: dayjs(selectedMaterial.SLITTING_DATE), // Format date if required
+          SLITTING_DATE: dayjs(selectedMaterial.SLITTING_DATE, "DD/MM/YYYY"), // Format date if required
         });
       }
     }
@@ -129,11 +133,53 @@ const RawMaterialDashboard = () => {
     }
   };
 
+  // Function to delete raw material and slitting data
+  const delRawSlit = async (id: number, isMotherCoil : boolean) => {
+    try {
+      // Creete method working and test
+      const response = await apiClient(`${API_BASE_URL}DelRawSlit?USER_SRNO=${USER_SRNO}&SRNO=${id}&IS_MOTHER_COIL=${isMotherCoil}`, 'DELETE');
+      if (response.msgId === 200) {
+        message.success('Record Deleted Sucessfully!');
+
+        if (isMotherCoil) {
+          // Find the record by material_srno and REMOVE THAT ROW
+          const updatedData = [...rawMaterials]; // Assuming rawMaterials is a state
+          const record = updatedData.find((item) => item.MATERIAL_SRNO === id);
+          // remove above record from data
+          if (record) {
+            updatedData.splice(updatedData.indexOf(record), 1);
+            setRawMaterials(updatedData); // Update state to re-render table
+          }
+          
+        }else{
+        // Find the record by SLITTING_SRNO and REMOVE THAT ROW
+        const updatedData = [...slittingData]; // Assuming slittingData is a state
+        const record = updatedData.find((item) => item.SLITTING_SRNO === id);
+       // remove above record from data
+        if (record) {
+          updatedData.splice(updatedData.indexOf(record), 1);
+          setslittingData(updatedData); // Update state to re-render table
+        }
+      }
+
+      } else {
+        message.error(`Error: ${response.msg}`);
+      }
+    } catch (error) {
+      console.error('Error adding raw material:', error);
+      message.error('Failed to add raw material');
+    }
+  };
+
 
   //  fUNCTION TO FETCH RAW MATERIALS
   const FetchRawMaterials = async () => {
     try {
-      const response = await apiClient(`${API_BASE_URL}DtRawMaterial`, 'GET');
+      const values = SearchForm.getFieldsValue();
+      const query = `CHALLAN_NO=${values.CHALLAN_NO || ''}&DT_REG_FROM=${values.DT_REG_FROM || ''}&DT_REG_TO=${values.DT_REG_TO || ''}&SUPPLIER=${values.SUPPLIER || ''}&GRADE_SRNO=${values.GRADE_SRNO || ''}&THICKNESS_SRNO=${values.THICKNESS_SRNO || ''}`
+      console.log(values);
+      
+      const response = await apiClient(`${API_BASE_URL}DtRawMaterial?${query}`, 'GET');
       if (response.msgId === 200) {
         if (!response.data) { return; }
         const RAW_MATERIALS_DATA = response.data.Table.map((material: any, index: number) => ({
@@ -172,6 +218,7 @@ const RawMaterialDashboard = () => {
     form.resetFields();
     setIsRawMaterialEdit(false)
     setSelectedMaterial(null)
+    setMotherModalVisible(false)
   }
 
   // Adjusted function to handle adding raw material with API request
@@ -264,6 +311,7 @@ const RawMaterialDashboard = () => {
   // Adjusted function to handle slitting operation with API request
   const handleSlitMaterial = async (values: any) => {
     if (!selectedMaterial) return;
+    debugger;
     try {
       if (values.SLITTING_SRNO > 0) {
         let SLITTING_STATUS_SRNO = 0;
@@ -355,40 +403,58 @@ const RawMaterialDashboard = () => {
         };
 
 return (
+  <ProtectedRoute>
     <div style={{ padding: '20px' }}>
       {/* <h1>Raw Material Dashboard</h1> */}
 
-      <Form
-        form={form}
-        layout="horizontal"
-        onFinish={handleAddRawMaterial}
-        onReset={handleResetRawMaterial}
-        style={{ marginBottom: '20px' }}
-        >
-        {/* {JSON.stringify(selectedMaterial)} */}
-         {/* Hidden Controls */}
-         <Form.Item name="MATERIAL_SRNO" initialValue={0} hidden>
-            <Input />
-          </Form.Item>
-        <Row gutter={16}>
-          <Col span={6}>
-            <Form.Item name="CHALLAN_NO" label="Challan No" rules={[{ required: true, message: 'Please enter challan number' }]}>
+      {/* Search Form */}
+      <Form layout="vertical" style={{ marginBottom: '20px' }}
+      onFinish={FetchRawMaterials}
+      
+        form={SearchForm}
+      >
+
+      <Row gutter={16}>
+          <Col span={4}>
+            <Form.Item name="CHALLAN_NO" label="Challan No" rules={[{ required: false, message: 'Please enter challan number' }]}>
               <Input placeholder="Enter Challan No" />
             </Form.Item>
           </Col>
-          <Col span={6}>
-            <Form.Item name="RECEIVED_DATE" label="Date" rules={[{ required: true, message: 'Please select date' }]}>
-              <DatePicker style={{ width: '100%' }} />
+          <Col span={4}>
+            <Form.Item name="RECEIVED_DATE" label="Date" rules={[{ required: false, message: 'Please select date' }]}>
+              <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" />
             </Form.Item>
           </Col>
-          <Col span={6}>
-            <Form.Item name="MATERIAL_GRADE_SRNO" label="Grade" rules={[{ required: true, message: 'Please select grade' }]}>
+          <Col span={4}>
+            <Form.Item name="SUPLIERS" label="Supiler" rules={[{ required: false, message: 'Please select date' }]}>
+            <Input placeholder="Enter Supiler" />
+            </Form.Item>
+          </Col>
+         
+          <Col span={3}>
+            <Form.Item name="MATERIAL_GRADE_SRNO" label="Grade" rules={[{ required: false, message: 'Please select grade' }]}>
               <Select showSearch placeholder="Select Grade" options={optGrades} filterOption={(input: any, option: any) =>
                 option?.label.toLowerCase().includes(input.toLowerCase())
               }></Select>
             </Form.Item>
           </Col>
-          <Col span={6}>
+          <Col span={3}>
+            <Form.Item name="MATERIAL_THICKNESS_SRNO" label="Thickness" rules={[{ required: false, message: 'Select Thickness' }]}>
+              <Select showSearch placeholder="Select Thickness" options={optThickNess} filterOption={(input: any, option: any) =>
+                option?.label.toLowerCase().includes(input.toLowerCase())
+              }></Select>
+            </Form.Item>
+          </Col>
+          <Col span={2}>
+            {/* Search Button */}
+            <Form.Item>
+              
+                    <Button type="primary" htmlType="submit" style={{ marginTop: '30px', width: '100%' }}>
+              Search
+              </Button>
+              </Form.Item>
+          </Col>
+          {/* <Col span={8}>
             <Form.Item name="MATERIAL_C_LOCATION_SRNO" label="Shift To" rules={[{ required: true, message: 'Please select Shift to' }]}>
               <Select
                 showSearch
@@ -399,88 +465,13 @@ return (
                 }
               ></Select>
             </Form.Item>
-          </Col>
-        </Row>
-        <Row gutter={16}>
-          <Col span={5}>
-            <Form.Item name="MATERIAL_THICKNESS_SRNO" label="Thickness (mm)" rules={[{ required: true, message: 'Select Thickness' }]}>
-              <Select showSearch placeholder="Select Thickness" options={optThickNess} filterOption={(input: any, option: any) =>
-                option?.label.toLowerCase().includes(input.toLowerCase())
-              }></Select>
-            </Form.Item>
-          </Col>
-          <Col span={5}>
-            <Form.Item name="MATERIAL_WIDTH" label="Width (mm)"
-             rules={[{ required: true, message: 'Please Enter Width' },
-              {
-                validator: (_, value) => {
-                 
-                  if (value > 0) {
-                    
-                  const MATERIAL_SCRAP = Number(form.getFieldValue('MATERIAL_SCRAP')) || 0;
-                  if (!(selectedMaterial && ('MATERIAL_SCRAP' in selectedMaterial) && ('MATERIAL_WIDTH' in selectedMaterial ))) {
-                    return Promise.resolve();
-                  }
-                  const slittedWidth = Number(selectedMaterial.MATERIAL_WIDTH) - Number(selectedMaterial.remainingWidth) - Number(selectedMaterial.MATERIAL_SCRAP);
-
-                  return value < Number(slittedWidth + MATERIAL_SCRAP)
-                    ? Promise.reject(
-                        `Width cannot be less than the sum of used width (${slittedWidth}) and scrap (${MATERIAL_SCRAP}) = ${Number(slittedWidth + MATERIAL_SCRAP)}.`
-                      )
-                    : Promise.resolve();
-                  }
-                  else{
-                    return Promise.resolve();
-                  }
-                },
-              },
-            ]}
-            >
-              <InputNumber style={{ width: '100%' }} min={0} placeholder="Enter Width" 
-               onChange={(value: any) => {
-                if (!selectedMaterial || !isRawMaterialEdit) return;
-                debugger
-                const calculatedWeight = selectedMaterial && 'MATERIAL_WIDTH' in selectedMaterial
-                  ? ((value / Number(selectedMaterial.MATERIAL_WIDTH)) * Number(selectedMaterial.MATERIAL_WEIGHT)).toFixed(2)
-                  : ((value / Number(selectedMaterial.SLITTING_WIDTH)) * Number(selectedMaterial.SLITTING_WEIGHT)).toFixed(2);
-
-                // Update only the current weight field
-                // slittingDetails[name] = {
-                //   ...slittingDetails[name],
-                //   SLITTING_WEIGHT: parseFloat(calculatedWeight),
-                // };
-                form.setFieldsValue({ MATERIAL_WEIGHT: parseFloat(calculatedWeight) });
-              }}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={5}>
-            <Form.Item name="MATERIAL_WEIGHT" label="Weight (kg)" rules={[{ required: true, message: 'Please enter weight' }]}>
-              <InputNumber style={{ width: '100%' }} min={0} placeholder="Enter Weight" 
-              disabled={!!(isRawMaterialEdit && selectedMaterial && ('IS_SEMI_SLITTED' in selectedMaterial) && selectedMaterial.IS_SEMI_SLITTED)} />
-            </Form.Item>
-          </Col>
-          <Col span={5}>
-            <Form.Item name="MATERIAL_SCRAP" label="Scrap (mm)" rules={[{ required: false, message: 'Please enter scrap' }]} 
-            hidden={!(isRawMaterialEdit && selectedMaterial && ('IS_SEMI_SLITTED' in selectedMaterial) && selectedMaterial.IS_SEMI_SLITTED)}
-            >
-              <InputNumber style={{ width: '100%' }} min={0} placeholder="Enter scrap" 
-              />
-            </Form.Item>
-          </Col>
-          <Col span={3}>
-            <Button type="primary" htmlType="submit">{isRawMaterialEdit ? 'Update' : "Add"}  Material</Button>
-          </Col>
-          <Col span={1}>
-            <Button type="primary" htmlType="reset">Reset</Button>
-          </Col>
-        </Row>
-        <Row>
-
+          </Col> */}
+          
         </Row>
       </Form>
+        
 
-      <SlitTable mainTableData={rawMaterials} slittingData={slittingData} setSlitingLevvel={setSlitingLevvel} setSelectedMaterial={setSelectedMaterial} setModalVisible={setModalVisible} updateSlittedStatus={updateSlittedStatus} setIsRawMaterialEdit={setIsRawMaterialEdit} setIsSlitMaterialEdit={setIsSlitMaterialEdit} />
+      <SlitTable mainTableData={rawMaterials} slittingData={slittingData} setSlitingLevvel={setSlitingLevvel} setSelectedMaterial={setSelectedMaterial} setModalVisible={setModalVisible} setMotherModalVisible={setMotherModalVisible} updateSlittedStatus={updateSlittedStatus} delRawSlit={delRawSlit} setIsRawMaterialEdit={setIsRawMaterialEdit} setIsSlitMaterialEdit={setIsSlitMaterialEdit} />
       <Modal
         title={isSlitMaterialEdit ? 'Edit Slit Material' : 'Slit Material'}
         open={modalVisible}
@@ -852,7 +843,157 @@ return (
           </Button>
         </Form>
       </Modal>
+
+
+      {/* Adding Modal For Mother Coil */}
+      <Modal
+        width={1000}
+        title={isRawMaterialEdit ? 'Edit Mother Coil' : 'Add Mother Coil'}
+        open={motherModalVisible}
+        onCancel={() => {
+          setSelectedMaterial(null)
+          setIsSlitMaterialEdit(false)
+          form.resetFields();
+          setMotherModalVisible(false);
+          handleResetRawMaterial()
+        }}
+        footer={null}
+        bodyStyle={{ padding: '24px 32px' }}
+        centered
+      >
+        
+        <Form
+        form={form}
+        layout="horizontal"
+        onFinish={handleAddRawMaterial}
+        onReset={handleResetRawMaterial}
+        style={{ marginBottom: '20px' }}
+        >
+        {/* {JSON.stringify(selectedMaterial)} */}
+         {/* Hidden Controls */}
+         <Form.Item name="MATERIAL_SRNO" initialValue={0} hidden>
+            <Input />
+          </Form.Item>
+        <Row gutter={16}>
+          <Col span={8}>
+            <Form.Item name="CHALLAN_NO" label="Challan No" rules={[{ required: true, message: 'Please enter challan number' }]}>
+              <Input placeholder="Enter Challan No" />
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item name="RECEIVED_DATE" label="Date" rules={[{ required: true, message: 'Please select date' }]}>
+              <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD"/>
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item name="SUPLIERS" label="Supiler" rules={[{ required: false, message: 'Please select date' }]}>
+            <Input placeholder="Enter Supiler" />
+            </Form.Item>
+          </Col>
+          </Row>
+          <Row gutter={16}>
+          <Col span={8}>
+            <Form.Item name="MATERIAL_GRADE_SRNO" label="Grade" rules={[{ required: true, message: 'Please select grade' }]}>
+              <Select showSearch placeholder="Select Grade" options={optGrades} filterOption={(input: any, option: any) =>
+                option?.label.toLowerCase().includes(input.toLowerCase())
+              }></Select>
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item name="MATERIAL_C_LOCATION_SRNO" label="Shift To" rules={[{ required: true, message: 'Please select Shift to' }]}>
+              <Select
+                showSearch
+                placeholder="Select"
+                options={optVendors}
+                filterOption={(input: any, option: any) =>
+                  option?.label.toLowerCase().includes(input.toLowerCase())
+                }
+              ></Select>
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item name="MATERIAL_THICKNESS_SRNO" label="Thickness (mm)" rules={[{ required: true, message: 'Select Thickness' }]}>
+              <Select showSearch placeholder="Select Thickness" options={optThickNess} filterOption={(input: any, option: any) =>
+                option?.label.toLowerCase().includes(input.toLowerCase())
+              }></Select>
+            </Form.Item>
+          </Col>
+        </Row>
+        <Row gutter={16}>
+         
+          <Col span={6}>
+            <Form.Item name="MATERIAL_WIDTH" label="Width (mm)"
+             rules={[{ required: true, message: 'Please Enter Width' },
+              {
+                validator: (_, value) => {
+                 
+                  if (value > 0) {
+                    
+                  const MATERIAL_SCRAP = Number(form.getFieldValue('MATERIAL_SCRAP')) || 0;
+                  if (!(selectedMaterial && ('MATERIAL_SCRAP' in selectedMaterial) && ('MATERIAL_WIDTH' in selectedMaterial ))) {
+                    return Promise.resolve();
+                  }
+                  const slittedWidth = Number(selectedMaterial.MATERIAL_WIDTH) - Number(selectedMaterial.remainingWidth) - Number(selectedMaterial.MATERIAL_SCRAP);
+
+                  return value < Number(slittedWidth + MATERIAL_SCRAP)
+                    ? Promise.reject(
+                        `Width cannot be less than the sum of used width (${slittedWidth}) and scrap (${MATERIAL_SCRAP}) = ${Number(slittedWidth + MATERIAL_SCRAP)}.`
+                      )
+                    : Promise.resolve();
+                  }
+                  else{
+                    return Promise.resolve();
+                  }
+                },
+              },
+            ]}
+            >
+              <InputNumber style={{ width: '100%' }} min={0} placeholder="Enter Width" 
+               onChange={(value: any) => {
+                if (!selectedMaterial || !isRawMaterialEdit) return;
+                debugger
+                const calculatedWeight = selectedMaterial && 'MATERIAL_WIDTH' in selectedMaterial
+                  ? ((value / Number(selectedMaterial.MATERIAL_WIDTH)) * Number(selectedMaterial.MATERIAL_WEIGHT)).toFixed(2)
+                  : ((value / Number(selectedMaterial.SLITTING_WIDTH)) * Number(selectedMaterial.SLITTING_WEIGHT)).toFixed(2);
+
+                // Update only the current weight field
+                // slittingDetails[name] = {
+                //   ...slittingDetails[name],
+                //   SLITTING_WEIGHT: parseFloat(calculatedWeight),
+                // };
+                form.setFieldsValue({ MATERIAL_WEIGHT: parseFloat(calculatedWeight) });
+              }}
+              />
+            </Form.Item>
+          </Col>
+          <Col span={6}>
+            <Form.Item name="MATERIAL_WEIGHT" label="Weight (kg)" rules={[{ required: true, message: 'Please enter weight' }]}>
+              <InputNumber style={{ width: '100%' }} min={0} placeholder="Enter Weight" 
+              disabled={!!(isRawMaterialEdit && selectedMaterial && ('IS_SEMI_SLITTED' in selectedMaterial) && selectedMaterial.IS_SEMI_SLITTED)} />
+            </Form.Item>
+          </Col>
+          <Col span={6}>
+            <Form.Item name="MATERIAL_SCRAP" label="Scrap (mm)" rules={[{ required: false, message: 'Please enter scrap' }]} 
+            hidden={!(isRawMaterialEdit && selectedMaterial && ('IS_SEMI_SLITTED' in selectedMaterial) && selectedMaterial.IS_SEMI_SLITTED)}
+            >
+              <InputNumber style={{ width: '100%' }} min={0} placeholder="Enter scrap" 
+              />
+            </Form.Item>
+          </Col>
+          <Col span={4}>
+            <Button type="primary" htmlType="submit">{isRawMaterialEdit ? 'Update' : "Add"}  Material</Button>
+          </Col>
+          <Col span={2}>
+            <Button type="primary" htmlType="reset">Reset</Button>
+          </Col>
+        </Row>
+        
+      </Form>
+        
+       
+      </Modal>
     </div>
+    </ProtectedRoute>
   );
 };
 

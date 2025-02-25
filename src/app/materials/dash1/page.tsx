@@ -1,4 +1,6 @@
 "use client";
+import { RetweetOutlined, DollarCircleOutlined, BuildOutlined, SwapOutlined } from "@ant-design/icons";
+
 import React, { useState, useEffect } from "react";
 import { Card, Table, Row, Col, message, Button, Form, Input, Modal, Select, Tooltip, Spin, Tabs, Descriptions } from "antd";
 import { apiClient } from "@/utils/apiClient";
@@ -11,6 +13,7 @@ const RawMaterialsShiftHis = () => {
   const [MotherData, setMotherData] = useState<any[]>([]);
   const [SemiSlittedData, setSemiSlittedData] = useState<any[]>([]);
   const [SlittedData, setSlittedData] = useState<any[]>([]);
+  const [fetchCoilsData, setFetchCoilsData] = useState<any[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedMaterial, setSelectedMaterial] = useState<any>(null);
   const [optVendors, setOptVendors] = useState<{ label: string; value: string }[]>([]);
@@ -106,6 +109,30 @@ const RawMaterialsShiftHis = () => {
     }
   };
 
+  // Fetch slitted data
+  const fetchCoils = async (MATERIAL_FLAG:string) => {
+    try {
+      // alert("dfg")
+      setLoading(true);
+      // const MATERIAL_FLAG ='S'
+      const response = await apiClient(`${API_BASE_URL}DtRawMaterialShift?${USER_SRNO}&MATERIAL_FLAG=${MATERIAL_FLAG}`, "GET");
+
+
+      if (response.msgId === 200) {
+        if (!response.data) return;
+        setFetchCoilsData(response.data.Table3);
+      } else {
+        message.error(response.msg);
+        console.error("API Error:", response.msg);
+      }
+    } catch (error: any) {
+      console.error("Error fetching semi-slitted Coil:", error);
+      message.error(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     FetchPlCommon();
     fetchMotherCoil();
@@ -116,6 +143,59 @@ const RawMaterialsShiftHis = () => {
     setSelectedMaterial({ ...record, flag });
     setIsModalVisible(true);
   };
+
+  // Handle Row Action 
+  const handleRowAction = async (SRNO: number, COIL_FLAG: string,STATUS_FLAG: string) => {
+      // STATUS_FLAG = S-SELL, R- RETURN, P- PRODUCTION ]
+      try {
+       const response = await apiClient(`${API_BASE_URL}IuShiftStock?IU_FLAG=U&COIL_FLAG=${COIL_FLAG}&STATUS_FLAG=${STATUS_FLAG}&SRNO=${SRNO}&USER_SRNO=${USER_SRNO}`, "GET");
+  
+        if (response.msgId === 200) {
+          message.success("Record Saved Succesfully!");
+          setIsModalVisible(false);
+          form.resetFields();
+          // add case statement for falg and call the appropriate function to refresh the table for M, P, S
+          //remove the record from the table
+            switch (COIL_FLAG) {
+            case 'M':
+              setMotherData((prevData) => prevData.filter(item => item.MATERIAL_SRNO !== SRNO));
+              break;
+            case 'P':
+              setSemiSlittedData((prevData) => prevData.filter(item => item.SLITTING_SRNO !== SRNO));
+              break;
+            case 'S':
+              setSlittedData((prevData) => prevData.filter(item => item.SLITTING_SRNO !== SRNO));
+              break;
+            default:
+              break;
+            }
+
+          // switch (COIL_FLAG) {
+          //   case 'M':
+          //     //fetchMotherCoil();
+          //     break;
+          //   case 'P':
+          //     //fetchSemiSlitted();
+          //     break;
+          //   case 'S':
+          //     //fetchSlitted();
+          //     break;
+          //   default:
+          //     break;
+          // }
+          // isMotherCoil ? fetchSemiSlitted() : fetchMotherCoil(); // Refresh the appropriate table
+        } else {
+        alert(response.msg)
+        console.log(response.msgId);
+        
+  
+          message.error(response.msg);
+        }
+      } catch (error: any) {
+        alert(error)
+        message.error(error.message);
+      }
+  }
 
   // Handle modal OK button click
   const handleOk = async () => {
@@ -183,32 +263,111 @@ const RawMaterialsShiftHis = () => {
       { title: "Material Weight", dataIndex: "MATERIAL_WEIGHT", key: "MATERIAL_WEIGHT" },
       { title: "Material Thickness", dataIndex: "MATERIAL_THICKNESS", key: "MATERIAL_THICKNESS" },
       { title: "Material Grade", dataIndex: "MATERIAL_GRADE", key: "MATERIAL_GRADE" },
-      { title: "Location", dataIndex: "FROM_LOCATION", key: "FROM_LOCATION" },
-      { title: "is slitetd", dataIndex: "IS_RAW_SLITTED", key: "IS_RAW_SLITTED" },
+      
+      // { title: "is slitetd", dataIndex: "IS_RAW_SLITTED", key: "IS_RAW_SLITTED" },
     ];
 
-    if (flag === 'P' || flag === 'S') {
+    const baseColumns1 = [
+      { title: "Challan No", dataIndex: "CHALLAN_NO", key: "CHALLAN_NO" },
+      { title: "DC No", dataIndex: "DC_NO", key: "DC_NO" },
+      { title: "Width", dataIndex: "WIDTH", key: "WIDTH" },
+      { title: "Weight", dataIndex: "WEIGHT", key: "WEIGHT" },
+      { title: "Thickness", dataIndex: "THICKNESS", key: "THICKNESS" },
+      { title: "Grade", dataIndex: "GRADE", key: "GRADE" },
+      { title: "Coil Type", dataIndex: "COIL_TYPE", key: "COIL_TYPE" },
+
+    ];
+    if (flag === 'M' || flag === 'P' || flag === 'S') {
+      baseColumns.splice(1, 0, { title: "Location", dataIndex: "FROM_LOCATION", key: "FROM_LOCATION" });
+    }
+    if (flag === 'P' || flag === 'S' ) {
       baseColumns.splice(1, 0, { title: "DC No", dataIndex: "DC_NO", key: "DC_NO" });
     }
+   
+    
 
     const actionColumn = {
       title: "Actions",
       key: "actions",
       render: (_: any, record: any) => (
-        // disable in case of IS_RAW_SLITTED = y
+        <div style={{ display: "flex", gap: "8px" }}>
+      {/* Shift */}
+      <Tooltip title={record.IS_RAW_SLITTED === 'Y' ? "Material already slitted" : "Shift to another location"}>
+        <Button
+          style={{
+            backgroundColor: record.IS_RAW_SLITTED === 'Y' ? "#d9d9d9" : "#1890ff",
+            borderColor: record.IS_RAW_SLITTED === 'Y' ? "#d9d9d9" : "#1890ff",
+            color: "white",
+            opacity: record.IS_RAW_SLITTED === 'Y' ? 0.5 : 1,
+          }}
+          onClick={() => handleShift(record, flag)}
+          disabled={record.IS_RAW_SLITTED === 'Y'}
+          icon={<SwapOutlined />}
+        />
+      </Tooltip>
 
-        <Tooltip title={record.IS_RAW_SLITTED === 'Y' ? "Material already slitted" : ""}>
-          <Button type="primary" onClick={() => handleShift(record, flag)} disabled={record.IS_RAW_SLITTED === 'Y'}>
-            Shift
-          </Button>
-        </Tooltip>
-        // <Button type="primary" onClick={() => handleShift(record, flag)}>
-          // Shift
-        // </Button>
+      {/* Return */}
+      <Tooltip title="Return material to supplier">
+        <Button
+          style={{
+            backgroundColor: record.IS_RAW_SLITTED === 'Y' ? "#d9d9d9" : "#FFA500",
+            borderColor: record.IS_RAW_SLITTED === 'Y' ? "#d9d9d9" : "#FFA500",
+            color: "white",
+            opacity: record.IS_RAW_SLITTED === 'Y' ? 0.5 : 1,
+          }}
+          onClick={() => handleRowAction(flag=='M' ? record.MATERIAL_SRNO : record.SLITTING_SRNO,flag,'R')}
+          disabled={record.IS_RAW_SLITTED === 'Y'}
+          icon={<RetweetOutlined />}
+        />
+      </Tooltip>
+
+      {/* Sell */}
+      <Tooltip title="Sell material">
+        <Button
+          style={{
+            backgroundColor: record.IS_RAW_SLITTED === 'Y' ? "#d9d9d9" : "#008000",
+            borderColor: record.IS_RAW_SLITTED === 'Y' ? "#d9d9d9" : "#008000",
+            color: "white",
+            opacity: record.IS_RAW_SLITTED === 'Y' ? 0.5 : 1,
+          }}
+          onClick={() => handleRowAction(flag=='M' ? record.MATERIAL_SRNO : record.SLITTING_SRNO,flag,'S')}
+          disabled={record.IS_RAW_SLITTED === 'Y'}
+          icon={<DollarCircleOutlined />}
+        />
+      </Tooltip>
+
+      {/* Shift to Production */}
+      <Tooltip title="Shift material to production">
+        <Button
+          style={{
+            backgroundColor: record.IS_RAW_SLITTED === 'Y' ? "#d9d9d9" : "#800080",
+            borderColor: record.IS_RAW_SLITTED === 'Y' ? "#d9d9d9" : "#800080",
+            color: "white",
+            opacity: record.IS_RAW_SLITTED === 'Y' ? 0.5 : 1,
+          }}
+          onClick={() => handleRowAction(flag=='M' ? record.MATERIAL_SRNO : record.SLITTING_SRNO,flag,'P')}
+          disabled={record.IS_RAW_SLITTED === 'Y'}
+          icon={<BuildOutlined />}
+        />
+      </Tooltip>
+    </div>
       ),
     };
+   
 
-    return [...baseColumns, actionColumn];
+    // Add action column to the base columns ONLY for Mother Coils AND SLITTED
+    if (flag === 'M' || flag === 'S') {
+      return [...baseColumns, actionColumn];
+    }else if(flag === 'P'){
+    return [...baseColumns];
+    }
+    else if(flag === 'F' || flag === 'R' || flag === 'O'){
+      return [...baseColumns1];
+    }
+    else{
+      return [...baseColumns];
+
+    }
   };
 
   // Handle tab change
@@ -218,7 +377,16 @@ const RawMaterialsShiftHis = () => {
       fetchSemiSlitted();
     }else if(key === "SLITTED"){
       fetchSlitted();
+    }else if(key === "MOTHER"){
+      fetchMotherCoil();
+    }else if (key === "PRODUCTION"){
+      fetchCoils('F');
+    }else if (key === "RETURNED"){
+      fetchCoils('R');
+    }else if (key === "SOLD"){  
+      fetchCoils('O');
     }
+      
   };
 
   return (
@@ -237,6 +405,21 @@ const RawMaterialsShiftHis = () => {
         <TabPane tab="Slitted Coils" key="SLITTED">
           <Spin spinning={loading}>
             <Table dataSource={SlittedData} columns={generateTableColumns('S')} pagination={false} />
+          </Spin>
+        </TabPane>
+        <TabPane tab="Production Coils" key="PRODUCTION">
+          <Spin spinning={loading}>
+            <Table dataSource={fetchCoilsData} columns={generateTableColumns('F')} pagination={false} />
+          </Spin>
+        </TabPane>
+        <TabPane tab="Return Coils" key="RETURNED">
+          <Spin spinning={loading}>
+            <Table dataSource={fetchCoilsData} columns={generateTableColumns('R')} pagination={false} />
+          </Spin>
+        </TabPane>
+        <TabPane tab="Sold Coils" key="SOLD">
+          <Spin spinning={loading}>
+            <Table dataSource={fetchCoilsData} columns={generateTableColumns('O')} pagination={false} />
           </Spin>
         </TabPane>
       </Tabs>

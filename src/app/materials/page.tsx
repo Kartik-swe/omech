@@ -1,132 +1,192 @@
 "use client"
-import React, { useState } from 'react';
-import { Row, Col, Table, DatePicker, Select, Button, Card, Statistic, Typography } from 'antd';
-import { Line, Doughnut } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
+import React, { useEffect, useState } from 'react';
+import { Row, Col, Table, DatePicker, Select, Button, Card, Statistic, Typography, Form, message } from 'antd';
 import Link from 'next/link';
-
-// Register necessary components for Chart.js
-ChartJS.register(
-  CategoryScale,  // For x-axis
-  LinearScale,    // For y-axis
-  BarElement,     // For bar elements (useful for Line chart too)
-  PointElement,   // For points (used in Line chart)
-  LineElement,    // For line elements (used in Line chart)
-  Title,          // For chart title
-  Tooltip,        // For tooltips
-  Legend,         // For chart legend
-  ArcElement      // For pie/doughnut chart elements
-);
-
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Treemap } from 'recharts';
+import { apiClient } from '@/utils/apiClient';
+import { getCookieData } from '@/utils/common';
+import { table } from 'console';
+import ProtectedRoute from '../components/ProtectedRoute';
 const { Title: AntTitle } = Typography;
 
-
 const Dashboard = () => {
-  const [filters, setFilters] = useState<{
-    startDate: string | null;
-    endDate: string | null;
-    grade: string | null;
-    thickness: string | null;
-    vendor: string | null;
-    status: string | null;
-    machine: string | null;
-  }>({
-    startDate: null, endDate: null, grade: null, thickness: null, vendor: null, status: null, machine: null,
+  const [CARD_DATA, setCARD_DATA] = useState<any>([]);
+  const [gradeWiseStockData, setGradeWiseStockData] = useState<any>([]);
+  const [gradeVendorData, setgradeVendorData] = useState<any>([]);
+  const [allLocations, setAllLocations] = useState<any>([]);
+  const [DT_DATA, setDT_DATA] = useState<any>([]);
+  const [loading, setLoading] = useState(true);
+ // state for grade options with interface
+  const [optGrades, setOptGrades] = useState<{ label: string; value: string }[]>([]);
+  const [optThickNess, setoptThickNess] = useState<{ label: string; value: string }[]>([]);
+  const [optVendors, setOptVendors] = useState<{ label: string; value: string }[]>([]);
+  const [optStatus, setOptStatus] = useState<{ label: string; value: string }[]>([]);
+  const cookiesData = getCookieData();
+  const { USER_SRNO, API_BASE_URL, UT_SRNO } = cookiesData;
+  const [SearchForm] = Form.useForm();
+
+  const [filters, setFilters] = useState({
+    startDate: null, endDate: null, grade: [], thickness: null, vendor: [], status: null, machine: [],
   });
 
-  // Dummy Data for Raw Materials and Slitting Processes
-  const rawMaterials = [
-    { material_srno: 'RM001', vendor: 'Vendor A', challan_no: '12345', grade: 'MS', weight: 7000, received_date: '2025-01-01' },
-    { material_srno: 'RM002', vendor: 'Vendor B', challan_no: '12346', grade: 'SS', weight: 15000, received_date: '2025-01-02' },
-    { material_srno: 'RM003', vendor: 'Vendor C', challan_no: '12347', grade: 'MS', weight: 12500, received_date: '2025-01-03' },
-  ];
+   useEffect(() => {
+      FetchPlCommon();
+      FetchRawMaterials();
+    }, []);
+  
 
-  const slittingProcesses = [
-    { slitting_srno: 'SP001', material_srno: 'RM001', slitting_date: '2025-01-05', weight: 1200, status: 'Completed' },
-    { slitting_srno: 'SP002', material_srno: 'RM002', slitting_date: '2025-01-06', weight: 1500, status: 'Pending' },
-    { slitting_srno: 'SP003', material_srno: 'RM003', slitting_date: '2025-01-07', weight: 1000, status: 'Completed' },
-  ];
+     // Function to fetch common dropdown options
+  const FetchPlCommon = async () => {
+    const response = await apiClient<Record<string, any>>(`${API_BASE_URL}Pl_Common?USER_SRNO=${USER_SRNO}&UT_SRNO=${UT_SRNO}&TBL_SRNO=1,3,4,5`, 'GET');
+    if (response.msgId === 200) {
+      if (!response.data) { return; }
+      const { Table1, Table3, Table4, Table5 } = response.data;
+      setOptGrades(Table1)
+      setoptThickNess(Table3)
+      setOptVendors(Table4)
+      setOptStatus(Table5)
+    } else {
+      message.error(response.msg)
+      console.error('API Error:', response.msg);  // Logging the error message
+    }
+  };
+
+  //  fUNCTION TO FETCH RAW MATERIALS
+  const FetchRawMaterials = async () => {
+    setLoading(true);
+    const values = SearchForm.getFieldsValue();
+    try {
+      const param = `MATERIAL_FLAG=D&F_DATE=${values.F_DATE  || ''}&TO_DATE=${values.TO_DATE || ''}&GRADE_SRNO=${values.GRADE_SRNO || ''}&THICNESS_SRNO=${values.THICNESS_SRNO || ''}&WIDTH=${values.WIDTH || ''}&STATUS_SRNO=${values.STATUS_SRNO  || ''}&C_LOCATION=${values.C_LOCATION ||''}&USER_SRNO=${USER_SRNO}`
+      const response = await apiClient(`${API_BASE_URL}DtDashRawInventory?${param}`, 'GET');
+      if (response.msgId === 200) {
+        if (!response.data) { return; }
+        console.log(response.data);
+        
+        const row = response.data.Table[0];
+        const keyCardData = [
+          { title: 'Mother coil weight', value: row.T_MOTHER_WEIGHT || 0 },
+          { title: 'Semi-slitted weight', value: row.T_SLITTING_WEIGHT || 0},
+          { title: 'slitted weight', value: row.T_SLITTED_WEIGHT || 0 },
+          { title: 'Scrap', value: row.T_SCRAP || 0 },
+        ]
+
+        const gradeWiseStockDataTemp = response.data.Table1.map((item:any) => ({
+          name: item.GRADE,
+          value: item.T_WEIGHT
+      }));
+
+      debugger
+      // Transform data into required format
+      const gradeVendorDataTemp:any = [];
+      const locationSetTemp = new Set();
+
+      response.data.Table2.forEach((item:any )=> {
+        locationSetTemp.add(item.C_LOCATION);
+        let existingGrade = gradeVendorDataTemp.find((g:any) => g.grade === item.GRADE);
+
+        if (!existingGrade) {
+          existingGrade = { grade: item.GRADE };
+          gradeVendorDataTemp.push(existingGrade);
+        }
+
+        existingGrade[item.C_LOCATION] = item.T_WEIGHT;
+      });
+
+      // Convert Set to Array
+      const allLocationsTemp = Array.from(locationSetTemp);
+
+      // Fill missing location columns with 0
+      gradeVendorDataTemp.forEach((row:any) => {
+        allLocations.forEach((location:any) => {
+          if (!(location in row)) {
+            row[location] = 0;
+          }
+        });
+      });
+
+      
+        
+        setCARD_DATA(keyCardData);
+        setGradeWiseStockData(gradeWiseStockDataTemp);
+        setgradeVendorData(gradeVendorDataTemp);
+        setAllLocations(allLocationsTemp)
+        console.log(gradeVendorDataTemp,"gradeVendorDataTemp");
+        console.log(allLocationsTemp,"allLocationsTemp");
+        console.log(locationSetTemp,"locationSetTemp");
+        
+      } else {
+        message.error(response.msg)
+        console.error('API Error:', response.msg);  // Logging the error message
+      }
+    } catch (error) {
+      console.error('Error fetching raw materials:', error);
+      message.error('Failed to fetch raw materials');
+    }
+    setLoading(false);
+  };
 
   // Key Metrics Data
   const keyMetrics = [
-    { title: 'Mother coil weight', value: rawMaterials.reduce((acc:any, item:any) => acc + item.weight, 0)} ,
-    { title: 'Semi-slitted weight', value: slittingProcesses.reduce((acc, item) => acc + item.weight, 0) },
-    { title: 'Slit production weight', value: slittingProcesses.filter(p => p.status === 'Pending').reduce((acc, item) => acc + item.weight, 0) },
-    { title: 'Low Stock Alerts', value: rawMaterials.filter(m => m.weight < 10).length },
+    { title: 'Total Raw Material Received', value: 446566 },
+    { title: 'Total Slitted Weight', value: 4558 },
+    { title: 'Total Processed Weight', value: 584 },
+    { title: 'Remaining Stock', value: 6685 },
   ];
 
-  // Chart Data
-  const slittingWeightData = {
-    labels: ['Grade A', 'Grade B', 'Grade C'],
-    datasets: [
-      {
-        data: [120, 150, 100],
-        backgroundColor: ['#FF5733', '#FFBD33', '#33FF57'],
-      },
-    ],
-  };
-
-  const rawMaterialData = {
-    labels: ['2025-01-01', '2025-01-02', '2025-01-03'],
-    datasets: [
-      {
-        label: 'Raw Materials Received',
-        data: [120, 150, 100],
-        borderColor: '#4CAF50',
-        backgroundColor: 'rgba(76, 175, 80, 0.2)',
-        fill: true,
-      },
-    ],
-  };
-
-  // Table Columns
-  const columns = [
-    { title: 'Material SRNO', dataIndex: 'material_srno' },
-    { title: 'Vendor', dataIndex: 'vendor' },
-    { title: 'Challan No', dataIndex: 'challan_no' },
-    { title: 'Grade', dataIndex: 'grade' },
-    { title: 'Weight', dataIndex: 'weight' },
-    { title: 'Received Date', dataIndex: 'received_date' },
+  // Dummy Data for Charts
+  const stockData = [
+    { name: 'Received', value: 446566 },
+    { name: 'Slitted', value: 4558 },
+    { name: 'Processed', value: 584 },
+    { name: 'Remaining', value: 6685 },
   ];
 
-  const slittingColumns = [
-    { title: 'Slitting SRNO', dataIndex: 'slitting_srno' },
-    { title: 'Material SRNO', dataIndex: 'material_srno' },
-    { title: 'Slitting Date', dataIndex: 'slitting_date' },
-    { title: 'Weight', dataIndex: 'weight' },
-    { title: 'Status', dataIndex: 'status' },
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+
+  const materialGradeData = [
+    { grade: 'Grade A', VendorA: 300, VendorB: 400, VendorC: 200 },
+    { grade: 'Grade B', VendorA: 250, VendorB: 300, VendorC: 350 },
+    { grade: 'Grade C', VendorA: 200, VendorB: 150, VendorC: 100 },
   ];
 
-  // Date Change Handler
-  const handleDateChange = (date:any, dateString:any) => {
-    setFilters(prev => ({ ...prev, startDate: dateString[0], endDate: dateString[1] }));
-  };
+  const machineProcessingData = [
+    { machine: 'Machine A', weight: 200 },
+    { machine: 'Machine B', weight: 500 },
+    { machine: 'Machine C', weight: 300 },
+  ];
+
+  const weightStatusData = [
+    { name: 'Processed', size: 584 },
+    { name: 'In Stock', size: 6685 },
+    { name: 'Pending', size: 1000 },
+  ];
 
   return (
+    <ProtectedRoute>
     <div>
       <Row gutter={16}>
-      <Col span={21}>
-      <AntTitle level={2}>Advanced Dashboard</AntTitle>
-
-      </Col>
-    
-      <Col span={3}>
-        <Link href="/new-materials">
-          <Button type="primary" danger>
-            Add Raw Materials
-          </Button>
-        </Link>
-      </Col>
+        <Col span={21}>
+          <AntTitle level={2}>Advanced Dashboard</AntTitle>
+        </Col>
+        <Col span={3}>
+          <Link href="/new-materials">
+            <Button type="primary" danger>
+              Add Raw Materials
+            </Button>
+          </Link>
+        </Col>
       </Row>
+      
       <Row gutter={16}>
         <Col span={8}>
           <Card>
-            <DatePicker.RangePicker onChange={handleDateChange} />
+            <DatePicker.RangePicker  />
           </Card>
         </Col>
         <Col span={8}>
           <Card>
             <Select
+              mode="multiple"
               placeholder="Select Grade"
               onChange={value => setFilters(prev => ({ ...prev, grade: value }))}
               style={{ width: '100%' }}
@@ -139,13 +199,22 @@ const Dashboard = () => {
         </Col>
         <Col span={8}>
           <Card>
-            <Button type="primary" onClick={() => setFilters({ ...filters, status: 'Completed' })}>Completed Slitting</Button>
+            <Select
+              mode="multiple"
+              placeholder="Select Vendor"
+              onChange={value => setFilters(prev => ({ ...prev, vendor: value }))}
+              style={{ width: '100%' }}
+            >
+              <Select.Option value="VendorA">Vendor A</Select.Option>
+              <Select.Option value="VendorB">Vendor B</Select.Option>
+              <Select.Option value="VendorC">Vendor C</Select.Option>
+            </Select>
           </Card>
         </Col>
       </Row>
-
+      
       <Row gutter={16} style={{ marginTop: '20px' }}>
-        {keyMetrics.map(metric => (
+        {CARD_DATA?.map((metric:any) => (
           <Col span={6} key={metric.title}>
             <Card>
               <Statistic title={metric.title} value={metric.value} />
@@ -153,29 +222,43 @@ const Dashboard = () => {
           </Col>
         ))}
       </Row>
-
+      
       <Row gutter={16} style={{ marginTop: '20px' }}>
         <Col span={12}>
-          <Card title="Slitting Weight Distribution">
-            <Doughnut data={slittingWeightData} />
+          <Card title="Grade Wise Stock Distribution">
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie data={gradeWiseStockData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100}>
+                  {gradeWiseStockData.map((entry:any, index:any) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
           </Card>
         </Col>
         <Col span={12}>
-          <Card title="Raw Materials Over Time">
-            <Line data={rawMaterialData} />
+          <Card title="Material by Grade & Location">
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={gradeVendorData}>
+              <XAxis dataKey="grade" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              {allLocations.map((location:any, index:any) => (
+                <Bar key={location} dataKey={location} fill={["#0088FE", "#00C49F", "#FFBB28"][index % 3]} />
+              ))}
+              </BarChart>
+            </ResponsiveContainer>
           </Card>
         </Col>
       </Row>
-
-      <Row gutter={16} style={{ marginTop: '20px' }}>
-        <Col span={12}>
-          <Table columns={columns} dataSource={rawMaterials} rowKey="material_srno" />
-        </Col>
-        <Col span={12}>
-          <Table columns={slittingColumns} dataSource={slittingProcesses} rowKey="slitting_srno" />
-        </Col>
-      </Row>
+      
+      
     </div>
+    </ProtectedRoute>
   );
 };
 
