@@ -1,5 +1,5 @@
 "use client";
-
+import Cookies from "js-cookie"; // Import js-cookie
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Form, Input, Button, message, Card } from "antd";
@@ -7,6 +7,9 @@ import { Form, Input, Button, message, Card } from "antd";
 const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+// state for handle Error msg
+  const [errMsg, setErrMsg] = useState('');
+
 
   const onFinish = async (values: { username: string; password: string }) => {
     setLoading(true);
@@ -24,16 +27,22 @@ const LoginPage = () => {
 
       if (response.ok) {
         console.log(data,"login data"); // Debugging
-        
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
+        const expMin = Number(process.env.NEXT_PUBLIC_AUTH_EXPIRY_TIME || 30)
+        const expirationTime = new Date(new Date().getTime() + expMin * 60 * 1000);
+
+        Cookies.set("token", data.token, { expires: expirationTime, secure: false, sameSite: "strict" });
+        Cookies.set("user", JSON.stringify(data.user), { expires: expirationTime, secure: false, sameSite: "strict" });
+
+
         message.success("Login successful!");
         window.location.href = "/materials"; // Redirect to dashboard
         // router.push("/materials"); // Redirect to dashboard
       } else {
+        setErrMsg(data.message || "Invalid credentials");
         message.error(data.message || "Invalid credentials");
       }
     } catch (error) {
+      setErrMsg("Something went wrong. Please try again.");
       message.error("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
@@ -69,6 +78,8 @@ const LoginPage = () => {
             </Button>
           </Form.Item>
         </Form>
+        {/* Handle Error Msg */}
+        {errMsg && <div className="text-red-500 text-sm">{errMsg}</div>}
       </Card>
     </div>
   );

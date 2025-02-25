@@ -1,5 +1,5 @@
 import axios from 'axios';
-
+import Cookies from 'js-cookie';
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 
 // interface If_ApiResponse {
@@ -13,7 +13,7 @@ function getAuthHeaders(contentType: string): Record<string, string> {
   };
 
   // Example: Add an Authorization token if it's available in localStorage or cookies
-  const token = localStorage.getItem('authToken'); // Replace with your token retrieval logic
+  const token =  Cookies.get("token");
   if (token) {
       headers['Authorization'] = `Bearer ${token}`;
   }

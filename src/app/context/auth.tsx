@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Cookies from "js-cookie"; // Import js-cookie
 
 interface AuthContextType {
   user: any;
@@ -19,8 +20,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     debugger;
-    const token = localStorage.getItem("token");
-    const userData = localStorage.getItem("user");
+    // Check for token in cookies on mount
+    const token = Cookies.get("token");
+    const userData = Cookies.get("user");
+
     console.log(token, userData, "token and user data");  
     
     if (token && userData) {
@@ -30,15 +33,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const login = (token: string, userData: any) => {
-    localStorage.setItem("token", token);
-    localStorage.setItem("user", JSON.stringify(userData));
+    Cookies.set("token", token, { expires: 1, secure: true, sameSite: "strict" });
+    Cookies.set("user", JSON.stringify(userData), { expires: 1, secure: true, sameSite: "strict" });
     setUser(userData);
     router.push("/dashboard");
   };
 
   const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    Cookies.remove("token");
+    Cookies.remove("user");
     setUser(null);
     router.push("/login");
   };

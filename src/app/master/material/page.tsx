@@ -28,9 +28,9 @@ const EPage = () => {
       if (tabKey === "GRADE") {
         TBL_SRNO = 1;
       } else if (tabKey === "THICKNESS") {
-        TBL_SRNO = 2;
-      } else if (tabKey === "OD") {
         TBL_SRNO = 3;
+      } else if (tabKey === "OD") {
+        TBL_SRNO = 2;
       } else {  
         TBL_SRNO = 0;
       }

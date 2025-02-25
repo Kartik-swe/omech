@@ -1,4 +1,5 @@
-
+import { message } from 'antd';
+import Cookies from 'js-cookie';
 export interface ApiResponse<T = any> {
     msgId: number;
     msg: string;
@@ -21,7 +22,18 @@ export interface ApiResponse<T = any> {
   ): Promise<ApiResponse<T>> => {
     try {
       // Get JWT token from localStorage
-    const token = localStorage.getItem("token");
+    const token = Cookies.get("token");
+      // Chekc token and redirec to login
+    if (!token) {
+      message.error("Unauthorized. Please log in.");
+      console.warn("No token found. Redirecting to login...");
+      handleLogout();
+      return {
+        msgId: -1,
+        msg: "Unauthorized. Please log in.",
+      };
+    }
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -61,7 +73,7 @@ export interface ApiResponse<T = any> {
   
   // Function to handle logout
 const handleLogout = () => {
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
+  Cookies.remove("token");
+  Cookies.remove("user");
   window.location.href = "/login"; // Redirect to login page
 };
