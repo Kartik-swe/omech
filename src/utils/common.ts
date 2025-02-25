@@ -1,24 +1,26 @@
-// import Cookies from 'react-cookies';
-// Helper function to get cookie data
+import Cookies from 'js-cookie';
 // export const getCookieData = () => ({
-//     //default
-//     USER_SRNO: Cookies.load('USER_SRNO'),
-//     UT_SRNO: Cookies.load('UT_SRNO'),
-//     // USER_SRNO: Cookies.load('USER_SRNO'),
-//     HT_API_URL: Cookies.load('HT_API_URL'),
-//     AUTH_TOKEN: Cookies.load('AUTH_TOKEN'),
+//     USER_SRNO: 1,
+//     UT_SRNO: 1,
+//     API_BASE_URL:`${process.env.NEXT_PUBLIC_API_BASE_URL}api/omech/`,
+//     AUTH_TOKEN: '',
 // });
-export const getCookieData = () => ({
-    //default
-    USER_SRNO: 1,
-    UT_SRNO: 1,
-    // USER_SRNO: Cookies.load('USER_SRNO'),
-    API_BASE_URL:`${process.env.NEXT_PUBLIC_API_BASE_URL}api/omech/`,
-    AUTH_TOKEN: 'SDEDF3FVXR45',
-});
+
+
+export const getCookieData = () => {
+  const userData = Cookies.get("user");
+  const user = userData ? JSON.parse(userData) : null;
+
+  return {
+    USER_SRNO: user ? user.userId : null, // Get userId from stored user
+    UT_SRNO: user ? user.role : null, // Assuming role acts as a type identifier
+    API_BASE_URL: `${process.env.NEXT_PUBLIC_API_BASE_URL}api/omech/`,
+    AUTH_TOKEN: Cookies.get("token") || "",
+  };
+};
 
 export const getToken = () => {
-    return localStorage.getItem("token");
+    return Cookies.get("token");
   };
   
   export const isAuthenticated = () => {
@@ -26,7 +28,7 @@ export const getToken = () => {
   };
   
   export const logout = () => {
-    localStorage.removeItem("token");
+    Cookies.remove("token");
   };
 
   

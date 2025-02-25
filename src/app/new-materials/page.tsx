@@ -252,7 +252,7 @@ const RawMaterialDashboard = () => {
         RECEIVED_DATE: values.RECEIVED_DATE.format('YYYY-MM-DD') || null,
         MATERIAL_SCRAP: values.MATERIAL_SCRAP || null,
         MATERIAL_STATUS_SRNO: MATERIAL_STATUS_SRNO, //New
-        USER_SRNO: 1, // Example: replace with actual user ID
+        USER_SRNO: USER_SRNO, // Example: replace with actual user ID
         // MATERIAL_SRNO: 0, // Example: replace with actual user ID
       }
       const response = await apiClient(`${API_BASE_URL}IuRawMaterial`, 'POST', payload);

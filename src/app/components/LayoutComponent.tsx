@@ -36,20 +36,21 @@ const menuItems = [
         link: '/materials',
       },
       {
-        key: 'Raw_Materials12',
-        label: 'Shift Material',
-        link: '/materials/dash1',
-      },
-      {
         key: 'Raw_Materials2',
         label: 'Raw Material Stock',
         link: '/materials/dash2',
       },
       {
-        key: 'slitting_process',
-        label: 'Slitted Material Stock',
-        link: '/materials/dash3',
+        key: 'Raw_Materials12',
+        label: 'Shift Material',
+        link: '/materials/dash1',
       },
+      
+      // {
+      //   key: 'slitting_process',
+      //   label: 'Slitted Material Stock',
+      //   link: '/materials/dash3',
+      // },
       // {
       //   key: 'slitting_process2',
       //   label: 'Slitting History',
@@ -156,21 +157,21 @@ const menuItems = [
     icon: <DatabaseOutlined />,
     label: 'Master',
     subMenu: [
-      {
-        key: 'User Master',
-        label: 'usreMaster',
-        link: '/master/userMaster',
-      },
+      // {
+      //   key: 'User Master',
+      //   label: 'usreMaster',
+      //   link: '/master/userMaster',
+      // },
       {
         key: 'Grades & Thickness',
         label: 'Material',
         link: '/master/material',
       },
-      {
-        key: 'Vendors',
-        label: 'Vendors',
-        link: '/master/vendors',
-      },
+      // {
+      //   key: 'Vendors',
+      //   label: 'Vendors',
+      //   link: '/master/vendors',
+      // },
       {
         key: 'users',
         label: 'Users',
