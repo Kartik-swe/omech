@@ -423,7 +423,7 @@ const RawMaterialDashboard = () => {
         <RecursiveNestedTable data={slittingHistory1[selectedMaterial.MATERIAL_SRNO]} />
       )} */}
 
-<SlitTable mainTableData={rawMaterials} slittingData={slittingData} setSlitingLevvel={setSlitingLevvel} setSelectedMaterial={setSelectedMaterial} setModalVisible={setModalVisible} updateSlittedStatus={updateSlittedStatus} />
+{/* <SlitTable mainTableData={rawMaterials} slittingData={slittingData} setSlitingLevvel={setSlitingLevvel} setSelectedMaterial={setSelectedMaterial} setModalVisible={setModalVisible} updateSlittedStatus={updateSlittedStatus} /> */}
        <Modal
       title="Slit Material"
       visible={modalVisible}

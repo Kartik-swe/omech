@@ -13,11 +13,23 @@ export const getCookieData = () => ({
     USER_SRNO: 1,
     UT_SRNO: 1,
     // USER_SRNO: Cookies.load('USER_SRNO'),
-    API_BASE_URL:'https://localhost:7135/api/omech/',
+    API_BASE_URL:`${process.env.NEXT_PUBLIC_API_BASE_URL}api/omech/`,
     AUTH_TOKEN: 'SDEDF3FVXR45',
 });
 
+export const getToken = () => {
+    return localStorage.getItem("token");
+  };
+  
+  export const isAuthenticated = () => {
+    return !!getToken();
+  };
+  
+  export const logout = () => {
+    localStorage.removeItem("token");
+  };
 
+  
 export const getSelectedText = (value: number, options: any[]): string => {
     const selectedOption = options.find((option:any) => option.value === value);
     return selectedOption ? selectedOption.label : '';

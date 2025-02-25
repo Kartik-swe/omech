@@ -73,3 +73,30 @@ background-color: rgb(32, 28, 28) !important;
 color: white;
 } 
 
+
+
+/* Diifrent css for diffrent table */
+/* Ensure only the outer table gets the blue background */
+
+
+/* Ensure only the nested (inner) table gets the red background */
+.table-red > .ant-table-wrapper {
+  background-color: #ffebee !important; /* Light red */
+}
+
+/* Apply styles only to the table header of the nested table */
+.table-red .ant-table-thead > tr > th {
+  background-color: #f44336 !important; /* Red */
+  color: white !important;
+}
+
+
+.table-blue > .ant-table-wrapper {
+  background-color: #e3f2fd !important; /* Light blue */
+}
+
+/* Apply styles only to the table header of the outer table */
+.table-blue .ant-table-thead > tr > th {
+  background-color: #2196f3 !important; /* Blue */
+  color: white !important;
+}

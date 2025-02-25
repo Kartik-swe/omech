@@ -25,11 +25,11 @@ const menuItems = [
     icon: <DashboardOutlined />,
     label: 'Dashboard',
     subMenu: [
-      {
-        key: 'Dashboard',
-        label: 'Dashboard',
-        link: '/dashboard',
-      },
+      // {
+      //   key: 'Dashboard',
+      //   label: 'Dashboard',
+      //   link: '/dashboard',
+      // },
       {
         key: 'Raw_Materials',
         label: 'Raw Materials',
@@ -37,139 +37,139 @@ const menuItems = [
       },
       {
         key: 'Raw_Materials12',
-        label: 'Raw Materials',
+        label: 'Shift Material',
         link: '/materials/dash1',
       },
       {
         key: 'Raw_Materials2',
-        label: 'Raw Materials 2',
+        label: 'Raw Material Stock',
         link: '/materials/dash2',
       },
       {
         key: 'slitting_process',
-        label: 'Slitting Process',
+        label: 'Slitted Material Stock',
         link: '/materials/dash3',
       },
-      {
-        key: 'slitting_process2',
-        label: 'Slitting History',
-        link: '/materials/dash4',
-      },
+      // {
+      //   key: 'slitting_process2',
+      //   label: 'Slitting History',
+      //   link: '/materials/dash4',
+      // },
     ]
   },
-  {
-    key: 'management',
-    icon: <DatabaseOutlined />,
-    label: 'Management',
-    subMenu: [
+  // {
+  //   key: 'management',
+  //   icon: <DatabaseOutlined />,
+  //   label: 'Management',
+  //   subMenu: [
       
-      {
-        key: 'inventoryMaster',
-        label: 'Inventory Master',
-        link: '/inventory-master',
-      },
-      {
-        key: 'inventory',
-        label: 'Inventory',
-        link: '/inventory',
-      },
-      {
-        key: 'machine',
-        label: 'Machine',
-        link: '/machine',
-      },
-      {
-        key: 'production1',
-        label: 'Production',
-        link: '/production',
-      },
-    ],
-  },{
-    key: 'management1',
-    icon: <DatabaseOutlined />,
-    label: 'Management',
-    subMenu: [
-      {
-        key: 'products',
-        label: 'Products',
-        link: '/products',
-      },
-      {
-        key: 'inventory',
-        label: 'Inventory',
-        link: '/inventory',
-      },
-      {
-        key: 'inventory1',
-        label: 'Inventory 1',
-        link: '/inventory1',
-      },
-      {
-        key: 'inventory2',
-        label: 'Inventory 2',
-        link: '/inventory2',
-      },
-      {
-        key: 'production',
-        label: 'Production',
-        link: '/production',
-      },
-    ],
-  },
+  //     {
+  //       key: 'inventoryMaster',
+  //       label: 'Inventory Master',
+  //       link: '/inventory-master',
+  //     },
+  //     {
+  //       key: 'inventory',
+  //       label: 'Inventory',
+  //       link: '/inventory',
+  //     },
+  //     {
+  //       key: 'machine',
+  //       label: 'Machine',
+  //       link: '/machine',
+  //     },
+  //     {
+  //       key: 'production1',
+  //       label: 'Production',
+  //       link: '/production',
+  //     },
+  //   ],
+  // },{
+  //   key: 'management1',
+  //   icon: <DatabaseOutlined />,
+  //   label: 'Management',
+  //   subMenu: [
+  //     {
+  //       key: 'products',
+  //       label: 'Products',
+  //       link: '/products',
+  //     },
+  //     {
+  //       key: 'inventory',
+  //       label: 'Inventory',
+  //       link: '/inventory',
+  //     },
+  //     {
+  //       key: 'inventory1',
+  //       label: 'Inventory 1',
+  //       link: '/inventory1',
+  //     },
+  //     {
+  //       key: 'inventory2',
+  //       label: 'Inventory 2',
+  //       link: '/inventory2',
+  //     },
+  //     {
+  //       key: 'production',
+  //       label: 'Production',
+  //       link: '/production',
+  //     },
+  //   ],
+  // },
   // {
   //   key: 'orders',
   //   icon: <ShoppingCartOutlined />,
   //   label: 'Orders',
   //   link: '/orders',
   // },
-  {
-    key: 'resources',
-    icon: <BuildOutlined />,
-    label: 'Resources',
-    subMenu: [
-      {
-        key: 'materials',
-        label: 'Materials',
-        link: '/materials',
-      },
-      {
-        key: 'suppliers',
-        label: 'Suppliers',
-        link: '/suppliers',
-      },
-    ],
-  },
+  // {
+  //   key: 'resources',
+  //   icon: <BuildOutlined />,
+  //   label: 'Resources',
+  //   subMenu: [
+  //     {
+  //       key: 'materials',
+  //       label: 'Materials',
+  //       link: '/materials',
+  //     },
+  //     {
+  //       key: 'suppliers',
+  //       label: 'Suppliers',
+  //       link: '/suppliers',
+  //     },
+  //   ],
+  // },
   // {
   //   key: 'transactions',
   //   icon: <SyncOutlined />,
   //   label: 'Transactions',
   //   link: '/transactions',
   // },
-  {
-    key: 'reports',
-    icon: <BarChartOutlined />,
-    label: 'Reports',
-    link: '/reports',
-  },
+  // {
+  //   key: 'reports',
+  //   icon: <BarChartOutlined />,
+  //   label: 'Reports',
+  //   link: '/reports',
+  // },
   {
     key: 'master',
     icon: <DatabaseOutlined />,
     label: 'Master',
     subMenu: [
       {
-        key: 'inventory-stock',
-        label: 'Inventory Stock',
-        link: '/master/inventory-stock',
+        key: 'User Master',
+        label: 'usreMaster',
+        link: '/master/userMaster',
       },
       {
-        key: 'material',
+        key: 'Grades & Thickness',
         label: 'Material',
         link: '/master/material',
       },
       {
-        key: 'production',
-        label: 'Production',
-        link: '/master/production',
+        key: 'Vendors',
+        label: 'Vendors',
+        link: '/master/vendors',
       },
       {
         key: 'users',

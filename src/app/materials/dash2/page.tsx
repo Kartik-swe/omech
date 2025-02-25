@@ -1,91 +1,77 @@
 "use client"
 import React, { useState, useEffect } from 'react';
-import { Layout, Row, Col, Card, Select, DatePicker, Input, Button, Radio, Table, Space, message } from 'antd';
+import { Layout, Row, Col, Card, Select, DatePicker, Input, Button, Radio, Table, Space, message, Form } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
-import dayjs from 'dayjs';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { apiClient } from '@/utils/apiClient';
-import moment from 'moment';
+import { getCookieData } from '@/utils/common';
+import RawInventoryDtl from '@/app/components/RawInvetoryDtl';
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
 
 const Dashboard = () => {
-  const [filters, setFilters] = useState({
-    dateRange: [null, null],
-    vendor: null,
-    grade: null,
-    width: null,
-    thickness: null,
-    status: null,
-    searchText: '',
-    isSlitted: null,
-  });
-  const [data, setData] = useState<any>([]);
-  const [loading, setLoading] = useState(false);
-  const [rawMaterials, setRawMaterials] = useState<any[]>([]);
-    const [slittingData, setslittingData] = useState<any[]>([]);
-    const [slittingHistory1, setSlittingHistory] = useState<{ [key: number]: any[] }>({});
+  // States for data and loading
+  const [DT_DATA, setDT_DATA] = useState<any>([]);
+  const [loading, setLoading] = useState(true);
+ // state for grade options with interface
+  const [optGrades, setOptGrades] = useState<{ label: string; value: string }[]>([]);
+  const [optThickNess, setoptThickNess] = useState<{ label: string; value: string }[]>([]);
+  const [optVendors, setOptVendors] = useState<{ label: string; value: string }[]>([]);
+  const [optStatus, setOptStatus] = useState<{ label: string; value: string }[]>([]);
+  const cookiesData = getCookieData();
+  const { USER_SRNO, API_BASE_URL, UT_SRNO } = cookiesData;
+  const [SearchForm] = Form.useForm();
 
-    useEffect(() => {
-        FetchRawMaterials();
-  
+  // States for Show Modal of Raw Inventory Detail
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedMaterialSrnos, setSelectedMaterialSrnos] = useState<any>(null);
+  const [selectedSlittingSrnos, setSelectedSlittingSrnos] = useState<any>(null);
+  const [selectedCoilTypeFlag, setSelectedCoilTypeFlag] = useState<any>(null);
+
+
+  useEffect(() => {
+    FetchPlCommon();
+    FetchRawMaterials();
   }, []);
-// get data from api
+
+  //clear selected srnos
+  useEffect(() => {
+    console.log(selectedMaterialSrnos, selectedSlittingSrnos);
+    
+    
+    if (!!!modalVisible) {
+      setSelectedMaterialSrnos(null);
+      setSelectedSlittingSrnos(null);
+    }
+  }, [modalVisible]);
+
+  // Function to fetch common dropdown options
+  const FetchPlCommon = async () => {
+    const response = await apiClient<Record<string, any>>(`${API_BASE_URL}Pl_Common?USER_SRNO=${USER_SRNO}&UT_SRNO=${UT_SRNO}&TBL_SRNO=1,3,4,5`, 'GET');
+    if (response.msgId === 200) {
+      if (!response.data) { return; }
+      const { Table1, Table3, Table4, Table5 } = response.data;
+      setOptGrades(Table1)
+      setoptThickNess(Table3)
+      setOptVendors(Table4)
+      setOptStatus(Table5)
+    } else {
+      message.error(response.msg)
+      console.error('API Error:', response.msg);  // Logging the error message
+    }
+  };
+
   //  fUNCTION TO FETCH RAW MATERIALS
   const FetchRawMaterials = async () => {
+    setLoading(true);
+    const values = SearchForm.getFieldsValue();
     try {
-      const response = await apiClient('/api/Matarials/Raw', 'GET');
-      
-      
-      if (response.msgId === 1) {
-        if (!response.data) {
-          
-          return;
-        }
-        const RAW_MATERIALS_DATA = response.data.RAW_MATERIALS.map((material: any, index: number) => ({
-          key: material.MATERIAL_SRNO,
-          CHALLAN_NO: material.CHALLAN_NO,
-          RECEIVED_DATE: moment(material.RECEIVED_DATE).format('YYYY-MM-DD'),
-          MATERIAL_GRADE: material.MATERIAL_GRADE,
-          MATERIAL_THICKNESS: material.MATERIAL_THICKNESS,
-          MATERIAL_WIDTH: material.MATERIAL_WIDTH,
-          MATERIAL_WEIGHT: material.MATERIAL_WEIGHT,
-          remainingWeight: material.WEIGHT,
-          MATERIAL_SRNO: material.MATERIAL_SRNO,
-        }));
-
-        // Populate slitting history for each raw material
-       const SLIT_DATA =  response.data.RAW_MATERIALS.forEach((material: any) => {
-          // Filter slitting processes for the current raw material
-          const filteredSlits = response.data.SLIT_PROCESSES.filter(
-            (slit: any) => material.MATERIAL_SRNO === slit.MATERIAL_SRNO
-          );
-
-          // Map filtered slitting data to the required structure
-          slittingHistory1[material.MATERIAL_SRNO] = filteredSlits.map((slit: any) => ({
-            key: slit.SLITTING_SRNO,
-            DC_NO: slit.DC_NO || '-',
-            SLITTING_DATE: moment(slit.SLITTING_DATE).format('YYYY-MM-DD'),
-            SLITTING_WIDTH: slit.SLITTING_WIDTH,
-            SLITTING_WEIGHT: slit.SLITTING_WEIGHT,
-            MATERIAL_SRNO: slit.MATERIAL_SRNO,
-            SLITTING_LEVEL: slit.SLITTING_LEVEL,
-            SLITTING_SRNO_FK : slit.SLITTING_SRNO,
-          }));
-        });
-        
-        setslittingData(response.data.SLIT_PROCESSES)
-
-        // const slittingHistory = {
-        //   1: [{ DC_NO: "DC123", SLITTING_DATE: "2025-01-10" }],
-        //   2: [{ DC_NO: "DC124", SLITTING_DATE: "2025-01-11" }],
-        // };
-        setRawMaterials(RAW_MATERIALS_DATA);
-       setSlittingHistory(slittingHistory1);
-        
-
-        
+      const param = `MATERIAL_FLAG=${values.MATERIAL_FLAG || ''}&F_DATE=${values.F_DATE  || ''}&TO_DATE=${values.TO_DATE || ''}&GRADE_SRNO=${values.GRADE_SRNO || ''}&THICNESS_SRNO=${values.THICNESS_SRNO || ''}&WIDTH=${values.WIDTH || ''}&STATUS_SRNO=${values.STATUS_SRNO  || ''}&C_LOCATION=${values.C_LOCATION ||''}&USER_SRNO=${USER_SRNO}`
+      const response = await apiClient(`${API_BASE_URL}DtDashRawInventory?${param}`, 'GET');
+      if (response.msgId === 200) {
+        if (!response.data) { return; }
+        setDT_DATA(response.data.Table);
       } else {
         message.error(response.msg)
         console.error('API Error:', response.msg);  // Logging the error message
@@ -94,215 +80,204 @@ const Dashboard = () => {
       console.error('Error fetching raw materials:', error);
       message.error('Failed to fetch raw materials');
     }
+    setLoading(false);
   };
 
-
-  const handleDateRangeChange = (dates:any) => {
-    setFilters({ ...filters, dateRange: dates });
+  // Function to handle click of quantity
+  const handleQuantityClick = (record: any) => {
+    setModalVisible(true);
+    setSelectedMaterialSrnos(record.MATERIAL_SRNOS);
+    setSelectedSlittingSrnos(record.SLITTING_SRNOS);
+    setSelectedCoilTypeFlag(record.COIL_TYPE_FLAG);
   };
-
-  const handleVendorChange = (value:any) => {
-    setFilters({ ...filters, vendor: value });
-  };
-
-  const handleGradeChange = (value:any) => {
-    setFilters({ ...filters, grade: value });
-  };
-
-  const handleStatusChange = (value:any) => {
-    setFilters({ ...filters, status: value });
-  };
-
-  const handleSearchChange = (e:any) => {
-    setFilters({ ...filters, searchText: e.target.value });
-  };
-
-  const handleSlittedChange = (e:any) => {
-    setFilters({ ...filters, isSlitted: e.target.value });
-  };
-
-  const clearFilters = () => {
-    setFilters({
-      dateRange: [null, null],
-      vendor: null,
-      grade: null,
-      width: null,
-      thickness: null,
-      status: null,
-      searchText: '',
-      isSlitted: null,
-    });
-  };
-
-  // Simulated API call to fetch data based on filters
-  useEffect(() => {
-    setLoading(true);
-    const fetchData = () => {
-      // Simulate fetching filtered data from an API
-      setTimeout(() => {
-        const filteredData = [
-          { name: 'Vendor 1', grade: 'Grade 1', status: 'Active', width: 120, thickness : 1.5 , slitted: true },
-          { name: 'Vendor 2', grade: 'Grade 2', status: 'Inactive', width: 80, thickness : 2.0 , slitted: false },
-          // Add more data objects for simulation
-        ];
-        setData(filteredData);
-        setLoading(false);
-      }, 1000); // Simulating network delay
-    };
-    fetchData();
-  }, [filters]);
-
-  // Pie chart data for status
-  const statusData = [
-    { name: 'Active', value: data.filter((d:any) => d.status === 'Active').length },
-    { name: 'Inactive', value: data.filter((d:any) => d.status === 'Inactive').length },
-  ];
-
-  // Bar chart data for slitted vs not slitted
-  const slittedData = [
-    { name: 'Slitted', value: data.filter((d:any) => d.slitted).length },
-    { name: 'Not Slitted', value: data.filter((d:any) => !d.slitted).length },
-  ];
 
   // Table columns for data
   const columns = [
-    { title: 'Vendor', dataIndex: 'name', key: 'name' },
-    { title: 'Grade', dataIndex: 'grade', key: 'grade' },
-    { title: 'width', dataIndex: 'width', key: 'width' },
-    { title: 'thickness', dataIndex: 'thickness', key: 'thickness' },
-    { title: 'Slitted', dataIndex: 'slitted', key: 'slitted', render: (text:any) => (text ? 'Yes' : 'No') },
-    { title: 'Status', dataIndex: 'status', key: 'status' },
+    {
+      title: 'Challan No.',
+      dataIndex: 'CHALLAN_NO',
+      key: 'CHALLAN_NO',
+    },
+    {
+      title: 'Location',
+      dataIndex: 'C_LOCATION',
+      key: 'C_LOCATION',
+    },
+    {
+      title: 'Width',
+      dataIndex: 'BALANCE_WIDTH',
+      key: 'BALANCE_WIDTH',
+    },  
+    {
+      title: 'Weight',
+      dataIndex: 'BALANCE_WEIGHT',
+      key: 'BALANCE_WEIGHT',
+    },  
+    {
+      title: 'Grade',
+      dataIndex: 'GRADE',
+      key: 'GRADE',
+    },
+    
+    {
+      title: 'Thickness',
+      dataIndex: 'THICKNESS',
+      key: 'THICKNESS',
+    },
+    {
+      title: 'Status',
+      dataIndex: 'STATUS_NAME',
+      key: 'STATUS_NAME',
+    },
+    {
+      title: 'Source',
+      dataIndex: 'COIL_TYPE',
+      key: 'COIL_TYPE',
+    },
+    {
+      title: 'Quantity',
+      key: 'QUANTITY',
+      render: (text: any, record: any) => (
+      <Space size="middle">
+        <a onClick={() => handleQuantityClick(record)}>{record.QUANTITY}</a>
+      </Space>
+      ),
+    }
+    
   ];
-
+  
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Layout.Content style={{ padding: '0 50px', marginTop: 64 }}>
+      <Layout.Content style={{ padding: '0 20px', marginTop: 64 }}>
         <Row gutter={16} style={{ marginBottom: 20 }}>
-          <Col span={8}>
+         {modalVisible &&  <RawInventoryDtl modalVisible={modalVisible} setModalVisible={setModalVisible} selectedMaterialSrnos={selectedMaterialSrnos} selectedSlittingSrnos={selectedSlittingSrnos}  selectedCoilTypeFlag={selectedCoilTypeFlag} /> }
+          <Col span={6}>
             <Card title="Filters" bordered={false}>
-              <Space direction="vertical" size={12} style={{ width: '100%' }}>
-                {/* Date Range Filter */}
-                <RangePicker
-                //   value={filters.dateRange}
-                  onChange={handleDateRangeChange}
+                <Form layout="vertical" form={SearchForm} onReset={() => SearchForm.resetFields()}>
+                <Form.Item name={['MATERIAL_FLAG']} style={{ marginBottom: 8 }} initialValue={'A'}>
+                  <Radio.Group onChange={FetchRawMaterials}  size='small'>
+                  <Radio value={'A'} checked={true} >All</Radio>
+                  <Radio value={'M'}>Mother</Radio>
+                  <Radio value={'P'}>Semi Slitted</Radio>
+                  <Radio value={'S'}>Slitted</Radio>
+                  </Radio.Group>
+                </Form.Item>
+                <Form.Item name={['RECEIVED_DATE_RANGE']} style={{ marginBottom: 8 }} hidden>
+                  <RangePicker
+                  onChange={FetchRawMaterials}
                   format="YYYY-MM-DD"
                   style={{ width: '100%' }}
-                />
+                  allowClear
+                  />
+                </Form.Item>
 
-                {/* Vendor Filter */}
-                <Select
-                  value={filters.vendor}
-                  onChange={handleVendorChange}
-                  placeholder="Select Vendor"
+                <Form.Item name={['C_LOCATION']} style={{ marginBottom: 8 }}>
+                  <Select 
+                  showSearch
+                  onChange={FetchRawMaterials}
+                  placeholder="Select Location" 
+                  options={optVendors} 
+                  filterOption={(input: any, option: any) => option?.label.toLowerCase().includes(input.toLowerCase())}
+                  allowClear
+                  />
+                </Form.Item>
+
+                <Form.Item name={['GRADE_SRNO']} style={{ marginBottom: 8 }}>
+                  <Select 
+                  showSearch 
+                  onChange={FetchRawMaterials}
+                  placeholder="Select Grade" 
+                  options={optGrades} 
+                  filterOption={(input: any, option: any) => option?.label.toLowerCase().includes(input.toLowerCase())}
+                  allowClear
+                  />
+                </Form.Item>
+
+                <Form.Item name={['WIDTH']} style={{ marginBottom: 8 }}>
+                  <Input
+                  onChange={FetchRawMaterials}
+                  placeholder="Enter width"
                   style={{ width: '100%' }}
                   allowClear
-                >
-                  <Option value="vendor1">Vendor 1</Option>
-                  <Option value="vendor2">Vendor 2</Option>
-                </Select>
+                  />
+                </Form.Item>
 
-                {/* Grade Filter */}
-                <Select
-                  value={filters.grade}
-                  onChange={handleGradeChange}
-                  placeholder="Select Grade"
-                  style={{ width: '100%' }}
+                <Form.Item name={['THICNESS_SRNO']} style={{ marginBottom: 8 }}>
+                  <Select 
+                  showSearch 
+                  onChange={FetchRawMaterials}
+                  placeholder="Select Thickness" 
+                  options={optThickNess} 
+                  filterOption={(input: any, option: any) => option?.label.toLowerCase().includes(input.toLowerCase())}
                   allowClear
-                >
-                  <Option value="grade1">Grade 1</Option>
-                  <Option value="grade2">Grade 2</Option>
-                </Select>
-                {/* Grade WIDTH */}
-                <Input
-                //   value={filters.width}
-                //   onChange={handleGradeChange}
-                  placeholder="Select width"
-                  style={{ width: '100%' }}
-                  allowClear
-               />
-               
+                  />
+                </Form.Item>
 
-                {/* thickenss Filter */}
-                <Select
-                  value={filters.thickness}
-                //   onChange={handleGradeChange}
-                  placeholder="Select thickness"
-                  style={{ width: '100%' }}
-                  allowClear
-                >
-                  <Option value="grade1">1.5 mm</Option>
-                  <Option value="grade2">2.0 mm</Option>
-                </Select>
-
-                {/* Status Filter */}
-                <Select
-                  value={filters.status}
-                  onChange={handleStatusChange}
+                <Form.Item name={['STATUS_SRNO']} style={{ marginBottom: 8 }}>
+                  <Select
+                  onChange={FetchRawMaterials}
                   placeholder="Select Status"
                   style={{ width: '100%' }}
+                  options={optStatus} 
+                  filterOption={(input: any, option: any) => option?.label.toLowerCase().includes(input.toLowerCase())}
                   allowClear
-                >
-                  <Option value="active">Active</Option>
-                  <Option value="inactive">Inactive</Option>
-                </Select>
+                  >
+                  
+                  </Select>
+                </Form.Item>
 
-                {/* Search Filter */}
-                <Input
-                  value={filters.searchText}
-                  onChange={handleSearchChange}
+                <Form.Item name={['SEARCH_TEXT']} style={{ marginBottom: 8 }}>
+                  <Input
+                  onChange={FetchRawMaterials}
                   placeholder="Search"
                   prefix={<SearchOutlined />}
-                />
+                  allowClear
+                  />
+                </Form.Item>
 
-                {/* Slitted Filter */}
-                <Radio.Group onChange={handleSlittedChange} value={filters.isSlitted}>
-                  <Radio value={null}>All</Radio>
-                  <Radio value={true}>Slitted</Radio>
-                  <Radio value={false}>Not Slitted</Radio>
-                </Radio.Group>
+                
 
-                {/* Clear Filters Button */}
-                <Button type="default" onClick={clearFilters} style={{ width: '100%' }}>
+                <Form.Item style={{ marginBottom: 8 }}>
+                  <Button type="default"  style={{ width: '100%' }} onClick={() => { SearchForm.resetFields(); setDT_DATA([]); }}>
                   Clear Filters
-                </Button>
-              </Space>
+                  </Button>
+                </Form.Item>
+                </Form>
             </Card>
           </Col>
 
-          <Col span={16}>
+          <Col span={18}>
             <Card title="Data Overview" bordered={false}>
-                {/* Displaying Table with Data */}
+              {/* Displaying Table with Data */}
               <Table
-                dataSource={data}
+                dataSource={DT_DATA}
                 columns={columns}
                 loading={loading}
                 rowKey="name"
-                pagination={{ pageSize: 5 }}
+                pagination={{ pageSize: 10 }}
                 style={{ marginTop: 20 }}
+                summary={(pageData) => {
+                  let totalWeight = 0;
+                  pageData.forEach(({ BALANCE_WEIGHT, QUANTITY }) => {
+                    totalWeight += BALANCE_WEIGHT * QUANTITY;
+                    totalWeight = Number(totalWeight.toFixed(2));
+                  });
+                  return (
+                    <Table.Summary.Row>
+                      <Table.Summary.Cell index={0} colSpan={1}>
+                        <strong>Total</strong>
+                      </Table.Summary.Cell>
+                      <Table.Summary.Cell index={1}>
+                        {/* <strong>{totalWeightstr} kg</strong> */}
+                      </Table.Summary.Cell>
+                      <Table.Summary.Cell index={1}>
+                        <strong>{totalWeight} kg</strong>
+                      </Table.Summary.Cell>
+                     
+                    </Table.Summary.Row>
+                  );
+                }}
               />
-              {/* Displaying Pie Chart for Status */}
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie data={statusData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} fill="#8884d8" label>
-                    {statusData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={index % 2 === 0 ? '#8884d8' : '#82ca9d'} />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-
-              {/* Displaying Bar Chart for Slitted vs Not Slitted */}
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={slittedData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="value" fill="#82ca9d" />
-                </BarChart>
-              </ResponsiveContainer>
-
               
             </Card>
           </Col>
