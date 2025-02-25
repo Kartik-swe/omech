@@ -93,11 +93,11 @@ const Dashboard = () => {
 
   // Table columns for data
   const columns = [
-    {
-      title: 'Challan No.',
-      dataIndex: 'CHALLAN_NO',
-      key: 'CHALLAN_NO',
-    },
+    // {
+    //   title: 'Challan No.',
+    //   dataIndex: 'CHALLAN_NO',
+    //   key: 'CHALLAN_NO',
+    // },
     {
       title: 'Location',
       dataIndex: 'C_LOCATION',
@@ -226,7 +226,7 @@ const Dashboard = () => {
                   </Select>
                 </Form.Item>
 
-                <Form.Item name={['SEARCH_TEXT']} style={{ marginBottom: 8 }}>
+                <Form.Item name={['SEARCH_TEXT']} style={{ marginBottom: 8 }} hidden>
                   <Input
                   onChange={FetchRawMaterials}
                   placeholder="Search"

@@ -177,7 +177,7 @@ const Dashboard = () => {
         </Col>
       </Row>
       
-      <Row gutter={16}>
+      <Row gutter={16} hidden> 
         <Col span={8}>
           <Card>
             <DatePicker.RangePicker  />
