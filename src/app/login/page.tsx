@@ -41,7 +41,10 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100">
+    <div
+    className="absolute top-0 left-0 w-full h-full flex justify-center items-center bg-gray-100"
+    style={{ zIndex: 9999 }}
+  >
       <Card title="Login" className="w-96 shadow-lg rounded-lg">
         <Form layout="vertical" onFinish={onFinish}>
           <Form.Item
