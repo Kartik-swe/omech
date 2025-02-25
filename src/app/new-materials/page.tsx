@@ -176,7 +176,7 @@ const RawMaterialDashboard = () => {
   const FetchRawMaterials = async () => {
     try {
       const values = SearchForm.getFieldsValue();
-      const query = `CHALLAN_NO=${values.CHALLAN_NO || ''}&DT_REG_FROM=${values.DT_REG_FROM || ''}&DT_REG_TO=${values.DT_REG_TO || ''}&SUPPLIER=${values.SUPPLIER || ''}&GRADE_SRNO=${values.GRADE_SRNO || ''}&THICKNESS_SRNO=${values.THICKNESS_SRNO || ''}`
+      const query = `CHALLAN_NO=${values.CHALLAN_NO || ''}&DT_REG_FROM=${values.DT_REG_FROM || ''}&DT_REG_TO=${values.DT_REG_TO || ''}&SUPPLIER=${values.SUPPLIER || ''}&GRADE_SRNO=${values.MATERIAL_GRADE_SRNO || ''}&THICKNESS_SRNO=${values.MATERIAL_THICKNESS_SRNO || ''}`
       console.log(values);
       
       const response = await apiClient(`${API_BASE_URL}DtRawMaterial?${query}`, 'GET');
@@ -354,13 +354,13 @@ const RawMaterialDashboard = () => {
       
       const payload = {
         IU_FLAG: 'I', // For insert
-        MATERIAL_SRNO: selectedMaterial.MATERIAL_SRNO, 
-        SLITTING_SRNO_FK: values.SLITTING_SRNO_FK, 
-        SLITTING_LEVEL: values.SLITTING_LEVEL,
-        SLITTING_DATE: values.SLITTING_DATE.format('YYYY-MM-DD'),
-        DC_NO: values.DC_NO,
+        MATERIAL_SRNO: selectedMaterial.MATERIAL_SRNO || 0, 
+        SLITTING_SRNO_FK: values.SLITTING_SRNO_FK || 0, 
+        SLITTING_LEVEL: values.SLITTING_LEVEL || 0,
+        SLITTING_DATE: values.SLITTING_DATE.format('YYYY-MM-DD') || null,
+        DC_NO: values.DC_NO || '',
         C_LOCATION: values.SLITTING_SHIFT_TO_SRNO,
-        SCRAP: values.SLITTING_SCRAP,
+        SCRAP: values.SLITTING_SCRAP ,
         STATUS_SRNO: 4,
         USER_SRNO: USER_SRNO,
         SlitDetails: values.SLITTING_DTL,
@@ -454,6 +454,17 @@ return (
               </Button>
               </Form.Item>
           </Col>
+          <Col span={3}>
+            {/* Search Button */}
+            <Form.Item>
+              
+                    <Button onClick={() => setMotherModalVisible(true)}  type="default" style={{ marginTop: '30px', width: '100%', backgroundColor: 'red', color: 'white' }}>
+                      Add Mother Coil
+                    </Button>
+              </Form.Item>
+          </Col>
+
+
           {/* <Col span={8}>
             <Form.Item name="MATERIAL_C_LOCATION_SRNO" label="Shift To" rules={[{ required: true, message: 'Please select Shift to' }]}>
               <Select
@@ -618,7 +629,7 @@ return (
               <Form.Item
                 name="DC_NO"
                 label="DC No"
-                rules={[{ required: true, message: 'Please enter DC number' }]}
+                rules={[{ required: false, message: 'Please enter DC number' }]}
               >
                 <Input placeholder="Enter DC No" />
               </Form.Item>
@@ -758,7 +769,7 @@ return (
                         }}
                       />
                     </Form.Item>
-
+                        
                     {/* Weight Field (Read-only, Validation Not Required) */}
                     <Form.Item
                       {...restField}
@@ -782,8 +793,9 @@ return (
                       rules={[{ required: true, message: 'Enter nos' },
                         {
                           validator: (_, value) => {
+                            const SLITTING_SCRAP = Number(slitForm.getFieldValue('SLITTING_SCRAP')) || 0;
                             const SLITTING_WIDTH = slitForm.getFieldValue('SLITTING_DTL')[name].SLITTING_WIDTH || 0;
-                            return value*SLITTING_WIDTH > Number(selectedMaterial?.remainingWidth)
+                            return (value*SLITTING_WIDTH) + SLITTING_SCRAP > Number(selectedMaterial?.remainingWidth)
                               ? Promise.reject(`Width cannot exceed total width of ${selectedMaterial?.remainingWidth} mm`)
                               : Promise.resolve();
                           },
