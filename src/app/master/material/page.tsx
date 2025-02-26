@@ -41,9 +41,9 @@ const EPage = () => {
         if (tabKey === "GRADE") {
           setTabData(response.data.Table1);
         } else if (tabKey === "THICKNESS") {
-          setTabData(response.data.Table2);
-        } else if (tabKey === "OD") {
           setTabData(response.data.Table3);
+        } else if (tabKey === "OD") {
+          setTabData(response.data.Table2);
         }     
         
       } else {
