@@ -282,7 +282,10 @@ const SlittingTable = ({ mainTableData, slittingData ,setSlitingLevvel, setSelec
     const filteredSlittingData = slittingData.filter(
       (item) => (item.MATERIAL_SRNO === record.MATERIAL_SRNO && item.SLITTING_LEVEL === 1 && item.SLITTING_SRNO_FK === null)  
     );
-    // console.log(filteredSlittingData, "filteredSlittingData");
+    console.log(record,"record");
+    
+    console.log(slittingData, "slittingData");
+    console.log(filteredSlittingData, "filteredSlittingData");
     
     // Calculate total slitted weight and width
     const totalSlittedWeight = filteredSlittingData.reduce((sum, item) => sum + (item.SLITTING_WEIGHT || 0), 0);
@@ -294,6 +297,9 @@ const SlittingTable = ({ mainTableData, slittingData ,setSlitingLevvel, setSelec
     const scrap_weight = ((record.MATERIAL_SCRAP * record.MATERIAL_WEIGHT / record.MATERIAL_WIDTH) || 0)
     const remainingWeight = (record.MATERIAL_WEIGHT || 0) - totalSlittedWeight - scrap_weight;
     const remainingWidth = (record.MATERIAL_WIDTH || 0) - totalSlittedWidth - (record.MATERIAL_SCRAP || 0);
+
+    console.log(totalSlittedWidth,'remainingWidth');
+    
 
     return {
       ...record,
