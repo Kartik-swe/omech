@@ -2,7 +2,7 @@
 import { RetweetOutlined, DollarCircleOutlined, BuildOutlined, SwapOutlined } from "@ant-design/icons";
 
 import React, { useState, useEffect } from "react";
-import { Card, Table, Row, Col, message, Button, Form, Input, Modal, Select, Tooltip, Spin, Tabs, Descriptions } from "antd";
+import { Card, Table, Row, Col, message, Button, Form, Input, Modal, Select, Tooltip, Spin, Tabs, Descriptions, Popconfirm } from "antd";
 import { apiClient } from "@/utils/apiClient";
 import { getCookieData } from "@/utils/common";
 import TextArea from "antd/es/input/TextArea";
@@ -15,12 +15,16 @@ const RawMaterialsShiftHis = () => {
   const [SlittedData, setSlittedData] = useState<any[]>([]);
   const [fetchCoilsData, setFetchCoilsData] = useState<any[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isStatusLogModalVisible, setisStatusLogModalVisible] = useState(false);
   const [selectedMaterial, setSelectedMaterial] = useState<any>(null);
   const [optVendors, setOptVendors] = useState<{ label: string; value: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("MOTHER");
 
   const [form] = Form.useForm();
+  const [searchForm] = Form.useForm();
+  const [statusLog] = Form.useForm();
+
 
   const cookiesData = getCookieData();
   const { USER_SRNO, API_BASE_URL, UT_SRNO } = cookiesData;
@@ -42,11 +46,11 @@ const RawMaterialsShiftHis = () => {
   };
 
   // Fetch Mother data
-  const fetchMotherCoil = async () => {
+  const fetchMotherCoil = async (queryString : string) => {
     try {
       setLoading(true);
       const MATERIAL_FLAG = "M"; // S for Slitted
-      const response = await apiClient(`${API_BASE_URL}DtRawMaterialShift?${USER_SRNO}&MATERIAL_FLAG=${MATERIAL_FLAG}`, "GET");
+      const response = await apiClient(`${API_BASE_URL}DtRawMaterialShift?${USER_SRNO}&MATERIAL_FLAG=${MATERIAL_FLAG}&${queryString}`, "GET");
 
       if (response.msgId === 200) {
         if (!response.data) return;
@@ -64,11 +68,11 @@ const RawMaterialsShiftHis = () => {
   };
 
   // Fetch semi-slitted data
-  const fetchSemiSlitted = async () => {
+  const fetchSemiSlitted = async (queryString : string) => {
     try {
       setLoading(true);
       const MATERIAL_FLAG ='P'
-      const response = await apiClient(`${API_BASE_URL}DtRawMaterialShift?${USER_SRNO}&MATERIAL_FLAG=${MATERIAL_FLAG}`, "GET");
+      const response = await apiClient(`${API_BASE_URL}DtRawMaterialShift?${USER_SRNO}&MATERIAL_FLAG=${MATERIAL_FLAG}&${queryString}`, "GET");
 
 
       if (response.msgId === 200) {
@@ -86,12 +90,12 @@ const RawMaterialsShiftHis = () => {
     }
   };
   // Fetch slitted data
-  const fetchSlitted = async () => {
+  const fetchSlitted = async (queryString : string) => {
     try {
       // alert("dfg")
       setLoading(true);
       const MATERIAL_FLAG ='S'
-      const response = await apiClient(`${API_BASE_URL}DtRawMaterialShift?${USER_SRNO}&MATERIAL_FLAG=${MATERIAL_FLAG}`, "GET");
+      const response = await apiClient(`${API_BASE_URL}DtRawMaterialShift?${USER_SRNO}&MATERIAL_FLAG=${MATERIAL_FLAG}&${queryString}`, "GET");
 
 
       if (response.msgId === 200) {
@@ -135,13 +139,21 @@ const RawMaterialsShiftHis = () => {
 
   useEffect(() => {
     FetchPlCommon();
-    fetchMotherCoil();
+    fetchMotherCoil('');
   }, []);
 
   // Handle "Shift" button click
   const handleShift = (record: any, flag: string) => {
     setSelectedMaterial({ ...record, flag });
     setIsModalVisible(true);
+  };
+
+  // Handle "Shift" button click
+  const handleStatusLog = (record: any, flag: string) => {
+    console.log(record);
+    
+    setSelectedMaterial({ ...record, flag });
+    setisStatusLogModalVisible(true);
   };
 
   // Handle Row Action 
@@ -224,13 +236,13 @@ const RawMaterialsShiftHis = () => {
         // add case statement for falg and call the appropriate function to refresh the table for M, P, S
         switch (flag) {
           case 'M':
-            fetchMotherCoil();
+            fetchMotherCoil('');
             break;
           case 'P':
-            fetchSemiSlitted();
+            fetchSemiSlitted('');
             break;
           case 'S':
-            fetchSlitted();
+            fetchSlitted('');
             break;
           default:
             break;
@@ -255,6 +267,66 @@ const RawMaterialsShiftHis = () => {
     form.resetFields();
   };
 
+
+   // Handle modal OK button click
+   const handleStatusLogOk = async () => {
+    try {
+      const values = await statusLog.validateFields();
+      const { flag } = selectedMaterial;
+      console.log(values);
+      
+      const payload = {
+        MATERIAL_SRNO: selectedMaterial.MATERIAL_SRNO ,
+        SLITTING_SRNO: flag==='M' ? null : selectedMaterial.SLITTING_SRNO ,
+        PRE_LOG_STATUS_SRNO: selectedMaterial.LOG_STATUS_SRNO,
+        DESCRIPTION: values.DESCRIPTION,
+        REMARKS: values.REMARKS,
+        STATUS_CHANGE_DATE: values.STATUS_CHANGE_DATE,
+        USER_SRNO: USER_SRNO,
+        UT_SRNO: UT_SRNO,
+        LOG_STATUS_SRNO: 0,
+      };
+
+      const response = await apiClient(`${API_BASE_URL}IuStatusLog`, "POST", payload);
+
+      if (response.msgId === 200) {
+        message.success("Issued successful!");
+        setisStatusLogModalVisible(false);
+        statusLog.resetFields();
+        // add case statement for falg and call the appropriate function to refresh the table for M, P, S
+        switch (flag) {
+          case 'M':
+            fetchMotherCoil('');
+            break;
+          case 'P':
+            fetchSemiSlitted('');
+            break;
+          case 'S':
+            fetchSlitted('');
+            break;
+          default:
+            break;
+        }
+        // isMotherCoil ? fetchSemiSlitted() : fetchMotherCoil(); // Refresh the appropriate table
+      } else {
+      alert(response.msg)
+      console.log(response.msgId);
+      
+
+        message.error(response.msg);
+      }
+    } catch (error: any) {
+      alert(error)
+      message.error(error.message);
+    }
+  };
+
+  // Handle modal Cancel button click
+  const handleStatusLogCancel = () => {
+    setisStatusLogModalVisible(false);
+    statusLog.resetFields();
+  };
+
   // Generate table columns
   const generateTableColumns = (flag: string) => {
     const baseColumns = [
@@ -277,6 +349,10 @@ const RawMaterialsShiftHis = () => {
       { title: "Coil Type", dataIndex: "COIL_TYPE", key: "COIL_TYPE" },
 
     ];
+    if (flag === 'F') {
+      baseColumns1.splice(1, 0, { title: "Tube Mill", dataIndex: "STATUS_lOG_DESC", key: "STATUS_lOG_DESC" });
+      baseColumns1.splice(1, 0, { title: "Issue Date", dataIndex: "STATUS_LOG_DATE", key: "STATUS_LOG_DATE" });
+    }
     if (flag === 'M' || flag === 'P' || flag === 'S') {
       baseColumns.splice(1, 0, { title: "Location", dataIndex: "FROM_LOCATION", key: "FROM_LOCATION" });
     }
@@ -293,6 +369,15 @@ const RawMaterialsShiftHis = () => {
         <div style={{ display: "flex", gap: "8px" }}>
       {/* Shift */}
       <Tooltip title={record.IS_RAW_SLITTED === 'Y' ? "Material already slitted" : "Shift to another location"}>
+      <Popconfirm
+                     className=""
+                     title="Shift to another location"
+                     description="Are you sure to confirm?"
+                     onConfirm={() =>  handleShift(record, flag)}
+                    //  onCancel={cancel}
+                     okText="Yes"
+                     cancelText="No"
+                   >
         <Button
           style={{
             backgroundColor: record.IS_RAW_SLITTED === 'Y' ? "#d9d9d9" : "#1890ff",
@@ -300,29 +385,49 @@ const RawMaterialsShiftHis = () => {
             color: "white",
             opacity: record.IS_RAW_SLITTED === 'Y' ? 0.5 : 1,
           }}
-          onClick={() => handleShift(record, flag)}
+          // onClick={() =>}
           disabled={record.IS_RAW_SLITTED === 'Y'}
           icon={<SwapOutlined />}
         />
+        </Popconfirm>
       </Tooltip>
 
       {/* Return */}
       <Tooltip title="Return material to supplier">
-        <Button
+      <Popconfirm
+                     className=""
+                     title="Return material to supplier"
+                     description="Are you sure to confirm?"
+                     onConfirm={() =>   handleRowAction(flag=='M' ? record.MATERIAL_SRNO : record.SLITTING_SRNO,flag,'R')}
+                    //  onCancel={cancel}
+                     okText="Yes"
+                     cancelText="No"
+                   >
+       <Button
           style={{
             backgroundColor: record.IS_RAW_SLITTED === 'Y' ? "#d9d9d9" : "#FFA500",
             borderColor: record.IS_RAW_SLITTED === 'Y' ? "#d9d9d9" : "#FFA500",
             color: "white",
             opacity: record.IS_RAW_SLITTED === 'Y' ? 0.5 : 1,
           }}
-          onClick={() => handleRowAction(flag=='M' ? record.MATERIAL_SRNO : record.SLITTING_SRNO,flag,'R')}
+          // onClick={() => handleRowAction(flag=='M' ? record.MATERIAL_SRNO : record.SLITTING_SRNO,flag,'R')}
           disabled={record.IS_RAW_SLITTED === 'Y'}
           icon={<RetweetOutlined />}
         />
+        </Popconfirm>
       </Tooltip>
 
       {/* Sell */}
       <Tooltip title="Sell material">
+      <Popconfirm
+                     className=""
+                     title="Sell Material"
+                     description="Are you sure to confirm?"
+                     onConfirm={() =>   handleRowAction(flag=='M' ? record.MATERIAL_SRNO : record.SLITTING_SRNO,flag,'S')}
+                    //  onCancel={cancel}
+                     okText="Yes"
+                     cancelText="No"
+                   >
         <Button
           style={{
             backgroundColor: record.IS_RAW_SLITTED === 'Y' ? "#d9d9d9" : "#008000",
@@ -330,14 +435,25 @@ const RawMaterialsShiftHis = () => {
             color: "white",
             opacity: record.IS_RAW_SLITTED === 'Y' ? 0.5 : 1,
           }}
-          onClick={() => handleRowAction(flag=='M' ? record.MATERIAL_SRNO : record.SLITTING_SRNO,flag,'S')}
+          // onClick={() => handleRowAction(flag=='M' ? record.MATERIAL_SRNO : record.SLITTING_SRNO,flag,'S')}
           disabled={record.IS_RAW_SLITTED === 'Y'}
           icon={<DollarCircleOutlined />}
         />
+        </Popconfirm>
       </Tooltip>
 
       {/* Shift to Production */}
       <Tooltip title="Shift material to production">
+      <Popconfirm
+                     className=""
+                     title="Shift material to production"
+                     description="Are you sure to confirm?"
+                    //  onConfirm={() =>   handleRowAction(flag=='M' ? record.MATERIAL_SRNO : record.SLITTING_SRNO,flag,'P')}
+                     onConfirm={() =>   handleStatusLog(record, flag)}
+                    //  onCancel={cancel}
+                     okText="Yes"
+                     cancelText="No"
+                   >
         <Button
           style={{
             backgroundColor: record.IS_RAW_SLITTED === 'Y' ? "#d9d9d9" : "#800080",
@@ -345,10 +461,11 @@ const RawMaterialsShiftHis = () => {
             color: "white",
             opacity: record.IS_RAW_SLITTED === 'Y' ? 0.5 : 1,
           }}
-          onClick={() => handleRowAction(flag=='M' ? record.MATERIAL_SRNO : record.SLITTING_SRNO,flag,'P')}
+          // onClick={() => handleRowAction(flag=='M' ? record.MATERIAL_SRNO : record.SLITTING_SRNO,flag,'P')}
           disabled={record.IS_RAW_SLITTED === 'Y'}
           icon={<BuildOutlined />}
         />
+        </Popconfirm>
       </Tooltip>
     </div>
       ),
@@ -370,15 +487,65 @@ const RawMaterialsShiftHis = () => {
     }
   };
 
+  // Handle search form submit
+  const handleSearch = () => {
+    const searchFromValues = searchForm.getFieldsValue();
+    const searchParam = {
+      ...searchFromValues
+    };
+    // Handle undefined values
+    Object.keys(searchParam).forEach(queryKey => {
+      if (searchParam[queryKey] === undefined) {
+      searchParam[queryKey] = '';
+      }
+    });
+    // conveert it into query string USING FOREACH
+    let queryString = '';
+    Object.keys(searchParam).forEach(queryKey => {
+      if (searchParam[queryKey]) {
+        queryString += `${queryKey}=${searchParam[queryKey]}&`;
+      }
+    });
+
+    if (activeTab === "SEMI_SLITTED") {
+      fetchSemiSlitted(queryString);
+    }else if(activeTab === "SLITTED"){
+      fetchSlitted(queryString);
+    }else if(activeTab === "MOTHER"){
+      fetchMotherCoil(queryString);
+    }else if (activeTab === "PRODUCTION"){
+      fetchCoils('F');
+    }else if (activeTab === "RETURNED"){
+      fetchCoils('R');
+    }else if (activeTab === "SOLD"){
+      fetchCoils('O');
+    }
+  };
+
+
   // Handle tab change
   const onTabChange = (key: string) => {
     setActiveTab(key);
+    // Handle undefined values
+    const searchParam = searchForm.getFieldsValue();
+    Object.keys(searchParam).forEach(queryKey => {
+      if (searchParam[queryKey] === undefined) {
+        searchParam[queryKey] = '';
+      }
+    });
+    // conveert it into query string USING FOREACH
+    let queryString = '';
+    Object.keys(searchParam).forEach(queryKey => {
+      if (searchParam[queryKey]) {
+        queryString += `${queryKey}=${searchParam[queryKey]}&`;
+      }
+    });
     if (key === "SEMI_SLITTED") {
-      fetchSemiSlitted();
+      fetchSemiSlitted(queryString);
     }else if(key === "SLITTED"){
-      fetchSlitted();
+      fetchSlitted(queryString);
     }else if(key === "MOTHER"){
-      fetchMotherCoil();
+      fetchMotherCoil(queryString);
     }else if (key === "PRODUCTION"){
       fetchCoils('F');
     }else if (key === "RETURNED"){
@@ -391,7 +558,32 @@ const RawMaterialsShiftHis = () => {
 
   return (
     <Card title="Material Shift">
-      <Tabs activeKey={activeTab} onChange={onTabChange}>
+      <div>
+      {/* Search Fields Inside the Tab */}
+      <Form layout="inline" style={{ marginBottom: 16 }} onFinish={handleSearch} form={searchForm} hidden={activeTab === "PRODUCTION" || activeTab === "RETURNED" || activeTab === "SOLD"}>
+        <Form.Item name="CHALLAN_NO">
+          <Input placeholder="Challan No" />
+        </Form.Item>
+        <Form.Item name="REG_DATE_FROM">
+          <Input type="date" placeholder="Date From" />
+        </Form.Item>
+        <Form.Item name="REG_DATE_TO">
+          <Input type="date" placeholder="Date To" />
+        </Form.Item>
+        <Form.Item>
+          <Button type="primary" htmlType="submit">
+        Search
+          </Button>
+        </Form.Item>
+      </Form>
+
+      {/* Table */}
+      {/* <Spin spinning={loading}>
+        <Table dataSource={filteredData[key]} columns={generateTableColumns(columnType)} pagination={false} />
+      </Spin> */}
+    </div>
+
+      <Tabs activeKey={activeTab} onChange={onTabChange} >
         <TabPane tab="Mother Coils" key="MOTHER">
           <Spin spinning={loading}>
             <Table dataSource={MotherData} columns={generateTableColumns('M')} pagination={false} />
@@ -423,6 +615,67 @@ const RawMaterialsShiftHis = () => {
           </Spin>
         </TabPane>
       </Tabs>
+
+ {/* Modal for Status */}
+ <Modal
+        title="Issue Coil"
+        open={isStatusLogModalVisible}
+        footer={null}
+        onCancel={handleStatusLogCancel}
+        width={800} // Increase the modal width
+      >
+        {selectedMaterial && (
+          <div style={{ marginBottom: 16, maxHeight: 200, overflowY: 'auto' }}>
+            <Descriptions bordered column={2} size="small">
+              <Descriptions.Item label="Challan No">{selectedMaterial.CHALLAN_NO}</Descriptions.Item>
+              <Descriptions.Item label="Material Width">{selectedMaterial.MATERIAL_WIDTH} mm</Descriptions.Item>
+              <Descriptions.Item label="Material Weight">{selectedMaterial.MATERIAL_WEIGHT} kg</Descriptions.Item>
+              <Descriptions.Item label="Material Thickness">{selectedMaterial.MATERIAL_THICKNESS} mm</Descriptions.Item>
+              <Descriptions.Item label="Material Grade">{selectedMaterial.MATERIAL_GRADE}</Descriptions.Item>
+              <Descriptions.Item label="From Location">{selectedMaterial.FROM_LOCATION}</Descriptions.Item>
+            </Descriptions>
+          </div>
+        )}
+        <Form form={statusLog} layout="vertical" onFinish={handleStatusLogOk} >
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+          label="Tube Mill"
+          name="DESCRIPTION"
+          rules={[{ required: true, message: "Please Enter Tube Mill" }]}
+              >
+          <Input placeholder="Tube Mill
+          " />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+          label="Issue Date"
+          name="STATUS_CHANGE_DATE"
+          rules={[{ required: true, message: "Please select the issue date!" }]}
+              >
+          <Input type="date" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Form.Item
+            label="Remarks"
+            name="REMARKS"
+            rules={[{ required: false, message: "Please enter the Reamrk!" }]}
+          >
+            <TextArea placeholder="Remark" autoSize={{ minRows: 3, maxRows: 5 }} />
+          </Form.Item>
+          {/* Submit Button */}
+                    <Button
+                      type="primary"
+                      htmlType="submit"
+                      // loading={loading}
+                      style={{ width: '100%', marginTop: 20 }}
+                    >
+                      Shift
+                    </Button>
+        </Form>
+      </Modal>
 
       {/* Modal for shifting material */}
       <Modal

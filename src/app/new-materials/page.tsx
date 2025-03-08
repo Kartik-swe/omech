@@ -15,6 +15,7 @@ const RawMaterialDashboard = () => {
     key: number;
     CHALLAN_NO: string;
     RECEIVED_DATE: string;
+    SUPPLIER: string;
     MATERIAL_GRADE: string;
     MATERIAL_GRADE_SRNO: number;
     MATERIAL_C_LOCATION: string;
@@ -28,6 +29,8 @@ const RawMaterialDashboard = () => {
     MATERIAL_SRNO: number;
     MATERIAL_SCRAP: Number;
     SLIT_MATERIAL_SCRAP: Number
+    MATERIAL_SCRAP_WEIGHT: Number;
+    SLIT_MATERIAL_SCRAP_WEIGHT: Number
   }
   // interface for slitting data
   interface SlitMaterial {
@@ -48,6 +51,7 @@ const RawMaterialDashboard = () => {
     SLITTING_SRNO_FK: number;
     SLITTING_SRNO: number;
     SLITTING_SCRAP: number;
+    SLITTING_SCRAP_WEIGHT: number;
     children?: SlitMaterial[];
   }
   // Define the state for raw materials and slitting data
@@ -65,8 +69,10 @@ const RawMaterialDashboard = () => {
   const [optGrades, setOptGrades] = useState<{ label: string; value: string }[]>([]);
   const [optThickNess, setoptThickNess] = useState<{ label: string; value: string }[]>([]);
   const [optVendors, setOptVendors] = useState<{ label: string; value: string }[]>([]);
+  const [optCoilType, setOptCoilType] = useState<{ label: string; value: string }[]>([]);
   const cookiesData = getCookieData();
   const { USER_SRNO, API_BASE_URL, UT_SRNO } = cookiesData;
+
 
   // useEffect to fetch common dropdown options and raw materials
   React.useEffect(() => {
@@ -104,6 +110,11 @@ const RawMaterialDashboard = () => {
       setOptGrades(Table1)
       setoptThickNess(Table3)
       setOptVendors(Table4)
+      setOptCoilType([
+        { label: 'Mother Coil', value: 'M' },
+        { label: 'Semi-Slitted Coil', value: 'P' },
+        { label: 'Slitted Coil', value: 'S' },
+      ])
     } else {
       message.error(response.msg)
       console.error('API Error:', response.msg);  // Logging the error message
@@ -111,19 +122,37 @@ const RawMaterialDashboard = () => {
   };
 
   // Function to update slitted status
-  const updateSlittedStatus = async (id: number) => {
+  const updateSlittedStatus = async (id: number,COIL_FLAG : string, STATUS_FLAG :string ) => {
     try {
-      const response = await apiClient(`${API_BASE_URL}UpdateIsSlitted?USER_SRNO=${USER_SRNO}&SLITTING_SRNO=${id}`, 'GET');
+      const response = await apiClient(`${API_BASE_URL}UpdateIsSlitted?COIL_FLAG=${COIL_FLAG}&STATUS_FLAG=${STATUS_FLAG}&SRNO=${id}&USER_SRNO=${USER_SRNO}`, 'GET');
+      // const response = await apiClient(`${API_BASE_URL}IuShiftStock?IU_FLAG=U&COIL_FLAG=${COIL_FLAG}&STATUS_FLAG=${STATUS_FLAG}&SRNO=${SRNO}&USER_SRNO=${USER_SRNO}`, "GET");
       if (response.msgId === 200) {
-        message.success('Slitted Done!');
+        message.success('Status Updated!');
         // Find the record by SLITTING_SRNO and set IS_SLITTED to true
-        const updatedData = [...slittingData]; // Assuming slittingData is a state
-        const record = updatedData.find((item) => item.SLITTING_SRNO === id);
-        if (record) {
-          record.IS_SLITTED = true;
-          setslittingData(updatedData); // Update state to re-render table
+        if (COIL_FLAG=='M') {
+          const updatedData = [...rawMaterials]; // Assuming rawMaterials is a state
+          const record = updatedData.find((item) => item.MATERIAL_SRNO === id);
+          if (record) {
+            
+            if ('MATERIAL_STATUS' in record) {
+              record.MATERIAL_STATUS = 'Completed';
+            }
+            setRawMaterials(updatedData); // Update state to re-render table
+          }
+        }else{
+          const updatedData = [...slittingData]; // Assuming slittingData is a state
+          const record = updatedData.find((item) => item.SLITTING_SRNO === id);
+          if (record) {
+            if (STATUS_FLAG == 'S') {
+              record.IS_SLITTED = true;
+            }
+            if ('SLITTING_STATUS' in record) {
+              record.SLITTING_STATUS = 'Completed';
+            }
+            
+            setslittingData(updatedData); // Update state to re-render table
+          }
         }
-
       } else {
         message.error(`Error: ${response.msg}`);
       }
@@ -176,9 +205,9 @@ const RawMaterialDashboard = () => {
   const FetchRawMaterials = async () => {
     try {
       const values = SearchForm.getFieldsValue();
-      const query = `CHALLAN_NO=${values.CHALLAN_NO || ''}&DT_REG_FROM=${values.DT_REG_FROM || ''}&DT_REG_TO=${values.DT_REG_TO || ''}&SUPPLIER=${values.SUPPLIER || ''}&GRADE_SRNO=${values.MATERIAL_GRADE_SRNO || ''}&THICKNESS_SRNO=${values.MATERIAL_THICKNESS_SRNO || ''}`
       console.log(values);
       
+      const query = `CHALLAN_NO=${values.CHALLAN_NO || ''}&DT_REG_FROM=${values.RECEIVED_DATE || ''}&DT_REG_TO=${values.DT_REG_TO || ''}&SUPPLIER=${values.SUPPLIER || ''}&GRADE_SRNO=${values.MATERIAL_GRADE_SRNO || ''}&THICKNESS_SRNO=${values.MATERIAL_THICKNESS_SRNO || ''}`
       const response = await apiClient(`${API_BASE_URL}DtRawMaterial?${query}`, 'GET');
       if (response.msgId === 200) {
         if (!response.data) { return; }
@@ -186,6 +215,7 @@ const RawMaterialDashboard = () => {
           key: material.MATERIAL_SRNO,
           CHALLAN_NO: material.CHALLAN_NO,
           RECEIVED_DATE: material.RECEIVED_DATE,
+          SUPPLIER: material.SUPPLIER,
           MATERIAL_GRADE: material.MATERIAL_GRADE,
           MATERIAL_C_LOCATION: material.MATERIAL_C_LOCATION,
           MATERIAL_THICKNESS: material.MATERIAL_THICKNESS,
@@ -193,6 +223,8 @@ const RawMaterialDashboard = () => {
           MATERIAL_WEIGHT: material.MATERIAL_WEIGHT,
           MATERIAL_SCRAP: material.MATERIAL_SCRAP,
           SLIT_MATERIAL_SCRAP: material.SLIT_MATERIAL_SCRAP,
+          MATERIAL_SCRAP_WEIGHT: material.MATERIAL_SCRAP_WEIGHT,
+          SLIT_MATERIAL_SCRAP_WEIGHT: material.SLIT_MATERIAL_SCRAP_WEIGHT,
           // remainingWeight: material.WEIGHT,
           // remainingWidth: material.MATERIAL_WIDTH,
           MATERIAL_SRNO: material.MATERIAL_SRNO,
@@ -223,8 +255,6 @@ const RawMaterialDashboard = () => {
 
   // Adjusted function to handle adding raw material with API request
   const handleAddRawMaterial = async (values: any) => {
-    console.log(values, "values");
-    console.log(selectedMaterial, "selectedMaterial");
     let MATERIAL_STATUS_SRNO = 0;
     
     try {
@@ -247,10 +277,13 @@ const RawMaterialDashboard = () => {
         MATERIAL_GRADE: values.MATERIAL_GRADE_SRNO || 0,
         MATERIAL_WIDTH: values.MATERIAL_WIDTH || 0,
         MATERIAL_THICKNESS: values.MATERIAL_THICKNESS_SRNO || 0,
+        MATERIAL_TYPE: values.MATERIAL_TYPE || 'M',
         MATERIAL_WEIGHT: values.MATERIAL_WEIGHT || 0,
         CHALLAN_NO: values.CHALLAN_NO || null,
         RECEIVED_DATE: values.RECEIVED_DATE.format('YYYY-MM-DD') || null,
+        SUPPLIER: values.SUPPLIER || null,
         MATERIAL_SCRAP: values.MATERIAL_SCRAP || null,
+        MATERIAL_SCRAP_WEIGHT: values.MATERIAL_SCRAP_WEIGHT || null,
         MATERIAL_STATUS_SRNO: MATERIAL_STATUS_SRNO, //New
         USER_SRNO: USER_SRNO, // Example: replace with actual user ID
         // MATERIAL_SRNO: 0, // Example: replace with actual user ID
@@ -336,7 +369,8 @@ const RawMaterialDashboard = () => {
         SLITTING_WEIGHT: values.SLITTING_WEIGHT,
         DC_NO: values.DC_NO,
         STATUS_SRNO: SLITTING_STATUS_SRNO,
-        SLITTING_SCRAP: values.SLITTING_SCRAP,
+        SLITTING_SCRAP: values.SLITTING_SCRAP || null,
+        SLITTING_SCRAP_WEIGHT: values.SLITTING_SCRAP_WEIGHT || null,
         USER_SRNO: USER_SRNO,
         }
         const response = await apiClient(`${API_BASE_URL}IuRawSlit`, 'POST', payload);
@@ -355,12 +389,13 @@ const RawMaterialDashboard = () => {
       const payload = {
         IU_FLAG: 'I', // For insert
         MATERIAL_SRNO: selectedMaterial.MATERIAL_SRNO || 0, 
-        SLITTING_SRNO_FK: values.SLITTING_SRNO_FK || 0, 
+        SLITTING_SRNO_FK: values.SLITTING_SRNO_FK, 
         SLITTING_LEVEL: values.SLITTING_LEVEL || 0,
         SLITTING_DATE: values.SLITTING_DATE.format('YYYY-MM-DD') || null,
         DC_NO: values.DC_NO || '',
         C_LOCATION: values.SLITTING_SHIFT_TO_SRNO,
-        SCRAP: values.SLITTING_SCRAP ,
+        SCRAP: values.SLITTING_SCRAP || null ,
+        SLITTING_SCRAP_WEIGHT: values.SLITTING_SCRAP_WEIGHT || null ,
         STATUS_SRNO: 4,
         USER_SRNO: USER_SRNO,
         SlitDetails: values.SLITTING_DTL,
@@ -426,7 +461,7 @@ return (
             </Form.Item>
           </Col>
           <Col span={4}>
-            <Form.Item name="SUPLIERS" label="Supiler" rules={[{ required: false, message: 'Please select date' }]}>
+            <Form.Item name="SUPPLIER" label="Supiler" rules={[{ required: false, message: 'Please select date' }]}>
             <Input placeholder="Enter Supiler" />
             </Form.Item>
           </Col>
@@ -435,14 +470,14 @@ return (
             <Form.Item name="MATERIAL_GRADE_SRNO" label="Grade" rules={[{ required: false, message: 'Please select grade' }]}>
               <Select showSearch placeholder="Select Grade" options={optGrades} filterOption={(input: any, option: any) =>
                 option?.label.toLowerCase().includes(input.toLowerCase())
-              }></Select>
+              } allowClear></Select>
             </Form.Item>
           </Col>
           <Col span={3}>
             <Form.Item name="MATERIAL_THICKNESS_SRNO" label="Thickness" rules={[{ required: false, message: 'Select Thickness' }]}>
               <Select showSearch placeholder="Select Thickness" options={optThickNess} filterOption={(input: any, option: any) =>
                 option?.label.toLowerCase().includes(input.toLowerCase())
-              }></Select>
+              } allowClear></Select>
             </Form.Item>
           </Col>
           <Col span={2}>
@@ -634,11 +669,22 @@ return (
                 <Input placeholder="Enter DC No" />
               </Form.Item>
             </Col>
+            <Col span={6} hidden>
+
+              <Form.Item
+              hidden
+                name="SLITTING_SCRAP"
+                label="Scrap"
+                rules={[{ required: false, message: 'Please Enter Scrap' }]}
+              >
+                <Input placeholder="Enter Scrap" />
+              </Form.Item>
+            </Col>
             <Col span={12}>
 
               <Form.Item
-                name="SLITTING_SCRAP"
-                label="Scrap"
+                name="SLITTING_SCRAP_WEIGHT"
+                label="Scrap (kg)"
                 rules={[{ required: false, message: 'Please Enter Scrap' }]}
               >
                 <Input placeholder="Enter Scrap" />
@@ -677,13 +723,13 @@ return (
               >
                 <Input placeholder="Width (mm)" 
                   // add onchange to handle auto caluted weight
-                  onChange={(event: any) => {
-                    const value = parseFloat(event.target.value); 
-                    const calculatedWeight = ((value / selectedMaterial?.SLITTING_WIDTH) * selectedMaterial?.SLITTING_WEIGHT).toFixed(2);
-                    if (!isNaN(parseFloat(calculatedWeight))) {
-                      slitForm.setFieldsValue({ SLITTING_WEIGHT: parseFloat(calculatedWeight) });
-                    }
-                  }}
+                  // onChange={(event: any) => {
+                  //   const value = parseFloat(event.target.value); 
+                  //   const calculatedWeight = ((value / selectedMaterial?.SLITTING_WIDTH) * selectedMaterial?.SLITTING_WEIGHT).toFixed(2);
+                  //   if (!isNaN(parseFloat(calculatedWeight))) {
+                  //     slitForm.setFieldsValue({ SLITTING_WEIGHT: parseFloat(calculatedWeight) });
+                  //   }
+                  // }}
                 />
               </Form.Item>
               {/* show selectedMaterial in json string */}
@@ -698,7 +744,7 @@ return (
                 rules={[{ required: true, message: 'Please Enter Weight' }]}
               >
                 <Input
-                disabled={!!(isSlitMaterialEdit && selectedMaterial && ('IS_SEMI_SLITTED' in selectedMaterial) && selectedMaterial.IS_SEMI_SLITTED)}
+                // disabled={!!(isSlitMaterialEdit && selectedMaterial && ('IS_SEMI_SLITTED' in selectedMaterial) && selectedMaterial.IS_SEMI_SLITTED)}
 
                 placeholder="Weight (KG)" type='Number' />
               </Form.Item>
@@ -748,25 +794,25 @@ return (
                         min={0}
                         placeholder="Width (mm)"
                         style={{ width: '100%' }}
-                        onChange={(value: any) => {
-                          // console.log(selectedMaterial, "selectedMaterial");
-                          // debugger
-                          const slittingDetails = slitForm.getFieldValue('SLITTING_DTL') || [];
-                          if (!selectedMaterial) return;
-                          // if (selectedMaterial.SLITTING_LEVEL) {
+                        // onChange={(value: any) => {
+                        //   // console.log(selectedMaterial, "selectedMaterial");
+                        //   // debugger
+                        //   const slittingDetails = slitForm.getFieldValue('SLITTING_DTL') || [];
+                        //   if (!selectedMaterial) return;
+                        //   // if (selectedMaterial.SLITTING_LEVEL) {
 
-                          // }
-                          const calculatedWeight = selectedMaterial && 'MATERIAL_WIDTH' in selectedMaterial
-                            ? ((value / Number(selectedMaterial.MATERIAL_WIDTH)) * Number(selectedMaterial.MATERIAL_WEIGHT)).toFixed(2)
-                            : ((value / Number(selectedMaterial.SLITTING_WIDTH)) * Number(selectedMaterial.SLITTING_WEIGHT)).toFixed(2);
+                        //   // }
+                        //   const calculatedWeight = selectedMaterial && 'MATERIAL_WIDTH' in selectedMaterial
+                        //     ? ((value / Number(selectedMaterial.MATERIAL_WIDTH)) * Number(selectedMaterial.MATERIAL_WEIGHT)).toFixed(2)
+                        //     : ((value / Number(selectedMaterial.SLITTING_WIDTH)) * Number(selectedMaterial.SLITTING_WEIGHT)).toFixed(2);
 
-                          // Update only the current weight field
-                          slittingDetails[name] = {
-                            ...slittingDetails[name],
-                            SLITTING_WEIGHT: parseFloat(calculatedWeight),
-                          };
-                          slitForm.setFieldsValue({ SLITTING_DTL: slittingDetails });
-                        }}
+                        //   // Update only the current weight field
+                        //   slittingDetails[name] = {
+                        //     ...slittingDetails[name],
+                        //     SLITTING_WEIGHT: parseFloat(calculatedWeight),
+                        //   };
+                        //   slitForm.setFieldsValue({ SLITTING_DTL: slittingDetails });
+                        // }}
                       />
                     </Form.Item>
                         
@@ -781,7 +827,7 @@ return (
                         min={0}
                         placeholder="Weight (KG)"
                         style={{ width: '100%' }}
-                        readOnly
+                        // readOnly
                       />
                     </Form.Item>
 
@@ -806,12 +852,12 @@ return (
                       <InputNumber
                         min={0}
                         placeholder="Nos"
-                        onChange={(value: any) => {
-                          const slittingDetails = slitForm.getFieldValue('SLITTING_DTL')[name].SLITTING_WIDTH || 0;
-                          // console.log(slittingDetails, "slittingDetails");
+                        // onChange={(value: any) => {
+                        //   const slittingDetails = slitForm.getFieldValue('SLITTING_DTL')[name].SLITTING_WIDTH || 0;
+                        //   // console.log(slittingDetails, "slittingDetails");
                           
-                        }
-                        }
+                        // }
+                        // }
                         style={{ width: '100%' }}
                       />
                     </Form.Item>
@@ -898,20 +944,20 @@ return (
             </Form.Item>
           </Col>
           <Col span={8}>
-            <Form.Item name="SUPLIERS" label="Supiler" rules={[{ required: false, message: 'Please select date' }]}>
+            <Form.Item name="SUPPLIER" label="Supiler" rules={[{ required: false, message: 'Please select date' }]}>
             <Input placeholder="Enter Supiler" />
             </Form.Item>
           </Col>
           </Row>
           <Row gutter={16}>
-          <Col span={8}>
+          <Col span={5}>
             <Form.Item name="MATERIAL_GRADE_SRNO" label="Grade" rules={[{ required: true, message: 'Please select grade' }]}>
               <Select showSearch placeholder="Select Grade" options={optGrades} filterOption={(input: any, option: any) =>
                 option?.label.toLowerCase().includes(input.toLowerCase())
               }></Select>
             </Form.Item>
           </Col>
-          <Col span={8}>
+          <Col span={7}>
             <Form.Item name="MATERIAL_C_LOCATION_SRNO" label="Shift To" rules={[{ required: true, message: 'Please select Shift to' }]}>
               <Select
                 showSearch
@@ -923,11 +969,24 @@ return (
               ></Select>
             </Form.Item>
           </Col>
-          <Col span={8}>
+          <Col span={6}>
             <Form.Item name="MATERIAL_THICKNESS_SRNO" label="Thickness (mm)" rules={[{ required: true, message: 'Select Thickness' }]}>
               <Select showSearch placeholder="Select Thickness" options={optThickNess} filterOption={(input: any, option: any) =>
                 option?.label.toLowerCase().includes(input.toLowerCase())
               }></Select>
+            </Form.Item>
+          </Col>
+          {/* Adding new control for Coil Type , hidden in case of edit*/}
+          <Col span={6}>
+            <Form.Item name="MATERIAL_TYPE" label="Coil Type" rules={[{ required: !isRawMaterialEdit, message: 'Please select Coil Type' }]} hidden={isRawMaterialEdit}>
+              <Select
+                showSearch
+                placeholder="Select Coil Type"
+                options={optCoilType}
+                filterOption={(input: any, option: any) =>
+                  option?.label.toLowerCase().includes(input.toLowerCase())
+                }
+              ></Select>
             </Form.Item>
           </Col>
         </Row>
@@ -961,31 +1020,40 @@ return (
             ]}
             >
               <InputNumber style={{ width: '100%' }} min={0} placeholder="Enter Width" 
-               onChange={(value: any) => {
-                if (!selectedMaterial || !isRawMaterialEdit) return;
-                debugger
-                const calculatedWeight = selectedMaterial && 'MATERIAL_WIDTH' in selectedMaterial
-                  ? ((value / Number(selectedMaterial.MATERIAL_WIDTH)) * Number(selectedMaterial.MATERIAL_WEIGHT)).toFixed(2)
-                  : ((value / Number(selectedMaterial.SLITTING_WIDTH)) * Number(selectedMaterial.SLITTING_WEIGHT)).toFixed(2);
+              //  onChange={(value: any) => {
+              //   if (!selectedMaterial || !isRawMaterialEdit) return;
+              //   debugger
+              //   const calculatedWeight = selectedMaterial && 'MATERIAL_WIDTH' in selectedMaterial
+              //     ? ((value / Number(selectedMaterial.MATERIAL_WIDTH)) * Number(selectedMaterial.MATERIAL_WEIGHT)).toFixed(2)
+              //     : ((value / Number(selectedMaterial.SLITTING_WIDTH)) * Number(selectedMaterial.SLITTING_WEIGHT)).toFixed(2);
 
-                // Update only the current weight field
-                // slittingDetails[name] = {
-                //   ...slittingDetails[name],
-                //   SLITTING_WEIGHT: parseFloat(calculatedWeight),
-                // };
-                form.setFieldsValue({ MATERIAL_WEIGHT: parseFloat(calculatedWeight) });
-              }}
+              //   // Update only the current weight field
+              //   // slittingDetails[name] = {
+              //   //   ...slittingDetails[name],
+              //   //   SLITTING_WEIGHT: parseFloat(calculatedWeight),
+              //   // };
+              //   form.setFieldsValue({ MATERIAL_WEIGHT: parseFloat(calculatedWeight) });
+              // }}
               />
             </Form.Item>
           </Col>
           <Col span={6}>
             <Form.Item name="MATERIAL_WEIGHT" label="Weight (kg)" rules={[{ required: true, message: 'Please enter weight' }]}>
               <InputNumber style={{ width: '100%' }} min={0} placeholder="Enter Weight" 
-              disabled={!!(isRawMaterialEdit && selectedMaterial && ('IS_SEMI_SLITTED' in selectedMaterial) && selectedMaterial.IS_SEMI_SLITTED)} />
+              //disabled={!!(isRawMaterialEdit && selectedMaterial && ('IS_SEMI_SLITTED' in selectedMaterial) && selectedMaterial.IS_SEMI_SLITTED)}
+               />
             </Form.Item>
           </Col>
           <Col span={6}>
             <Form.Item name="MATERIAL_SCRAP" label="Scrap (mm)" rules={[{ required: false, message: 'Please enter scrap' }]} 
+            hidden={!(isRawMaterialEdit && selectedMaterial && ('IS_SEMI_SLITTED' in selectedMaterial) && selectedMaterial.IS_SEMI_SLITTED)}
+            >
+              <InputNumber style={{ width: '100%' }} min={0} placeholder="Enter scrap" 
+              />
+            </Form.Item>
+          </Col>
+          <Col span={6}>
+            <Form.Item name="MATERIAL_SCRAP_WEIGHT" label="Scrap (kg)" rules={[{ required: false, message: 'Please enter scrap' }]} 
             hidden={!(isRawMaterialEdit && selectedMaterial && ('IS_SEMI_SLITTED' in selectedMaterial) && selectedMaterial.IS_SEMI_SLITTED)}
             >
               <InputNumber style={{ width: '100%' }} min={0} placeholder="Enter scrap" 
