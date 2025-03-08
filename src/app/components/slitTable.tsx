@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 import { Button, Input, InputRef, message, Popconfirm, PopconfirmProps, Space, Table, TableColumnType, Tooltip } from "antd";
-import { EditOutlined, ScissorOutlined, CheckCircleOutlined, SearchOutlined, DeleteColumnOutlined, DeleteFilled } from '@ant-design/icons';
+import { EditOutlined, ScissorOutlined, CheckCircleOutlined, SearchOutlined, DeleteColumnOutlined, DeleteFilled,CheckOutlined } from '@ant-design/icons';
 import Highlighter from 'react-highlight-words';
 import { FilterDropdownProps } from "antd/es/table/interface";
 
@@ -56,7 +56,7 @@ const RecursiveNestedTable = ({ data, setSlitingLevvel, setSelectedMaterial , se
 
     const confirmSlit: PopconfirmProps['onConfirm'] = (e:any) => {
         // console.log(e.SLITTING_SRNO, "SLITTING_SRNO");
-        updateSlittedStatus(e.SLITTING_SRNO);
+        updateSlittedStatus(e.SLITTING_SRNO,'P','S');
         // message.success('Click on Yes');
       };
     const confirmSlitDelete: PopconfirmProps['onConfirm'] = (e:any) => {
@@ -109,9 +109,12 @@ const RecursiveNestedTable = ({ data, setSlitingLevvel, setSelectedMaterial , se
       key: "scrap",
       width: 120,
       render: (text: any, record: any) => (
-        <Tooltip title={`Scrap Width: ${record.SLITTING_SCRAP} mm, Scrap Weight: ${record.scrap_weight} kg`}>
+        <Tooltip 
+        // title={`Scrap Width: ${record.SLITTING_SCRAP} mm, Scrap Weight: ${record.SLITTING_SCRAP_WEIGHT} kg`}
+        title={`Scrap Weight: ${record.SLITTING_SCRAP_WEIGHT} kg`}
+        >
           <div> {record.SLITTING_SCRAP} mm</div>
-          <div> {record.scrap_weight} kg</div>
+          <div> {record.SLITTING_SCRAP_WEIGHT} kg</div>
         </Tooltip>
       ),
     },
@@ -179,7 +182,7 @@ const RecursiveNestedTable = ({ data, setSlitingLevvel, setSelectedMaterial , se
                      type="primary"
                      icon={<EditOutlined />}
                      onClick={() => {
-                       console.log(record, "record");
+                      //  console.log(record, "record");
                        
                        setIsSlitMaterialEdit(true);
                        setSelectedMaterial(record);
@@ -204,23 +207,46 @@ const RecursiveNestedTable = ({ data, setSlitingLevvel, setSelectedMaterial , se
                      {/* Slit */}
                    </Button>
                  </Tooltip>
-                 {record.SLITTING_WIDTH > record.remainingWidth || record.SLITTING_WEIGHT > record.remainingWeight ? null : (
-                 <Tooltip title="Mark as Slitted">
-                   <Popconfirm
-                     className=""
-                     title="Slitted done"
-                     description="Are you sure to confirm?"
-                     onConfirm={() => confirmSlit(record)}
-                     onCancel={cancel}
-                     okText="Yes"
-                     cancelText="No"
-                   >
-                     <Button color="primary" variant="solid" icon={<CheckCircleOutlined />}>
-                       {/* Slitted */}
-                     </Button>
-                   </Popconfirm>
-                 </Tooltip>
-                )}
+
+                 {  record.SLITTING_WIDTH > record.remainingWidth || record.SLITTING_WEIGHT > record.remainingWeight ? null : (
+                    <Tooltip title="Mark as Slitted">
+                      <Popconfirm
+                          className=""
+                          title="Slitted done"
+                          description="Are you sure to confirm?"
+                          onConfirm={() => confirmSlit(record)}
+                          onCancel={cancel}
+                          okText="Yes"
+                          cancelText="No"
+                          >
+                          <Button color="primary" variant="solid" icon={<CheckCircleOutlined />}></Button>
+                        </Popconfirm>
+                    </Tooltip>
+                    )
+                  }
+
+
+{record.SLITTING_STATUS== 'In Slitting' && (
+<Tooltip title="Mark as Completed">
+                      <Popconfirm
+                        title="Complete Slitting"
+                        description="Are you sure you want to mark this as completed?"
+                        onConfirm={() => updateSlittedStatus(record.SLITTING_SRNO,'P','C')}
+                        onCancel={cancel}
+                        okText="Yes"
+                        cancelText="No"
+                      >
+                        <Button 
+                            type="primary" 
+                            style={{ backgroundColor: "#52c41a", borderColor: "#52c41a" }} 
+                            icon={<CheckOutlined />}
+                          >
+                            {/* Mark as Completed */}
+                          </Button>
+
+                      </Popconfirm>
+                    </Tooltip>
+)}
 
               <Tooltip title="Delete">
               <Popconfirm
@@ -237,6 +263,9 @@ const RecursiveNestedTable = ({ data, setSlitingLevvel, setSelectedMaterial , se
                      </Button>
                    </Popconfirm>
                     </Tooltip>
+
+
+                    
                </Space>
            ),
          },
@@ -282,10 +311,10 @@ const SlittingTable = ({ mainTableData, slittingData ,setSlitingLevvel, setSelec
     const filteredSlittingData = slittingData.filter(
       (item) => (item.MATERIAL_SRNO === record.MATERIAL_SRNO && item.SLITTING_LEVEL === 1 && item.SLITTING_SRNO_FK === null)  
     );
-    console.log(record,"record");
+    // console.log(record,"record");
     
-    console.log(slittingData, "slittingData");
-    console.log(filteredSlittingData, "filteredSlittingData");
+    // console.log(slittingData, "slittingData");
+    // console.log(filteredSlittingData, "filteredSlittingData");
     
     // Calculate total slitted weight and width
     const totalSlittedWeight = filteredSlittingData.reduce((sum, item) => sum + (item.SLITTING_WEIGHT || 0), 0);
@@ -293,12 +322,12 @@ const SlittingTable = ({ mainTableData, slittingData ,setSlitingLevvel, setSelec
 
     // alert(totalSlittedWeight)
     // Calculate remaining values
-    const SLIT_MATERIAL_SCRAP_weight = ((record.SLIT_MATERIAL_SCRAP * record.MATERIAL_WEIGHT / record.MATERIAL_WIDTH) || 0)
-    const scrap_weight = ((record.MATERIAL_SCRAP * record.MATERIAL_WEIGHT / record.MATERIAL_WIDTH) || 0)
-    const remainingWeight = (record.MATERIAL_WEIGHT || 0) - totalSlittedWeight - scrap_weight;
+    // const SLIT_MATERIAL_SCRAP_weight = ((record.SLIT_MATERIAL_SCRAP * record.MATERIAL_WEIGHT / record.MATERIAL_WIDTH) || 0)
+    // const scrap_weight = ((record.MATERIAL_SCRAP * record.MATERIAL_WEIGHT / record.MATERIAL_WIDTH) || 0)
+    const remainingWeight = (record.MATERIAL_WEIGHT || 0) - totalSlittedWeight - (record.MATERIAL_SCRAP_WEIGHT || 0);
     const remainingWidth = (record.MATERIAL_WIDTH || 0) - totalSlittedWidth - (record.MATERIAL_SCRAP || 0);
 
-    console.log(totalSlittedWidth,'remainingWidth');
+    // console.log(totalSlittedWidth,'remainingWidth');
     
 
     return {
@@ -306,8 +335,8 @@ const SlittingTable = ({ mainTableData, slittingData ,setSlitingLevvel, setSelec
       IS_SEMI_SLITTED: totalSlittedWeight > 0,
       remainingWeight: remainingWidth > 0 ?(remainingWeight > 0 ? parseFloat(remainingWeight.toFixed(2)) : 0) : 0, // Ensure no negative weights
       remainingWidth: remainingWidth > 0 ? remainingWidth : 0,   // Ensure no negative widths
-      scrap_weight: (scrap_weight > 0 ? parseFloat(scrap_weight.toFixed(2)) : 0),
-      SLIT_MATERIAL_SCRAP_weight : parseFloat(SLIT_MATERIAL_SCRAP_weight.toFixed(2)),
+      // scrap_weight: (scrap_weight > 0 ? parseFloat(scrap_weight.toFixed(2)) : 0),
+      // SLIT_MATERIAL_SCRAP_weight : parseFloat(SLIT_MATERIAL_SCRAP_weight.toFixed(2)),
 
       // remainingWeight: remainingWeight,
       // remainingWidth: remainingWidth,
@@ -323,12 +352,12 @@ const SlittingTable = ({ mainTableData, slittingData ,setSlitingLevvel, setSelec
     );
 
     // Calculate total slitted weight and width
-    const scrap_weight = ((record.SLITTING_SCRAP * record.SLITTING_WEIGHT / record.SLITTING_WIDTH) || 0)
+    // const scrap_weight = ((record.SLITTING_SCRAP * record.SLITTING_WEIGHT / record.SLITTING_WIDTH) || 0)
     const totalSlittedWeight = filteredSlittingData.reduce((sum, item) => sum + (item.SLITTING_WEIGHT || 0), 0);
     const totalSlittedWidth = filteredSlittingData.reduce((sum, item) => sum + (item.SLITTING_WIDTH || 0), 0);
 
     // Calculate remaining values
-    const remainingWeight = (record.SLITTING_WEIGHT || 0) - totalSlittedWeight - scrap_weight;
+    const remainingWeight = (record.SLITTING_WEIGHT || 0) - totalSlittedWeight - (record.SLITTING_SCRAP_WEIGHT || 0);
     const remainingWidth = (record.SLITTING_WIDTH || 0) - totalSlittedWidth - (record.SLITTING_SCRAP || 0);
 
     return {
@@ -336,7 +365,7 @@ const SlittingTable = ({ mainTableData, slittingData ,setSlitingLevvel, setSelec
       IS_SEMI_SLITTED: totalSlittedWeight > 0,
       remainingWeight:  remainingWidth > 0 ?(remainingWeight > 0 ? parseFloat(remainingWeight.toFixed(2)) : 0) : 0 , // Ensure no negative weights
       remainingWidth: remainingWidth > 0 ? remainingWidth : 0,   // Ensure no negative widths
-      scrap_weight: parseFloat(scrap_weight.toFixed(2)),
+      // scrap_weight: parseFloat(scrap_weight.toFixed(2)),
       // remainingWidth: remainingWidth,
 
     };
@@ -494,9 +523,11 @@ const mainTableColumns = [
     key: "scrap",
     width: 150,
     render: (text: any, record: any) => (
-      <Tooltip title={`Mother Coil Slitting Scrap: ${record.MATERIAL_SCRAP || 0} mm , Slitting Process Scrap : (${record.SLIT_MATERIAL_SCRAP || 0} mm), Mother Coil Slitting Weight: ${record.scrap_weight || 0} kg , Slitting Process Weight (${record.SLIT_MATERIAL_SCRAP_weight || 0} kg)`}>
+      <Tooltip 
+      // title={`Mother Coil Slitting Scrap: ${record.MATERIAL_SCRAP || 0} mm , Slitting Process Scrap : (${record.SLIT_MATERIAL_SCRAP || 0} mm), Mother Coil Slitting Weight: ${record.scrap_weight || 0} kg , Slitting Process Weight (${record.SLIT_MATERIAL_SCRAP_weight || 0} kg)`}
+      title={`Mother Coil Slitting Weight: ${record.MATERIAL_SCRAP_WEIGHT || 0} kg , Slitting Process Weight (${record.SLIT_MATERIAL_SCRAP_WEIGHT || 0} kg)`}>
         <div>{record.MATERIAL_SCRAP || 0} + {record.SLIT_MATERIAL_SCRAP || 0} mm</div>
-        <div>{record.scrap_weight || 0} + {record.SLIT_MATERIAL_SCRAP_weight || 0} kg</div>
+        <div>{record.MATERIAL_SCRAP_WEIGHT || 0} + {record.SLIT_MATERIAL_SCRAP_WEIGHT || 0} kg</div>
       </Tooltip>
     ),
   },
@@ -573,7 +604,27 @@ const mainTableColumns = [
         {/* Slit */}
       </Button>
       </Tooltip>
+        {record.MATERIAL_STATUS== 'In Slitting' && (
+      <Tooltip title="Mark as Completed">
+                      <Popconfirm
+                        title="Complete Slitting"
+                        description="Are you sure you want to mark this as completed?"
+                        onConfirm={() => updateSlittedStatus(record.MATERIAL_SRNO,'M','C')}
+                        onCancel={cancel}
+                        okText="Yes"
+                        cancelText="No"
+                      >
+                        <Button 
+                            type="primary" 
+                            style={{ backgroundColor: "#52c41a", borderColor: "#52c41a" }} 
+                            icon={<CheckOutlined />}
+                          >
+                            {/* Mark as Completed */}
+                          </Button>
 
+                      </Popconfirm>
+                    </Tooltip>
+        )}
       <Tooltip title="Delete">
       <Popconfirm
                      className=""
