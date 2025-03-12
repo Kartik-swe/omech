@@ -17,9 +17,13 @@ const RawMaterialsShiftHis = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isStatusLogModalVisible, setisStatusLogModalVisible] = useState(false);
   const [selectedMaterial, setSelectedMaterial] = useState<any>(null);
-  const [optVendors, setOptVendors] = useState<{ label: string; value: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("MOTHER");
+
+  const [optGrades, setOptGrades] = useState<{ label: string; value: string }[]>([]);
+    const [optThickNess, setoptThickNess] = useState<{ label: string; value: string }[]>([]);
+    const [optVendors, setOptVendors] = useState<{ label: string; value: string }[]>([]);
+    
 
   const [form] = Form.useForm();
   const [searchForm] = Form.useForm();
@@ -32,13 +36,15 @@ const RawMaterialsShiftHis = () => {
   // Fetch dropdown options for locations
   const FetchPlCommon = async () => {
     const response = await apiClient<Record<string, any>>(
-      `${API_BASE_URL}Pl_Common?USER_SRNO=${USER_SRNO}&UT_SRNO=${UT_SRNO}&TBL_SRNO=4`,
+      `${API_BASE_URL}Pl_Common?USER_SRNO=${USER_SRNO}&UT_SRNO=${UT_SRNO}&TBL_SRNO=1,3,4`,
       "GET"
     );
     if (response.msgId === 200) {
       if (!response.data) return;
-      const { Table4 } = response.data;
-      setOptVendors(Table4);
+      const { Table1, Table3, Table4 } = response.data;
+      setOptGrades(Table1)
+      setoptThickNess(Table3)
+      setOptVendors(Table4)
     } else {
       message.error(response.msg);
       console.error("API Error:", response.msg);
@@ -570,6 +576,36 @@ const RawMaterialsShiftHis = () => {
         <Form.Item name="REG_DATE_TO">
           <Input type="date" placeholder="Date To" />
         </Form.Item>
+        <Form.Item name={['C_LOCATION']} style={{ marginBottom: 8 }}>
+                          <Select 
+                          showSearch
+                          placeholder="Select Location" 
+                          options={optVendors} 
+                          filterOption={(input: any, option: any) => option?.label.toLowerCase().includes(input.toLowerCase())}
+                          allowClear
+                          />
+                        </Form.Item>
+        
+                        <Form.Item name={['GRADE_SRNO']} style={{ marginBottom: 8 }}>
+                          <Select 
+                          showSearch 
+                          placeholder="Select Grade" 
+                          options={optGrades} 
+                          filterOption={(input: any, option: any) => option?.label.toLowerCase().includes(input.toLowerCase())}
+                          allowClear
+                          />
+                        </Form.Item>
+        
+        
+                        <Form.Item name={['THICNESS_SRNO']} style={{ marginBottom: 8 }}>
+                          <Select 
+                          showSearch 
+                          placeholder="Select Thickness" 
+                          options={optThickNess} 
+                          filterOption={(input: any, option: any) => option?.label.toLowerCase().includes(input.toLowerCase())}
+                          allowClear
+                          />
+                        </Form.Item>
         <Form.Item>
           <Button type="primary" htmlType="submit">
         Search
