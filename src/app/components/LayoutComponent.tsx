@@ -167,11 +167,11 @@ const menuItems = [
         label: 'Material',
         link: '/master/material',
       },
-      // {
-      //   key: 'Vendors',
-      //   label: 'Vendors',
-      //   link: '/master/vendors',
-      // },
+      {
+        key: 'Location',
+        label: 'Location',
+        link: '/master/location',
+      },
       {
         key: 'users',
         label: 'Users',
