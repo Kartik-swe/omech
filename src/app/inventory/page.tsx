@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import {Table,Button,Modal,Form,Select,DatePicker,Input,Space,message,notification} from 'antd';
+import {Table,Button,Modal,Form,Select,DatePicker,Input,Space,message,notification, Alert} from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 
 import { apiService } from '../../../utils-old/apiUtils'; // Utility function for API calls
@@ -12,41 +12,8 @@ import { table } from 'console';
 
 const { Option } = Select;
 
-interface ProductionLogEntry {
-  productionId: number;
-  productId: number;
-  machineId: number;
-  staffId: number;
-  shift: string;
-  quantityProduced: number;
-  productionDate: string;
-  od: string;
-  grade: string;
-  thickness: string;
-}
-
-interface PipeData {
-  MACHINE_TYPE: string;
-  MACHINE_NAME: string;
-  STAFF_NAME: string;
-  SHIFT_NAME: string;
-  CREATED_DATE: string;
-  PIPE_QUANTITY: number;
-  OD: number;
-  THICKNESS: number;
-  GRADE: string;
-}
-
-interface DropdownData {
-  products: Array<{ productId: number; od: string; thickness: string; grade: string }>;
-  machines: Array<{ machineId: number; name: string }>;
-  staff: Array<{ staffId: number; name: string }>;
-  shifts: string[];
-}
 
 const ProductionLogsPage: React.FC = () => {
-  const [data, setData] = useState<ProductionLogEntry[]>([]);
-  const [dropdownData, setDropdownData] = useState<DropdownData | null>(null);
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [machineType, setMachineType] = useState<'Tube' | 'Laser'>('Tube');
@@ -58,8 +25,6 @@ const ProductionLogsPage: React.FC = () => {
   const [gradeOpt, setGradeOpt] = useState([]);
   const [productOpt, setproductOpt] = useState([]);
   
-  const [logs, setLogs] = useState([]);
-  const [pipeLogs, setPipeLogs] = useState<PipeData[]>([]);
 
     const cookiesData = getCookieData();
     const {USER_SRNO, API_BASE_URL, UT_SRNO} = cookiesData;
@@ -90,52 +55,78 @@ const ProductionLogsPage: React.FC = () => {
 
 const handleAddLog = async (values: any) => {
   try {
-    // Determine Insert or Update based on PIPE_SRNO
-    const IU_FLAG = values.PIPE_SRNO ? 'U' : 'I';
+    debugger
+    // // Determine Insert or Update based on PIPE_SRNO
+    // const IU_FLAG = values.PIPE_SRNO ? 'U' : 'I';
 
-    // Prepare the common payload fields
-    const commonPayload = {
-      IU_FLAG, // Insert or Update
-      PIPE_SRNO: values.PIPE_SRNO || null, // Use existing PIPE_SRNO for updates or null for new entries
-      MACHINE_SRNO: values.MACHINE_SRNO,
-      STAFF_SRNO: values.STAFF_SRNO,
-      SHIFT_SRNO: values.SHIFT_SRNO,
-      CREATED_DATE: values.CREATED_DATE.format('YYYY-MM-DD'), // Format date for API
-      PIPE_QUANTITY: values.PIPE_QUANTITY,
-      PIPE_GROUP: values.PIPE_GROUP || null, // Optional
-      STATUS_SRNO: values.STATUS_SRNO || null, // Optional
-      PIPE_TYPE: values.PIPE_TYPE || null, // Optional
-      USER_SRNO: 1, // Replace with actual user ID
-      MATERIAL_SRNO: 1, // Replace with actual material ID
-      LENGTH: values.LENGTH, // Replace with actual length
+    // // Prepare the common payload fields
+    // const commonPayload = {
+    //   IU_FLAG, // Insert or Update
+    //   PIPE_SRNO: values.PIPE_SRNO || null, // Use existing PIPE_SRNO for updates or null for new entries
+    //   MACHINE_SRNO: values.MACHINE_SRNO,
+    //   STAFF_SRNO: values.STAFF_SRNO,
+    //   WORK_SHIFT_SRNO: values.WORK_SHIFT_SRNO,
+    //   CREATED_DATE: values.CREATED_DATE.format('YYYY-MM-DD'), // Format date for API
+    //   PIPE_QUANTITY: values.PIPE_QUANTITY,
+    //   PIPE_GROUP: values.PIPE_GROUP || null, // Optional
+    //   STATUS_SRNO: values.STATUS_SRNO || null, // Optional
+    //   PIPE_TYPE: values.PIPE_TYPE || null, // Optional
+    //   USER_SRNO: 1, // Replace with actual user ID
+    //   MATERIAL_SRNO: 1, // Replace with actual material ID
+    //   LENGTH: values.LENGTH, // Replace with actual length
+    // };
+    // let payload: {}
+
+    // // Different logic for Tube Machine and Laser Machine
+    // if (machineType === 'Tube') {
+    //   payload = {
+    //     ...commonPayload,
+    //     OD: values.OD,
+    //     THICKNESS: values.THICKNESS,
+    //     GRADE: values.GRADE,
+    //   };
+    // } else {
+    //   payload = {
+    //     ...commonPayload,
+    //     PRODUCT_SRNO: values.PRODUCT_SRNO,
+    //   };
+    // }
+
+
+    const payload1 = {
+      IU_FLAG : 'I',
+      MATERIAL_SRNO : null,
+      SLITTING_SRNO : null,
+      MACHINE_SRNO : values.MACHINE_SRNO,
+      GRADE_SRNO : values.GRADE_SRNO,
+      THICKNESS_SRNO : values.THICKNESS_SRNO,
+      OD_SRNO : values.OD_SRNO,
+      WORK_SHIFT_SRNO : values.WORK_SHIFT_SRNO || null,
+      C_LOCATION : values.C_LOCATION,
+      IS_COIL_COMPLETED : false,
+      P_LENGTH : values.P_LENGTH,
+      PIPE_NOS : values.PIPE_NOS,
+      PG_SCRAP_WT : null,
+      P_WEIGHT : null,
+      REMARKS : null,
+      TRN_DATE : values.TRN_DATE,
+      TRN_BY : values.TRN_BY,
+      TRN_REMARK : values.TRN_REMARK,
+      UT_SRNO : UT_SRNO,
+      USER_SRNO : USER_SRNO,
+      PG_SRNO : null,
     };
-    let payload: {}
-
-    // Different logic for Tube Machine and Laser Machine
-    if (machineType === 'Tube') {
-      payload = {
-        ...commonPayload,
-        OD: values.OD,
-        THICKNESS: values.THICKNESS,
-        GRADE: values.GRADE,
-      };
-    } else {
-      payload = {
-        ...commonPayload,
-        PRODUCT_SRNO: values.PRODUCT_SRNO,
-      };
-    }
 
     // Call the API
-    const response: If_ApiResponse = await apiService.post('/productionlog', 'application/json', payload);
+    const response = await apiClient(`${API_BASE_URL}IuPipes`, "POST", payload1);
 console.log(response, "Response api post");
-
+debugger
     // Handle the API response
-    if (response.MsgId == 1 || response.MsgId == 0) {
+    if (response.msgId == 1 || response.msgId == 0) {
       message.success('Log added successfully!');
       setIsModalOpen(false); // Close modal after success
     } else {
-      throw new Error(response.Msg || 'Failed to add log');
+      throw new Error(response.msg || 'Failed to add log');
     }
   } catch (error: any) {
     console.error('Error adding log:', error);
@@ -145,24 +136,8 @@ console.log(response, "Response api post");
 
 
 
-  const fetchProductionLogs = async () => {
-    setLoading(true);
-    try {
-      const apiResData:If_ApiResponse = await apiService.get(`/productionlog?USER_SRNO=1`, 'application/json');
-      if (apiResData.MsgId==1) {
-        console.log(apiResData.Data.PIPES, 'apiResData.Data.PIPES');
-        
-        setPipeLogs(apiResData.Data.PIPES);
-      }
-    } catch (error) {
-      notification.error({ message: 'Error fetching production logs' });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchProductionLogs()
+  //  fetchProductionLogs()
     fetchPlCommon();
     // fetchDropdownData();
   }, []);
@@ -198,21 +173,9 @@ console.log(response, "Response api post");
   }
   }
 
-  
-  const pipeLogsColumns = [
-    { title: 'Machine Type',dataIndex: 'MACHINE_TYPE',key: 'MACHINE_TYPE'},
-    { title: 'Machine',dataIndex: 'MACHINE_NAME',key: 'MACHINE_NAME'},
-    { title: 'Staff',dataIndex: 'STAFF_NAME',key: 'STAFF_NAME'},
-    { title: 'Shift',dataIndex: 'SHIFT_NAME',key: 'SHIFT_NAME'},
-    { title: 'Date',dataIndex: 'CREATED_DATE',key: 'CREATED_DATE', render: (date: string) => new Date(date).toLocaleDateString()},
-    { title: 'Quantity',dataIndex: 'PIPE_QUANTITY',key: 'PIPE_QUANTITY'},
-    { title: 'OD',dataIndex: 'OD',key: 'OD'},
-    { title: 'Thickness',dataIndex: 'THICKNESS',key: 'THICKNESS'},
-    { title: 'Grade',dataIndex: 'GRADE',key: 'GRADE'},
-  ];
 
   return (
-    <div>
+    <>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         <h2>Production/Processing Logs</h2>
         <Button
@@ -221,15 +184,15 @@ console.log(response, "Response api post");
           onClick={() => setIsModalOpen(true)}
           style={{ marginBottom: 16 }}
         >
-          Add Log
+          Add Log  121
         </Button>
       </div>
-      <Table
+      {/* <Table
         dataSource={pipeLogs}
         columns={pipeLogsColumns}
-      />
+      /> */}
       <Modal
-        title="Add Production Log"
+        title="Add Production Log 1"
         open={isModalOpen}
         onCancel={() => setIsModalOpen(false)}
         footer={null}
@@ -255,23 +218,30 @@ console.log(response, "Response api post");
   >
     <Select
       placeholder="Select machine"
-      options={machinesOpt
-        .filter((machine: any) => machine.MACHINE_TYPE === machineType)
-        .map((machine: any) => ({ value: machine.value, label: machine.label }))}
+      // options={machinesOpt
+      //   .filter((machine: any) => machine.MACHINE_TYPE === machineType)
+      //   .map((machine: any) => ({ value: machine.value, label: machine.label }))}
     />
   </Form.Item>
 
   <Form.Item
     label="Staff"
-    name="STAFF_SRNO"
-    rules={[{ required: true, message: 'Please select staff!' }]}
+    name="TRN_BY"
+    rules={[{ required: false, message: 'Please select staff!' }]}
   >
     <Select placeholder="Select staff" options={staffOpt} />
+  </Form.Item>
+  <Form.Item
+    label="Location"
+    name="C_LOCATION"
+    rules={[{ required: true, message: 'Please select staff!' }]}
+  >
+    <Select placeholder="Select staff" options={shiftsOpt} />
   </Form.Item>
 
   <Form.Item
     label="Shift"
-    name="SHIFT_SRNO"
+    name="WORK_SHIFT_SRNO"
     rules={[{ required: true, message: 'Please select a shift!' }]}
   >
     <Select placeholder="Select shift" options={shiftsOpt} />
@@ -279,7 +249,7 @@ console.log(response, "Response api post");
 
   <Form.Item
     label="Date"
-    name="CREATED_DATE"
+    name="TRN_DATE"
     rules={[{ required: true, message: 'Please select date!' }]}
   >
     <DatePicker />
@@ -287,7 +257,7 @@ console.log(response, "Response api post");
 
   <Form.Item
     label="Quantity"
-    name="PIPE_QUANTITY"
+    name="PIPE_NOS"
     rules={[{ required: true, message: 'Please enter quantity!' }]}
   >
     <Input placeholder="Enter quantity" />
@@ -297,7 +267,7 @@ console.log(response, "Response api post");
     <>
       <Form.Item
         label="OD"
-        name="OD"
+        name="OD_SRNO"
         rules={[{ required: true, message: 'Please select OD!' }]}
       >
         <Select placeholder="Select OD" options={odOpt} />
@@ -305,7 +275,7 @@ console.log(response, "Response api post");
 
       <Form.Item
         label="Thickness"
-        name="THICKNESS"
+        name="THICKNESS_SRNO"
         rules={[{ required: true, message: 'Please select thickness!' }]}
       >
         <Select placeholder="Select thickness" options={thicknessOpt} />
@@ -313,7 +283,7 @@ console.log(response, "Response api post");
 
       <Form.Item
         label="Grade"
-        name="GRADE"
+        name="GRADE_SRNO"
         rules={[{ required: true, message: 'Please select grade!' }]}
       >
         <Select placeholder="Select grade" options={gradeOpt} />
@@ -333,7 +303,7 @@ console.log(response, "Response api post");
 
 <Form.Item
 label="Length"
-name="LENGTH"
+name="P_LENGTH"
 rules={[{ required: true, message: 'Please select a Length!' }]}
 >
 <Input placeholder="Enter Length" />
@@ -341,13 +311,7 @@ rules={[{ required: true, message: 'Please select a Length!' }]}
 </>
   )}
 
-  <Form.Item
-    label="Pipe Group"
-    name="PIPE_GROUP"
-    rules={[{ required: false, message: 'Enter the pipe group (optional).' }]}
-  >
-    <Input placeholder="Enter pipe group" />
-  </Form.Item>
+
 
   {/* <Form.Item
     label="Status"
@@ -367,8 +331,9 @@ rules={[{ required: true, message: 'Please select a Length!' }]}
 
   <Form.Item>
     <Space>
-      <Button type="primary" htmlType="submit">
-        Add Log
+      <Button 
+      type="primary" htmlType="submit">
+        Add Log 1
       </Button>
       <Button onClick={() => setIsModalOpen(false)}>Cancel</Button>
     </Space>
@@ -376,7 +341,7 @@ rules={[{ required: true, message: 'Please select a Length!' }]}
 </Form>
 
       </Modal>
-    </div>
+    </>
   );
 };
 

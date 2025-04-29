@@ -282,6 +282,7 @@ const RawMaterialDashboard = () => {
         CHALLAN_NO: values.CHALLAN_NO || null,
         RECEIVED_DATE: values.RECEIVED_DATE.format('YYYY-MM-DD') || null,
         SUPPLIER: values.SUPPLIER || null,
+        NOS: values.NOS || 1,
         MATERIAL_SCRAP: values.MATERIAL_SCRAP || null,
         MATERIAL_SCRAP_WEIGHT: values.MATERIAL_SCRAP_WEIGHT || null,
         MATERIAL_STATUS_SRNO: MATERIAL_STATUS_SRNO, //New
@@ -494,7 +495,7 @@ return (
             <Form.Item>
               
                     <Button onClick={() => setMotherModalVisible(true)}  type="default" style={{ marginTop: '30px', width: '100%', backgroundColor: 'red', color: 'white' }}>
-                      Add Mother Coil
+                      Add Coil
                     </Button>
               </Form.Item>
           </Col>
@@ -906,7 +907,7 @@ return (
       {/* Adding Modal For Mother Coil */}
       <Modal
         width={1000}
-        title={isRawMaterialEdit ? 'Edit Mother Coil' : 'Add Mother Coil'}
+        title={isRawMaterialEdit ? 'Edit Mother Coil' : 'Add Coil'}
         open={motherModalVisible}
         onCancel={() => {
           setSelectedMaterial(null)
@@ -1057,6 +1058,13 @@ return (
             hidden={!(isRawMaterialEdit && selectedMaterial && ('IS_SEMI_SLITTED' in selectedMaterial) && selectedMaterial.IS_SEMI_SLITTED)}
             >
               <InputNumber style={{ width: '100%' }} min={0} placeholder="Enter scrap" 
+              />
+            </Form.Item>
+          </Col>
+          <Col span={6}>
+            <Form.Item name="NOS" label="NOS" rules={[{ required: !isRawMaterialEdit, message: 'Please enter NOS' }]} hidden={isRawMaterialEdit} 
+            >
+              <InputNumber style={{ width: '100%' }} min={0} placeholder="Enter Nos" 
               />
             </Form.Item>
           </Col>

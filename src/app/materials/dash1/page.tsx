@@ -1,11 +1,12 @@
 "use client";
-import { RetweetOutlined, DollarCircleOutlined, BuildOutlined, SwapOutlined } from "@ant-design/icons";
+import { RetweetOutlined, DollarCircleOutlined, BuildOutlined, SwapOutlined, DownloadOutlined } from "@ant-design/icons";
 
 import React, { useState, useEffect } from "react";
 import { Card, Table, Row, Col, message, Button, Form, Input, Modal, Select, Tooltip, Spin, Tabs, Descriptions, Popconfirm } from "antd";
 import { apiClient } from "@/utils/apiClient";
-import { getCookieData } from "@/utils/common";
+import { exportToExcel, getCookieData } from "@/utils/common";
 import TextArea from "antd/es/input/TextArea";
+import ModalMoveCoilProd from "@/app/components/pipe/ModalMoveCoilProd";
 
 const { TabPane } = Tabs;
 
@@ -23,6 +24,7 @@ const RawMaterialsShiftHis = () => {
   const [optGrades, setOptGrades] = useState<{ label: string; value: string }[]>([]);
     const [optThickNess, setoptThickNess] = useState<{ label: string; value: string }[]>([]);
     const [optVendors, setOptVendors] = useState<{ label: string; value: string }[]>([]);
+    const [optTubeMachines, setoptTubeMachines] = useState<{ label: string; value: string }[]>([]);
     
 
   const [form] = Form.useForm();
@@ -36,15 +38,16 @@ const RawMaterialsShiftHis = () => {
   // Fetch dropdown options for locations
   const FetchPlCommon = async () => {
     const response = await apiClient<Record<string, any>>(
-      `${API_BASE_URL}Pl_Common?USER_SRNO=${USER_SRNO}&UT_SRNO=${UT_SRNO}&TBL_SRNO=1,3,4`,
+      `${API_BASE_URL}Pl_Common?USER_SRNO=${USER_SRNO}&UT_SRNO=${UT_SRNO}&TBL_SRNO=1,3,4,8`,
       "GET"
     );
     if (response.msgId === 200) {
       if (!response.data) return;
-      const { Table1, Table3, Table4 } = response.data;
+      const { Table1, Table3, Table4,Table8 } = response.data;
       setOptGrades(Table1)
       setoptThickNess(Table3)
       setOptVendors(Table4)
+      setoptTubeMachines(Table8)
     } else {
       message.error(response.msg);
       console.error("API Error:", response.msg);
@@ -120,12 +123,12 @@ const RawMaterialsShiftHis = () => {
   };
 
   // Fetch slitted data
-  const fetchCoils = async (MATERIAL_FLAG:string) => {
+  const fetchCoils = async (MATERIAL_FLAG:string, queryString : string) => {
     try {
       // alert("dfg")
       setLoading(true);
       // const MATERIAL_FLAG ='S'
-      const response = await apiClient(`${API_BASE_URL}DtRawMaterialShift?${USER_SRNO}&MATERIAL_FLAG=${MATERIAL_FLAG}`, "GET");
+      const response = await apiClient(`${API_BASE_URL}DtRawMaterialShift?${USER_SRNO}&MATERIAL_FLAG=${MATERIAL_FLAG}&${queryString}`, "GET");
 
 
       if (response.msgId === 200) {
@@ -285,7 +288,7 @@ const RawMaterialsShiftHis = () => {
         MATERIAL_SRNO: selectedMaterial.MATERIAL_SRNO ,
         SLITTING_SRNO: flag==='M' ? null : selectedMaterial.SLITTING_SRNO ,
         PRE_LOG_STATUS_SRNO: selectedMaterial.LOG_STATUS_SRNO,
-        DESCRIPTION: values.DESCRIPTION,
+        DESCRIPTION: values.MACHINE_SRNO.toString(), // PASSING TUBE MILL SRNO INSETED OF DESC NOW
         REMARKS: values.REMARKS,
         STATUS_CHANGE_DATE: values.STATUS_CHANGE_DATE,
         USER_SRNO: USER_SRNO,
@@ -520,11 +523,11 @@ const RawMaterialsShiftHis = () => {
     }else if(activeTab === "MOTHER"){
       fetchMotherCoil(queryString);
     }else if (activeTab === "PRODUCTION"){
-      fetchCoils('F');
+      fetchCoils('F', queryString);
     }else if (activeTab === "RETURNED"){
-      fetchCoils('R');
+      fetchCoils('R', queryString);
     }else if (activeTab === "SOLD"){
-      fetchCoils('O');
+      fetchCoils('O', queryString);
     }
   };
 
@@ -553,20 +556,51 @@ const RawMaterialsShiftHis = () => {
     }else if(key === "MOTHER"){
       fetchMotherCoil(queryString);
     }else if (key === "PRODUCTION"){
-      fetchCoils('F');
+      fetchCoils('F', queryString);
     }else if (key === "RETURNED"){
-      fetchCoils('R');
+      fetchCoils('R', queryString);
     }else if (key === "SOLD"){  
-      fetchCoils('O');
+      fetchCoils('O', queryString);
     }
       
+  };
+
+  const handleExport = async () => {
+    try {
+      setLoading(true);
+      if (activeTab == 'MOTHER') {
+        exportToExcel(MotherData, "Mother Coils", generateTableColumns('M'), "Mother Coils");
+      }else if (activeTab == 'SEMI_SLITTED') {
+        exportToExcel(SemiSlittedData, "Semi-Slitted Coils", generateTableColumns('P'), "Semi-Slitted Coils");
+        
+      }else if (activeTab == 'SLITTED') {
+        exportToExcel(SlittedData, "Slitted Coils", generateTableColumns('S'), "Slitted Coils");  
+      }
+      else if (activeTab == 'PRODUCTION') {
+        exportToExcel(fetchCoilsData, "Production Coils", generateTableColumns('F'), "Production Coils");  
+      }
+      else if (activeTab == 'RETURNED') {
+        exportToExcel(fetchCoilsData, "Return Coils", generateTableColumns('R'), "Return Coils");  
+      } 
+      else if (activeTab == 'SOLD') {
+        exportToExcel(fetchCoilsData, "Sold Coils", generateTableColumns('O'), "Sold Coils");  
+      }
+
+    } catch (error: any) {
+      console.error("Error exporting data:", error);
+      message.error(error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <Card title="Material Shift">
       <div>
       {/* Search Fields Inside the Tab */}
-      <Form layout="inline" style={{ marginBottom: 16 }} onFinish={handleSearch} form={searchForm} hidden={activeTab === "PRODUCTION" || activeTab === "RETURNED" || activeTab === "SOLD"}>
+      <Form layout="inline" style={{ marginBottom: 16 }} onFinish={handleSearch} form={searchForm} 
+//      hidden={activeTab === "PRODUCTION" || activeTab === "RETURNED" || activeTab === "SOLD"}
+      >
         <Form.Item name="CHALLAN_NO">
           <Input placeholder="Challan No" />
         </Form.Item>
@@ -576,7 +610,9 @@ const RawMaterialsShiftHis = () => {
         <Form.Item name="REG_DATE_TO">
           <Input type="date" placeholder="Date To" />
         </Form.Item>
-        <Form.Item name={['C_LOCATION']} style={{ marginBottom: 8 }}>
+        <Form.Item name={['C_LOCATION']} style={{ marginBottom: 8 }}
+        hidden={activeTab === "PRODUCTION" || activeTab === "RETURNED" || activeTab === "SOLD"}
+        >
                           <Select 
                           showSearch
                           placeholder="Select Location" 
@@ -606,6 +642,18 @@ const RawMaterialsShiftHis = () => {
                           allowClear
                           />
                         </Form.Item>
+
+                        <Form.Item name={['TUBE_MILL_SRNO']} style={{ marginBottom: 8 }}
+        hidden={activeTab != "PRODUCTION"}
+        >
+                          <Select 
+                          showSearch
+                          placeholder="Select Tube Mill" 
+                          options={optTubeMachines} 
+                          filterOption={(input: any, option: any) => option?.label.toLowerCase().includes(input.toLowerCase())}
+                          allowClear
+                          />
+                        </Form.Item>
         <Form.Item>
           <Button type="primary" htmlType="submit">
         Search
@@ -619,7 +667,15 @@ const RawMaterialsShiftHis = () => {
       </Spin> */}
     </div>
 
-      <Tabs activeKey={activeTab} onChange={onTabChange} >
+      <Tabs activeKey={activeTab} onChange={onTabChange}
+      tabBarExtraContent={
+        <Button type="primary" 
+        onClick={handleExport} icon={<DownloadOutlined />}
+        
+        >
+          Export
+        </Button>
+      }  >
         <TabPane tab="Mother Coils" key="MOTHER">
           <Spin spinning={loading}>
             <Table dataSource={MotherData} columns={generateTableColumns('M')} pagination={false} />
@@ -653,7 +709,8 @@ const RawMaterialsShiftHis = () => {
       </Tabs>
 
  {/* Modal for Status */}
- <Modal
+      {false && (<ModalMoveCoilProd setisStatusLogModalVisible={setisStatusLogModalVisible} isMoOpen={true} selectedMaterial={selectedMaterial} fetchMotherCoil={fetchMotherCoil}  fetchSlitted={fetchSlitted} ></ModalMoveCoilProd>)}
+  <Modal
         title="Issue Coil"
         open={isStatusLogModalVisible}
         footer={null}
@@ -674,14 +731,29 @@ const RawMaterialsShiftHis = () => {
         )}
         <Form form={statusLog} layout="vertical" onFinish={handleStatusLogOk} >
           <Row gutter={16}>
-            <Col span={12}>
+            <Col span={12} hidden>
               <Form.Item
           label="Tube Mill"
           name="DESCRIPTION"
-          rules={[{ required: true, message: "Please Enter Tube Mill" }]}
+          rules={[{ required: false, message: "Please Enter Tube Mill" }]}
               >
           <Input placeholder="Tube Mill
           " />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                label="Tube Mill"
+                name="MACHINE_SRNO"
+                rules={[{ required: true, message: "Select Tube Machine" }]}
+              >
+                <Select 
+                    showSearch 
+                    placeholder="Select Tube Machine" 
+                    options={optTubeMachines} 
+                    filterOption={(input: any, option: any) => option?.label.toLowerCase().includes(input.toLowerCase())}
+                    allowClear
+                />
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -701,7 +773,6 @@ const RawMaterialsShiftHis = () => {
           >
             <TextArea placeholder="Remark" autoSize={{ minRows: 3, maxRows: 5 }} />
           </Form.Item>
-          {/* Submit Button */}
                     <Button
                       type="primary"
                       htmlType="submit"
@@ -711,7 +782,7 @@ const RawMaterialsShiftHis = () => {
                       Shift
                     </Button>
         </Form>
-      </Modal>
+      </Modal> 
 
       {/* Modal for shifting material */}
       <Modal

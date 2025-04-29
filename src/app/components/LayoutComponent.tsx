@@ -58,34 +58,36 @@ const menuItems = [
       // },
     ]
   },
-  // {
-  //   key: 'management',
-  //   icon: <DatabaseOutlined />,
-  //   label: 'Management',
-  //   subMenu: [
+  {
+    key: 'Pipes',
+    icon: <DatabaseOutlined />,
+    label: 'Pipes',
+    subMenu: [
+      // {
+      //   key: 'Dashboard',
+      //   label: 'Dashboard',
+      //   link: '/inventory-master',
+      // },
+      {
+        key: 'Inventory',
+        label: 'Inventory',
+        link: '/pipe/inventory',
+      },
+      {
+        key: 'InventoryLogs',
+        label: 'Inventory Logs',
+        link: '/pipe/logs',
+      },
+      // {
+      //   key: 'inventory',
+      //   label: 'Inventory',
+      //   link: '/inventory',
+      // },
       
-  //     {
-  //       key: 'inventoryMaster',
-  //       label: 'Inventory Master',
-  //       link: '/inventory-master',
-  //     },
-  //     {
-  //       key: 'inventory',
-  //       label: 'Inventory',
-  //       link: '/inventory',
-  //     },
-  //     {
-  //       key: 'machine',
-  //       label: 'Machine',
-  //       link: '/machine',
-  //     },
-  //     {
-  //       key: 'production1',
-  //       label: 'Production',
-  //       link: '/production',
-  //     },
-  //   ],
-  // },{
+      
+    ],
+  },
+  // {
   //   key: 'management1',
   //   icon: <DatabaseOutlined />,
   //   label: 'Management',
@@ -173,6 +175,11 @@ const menuItems = [
         link: '/master/location',
       },
       {
+        key: 'Machine',
+        label: 'Machine',
+        link: '/master/machine',
+      },
+      {
         key: 'users',
         label: 'Users',
         link: '/master/users',
@@ -185,6 +192,26 @@ const menuItems = [
     label: 'Settings',
     link: '/settings',
   },
+// add one more menu item for logout
+  {
+    key: 'logout',
+    icon: <UsergroupAddOutlined />,
+    label: 'Logout',
+    link: '/logout',
+  },
+  // {
+  //   key: 'userManagement',
+  //   icon: <UsergroupAddOutlined />,
+  //   label: 'User Management',
+  //   link: '/user-management',
+  // },
+  // {
+  //   key: 'reports',
+  //   icon: <BarChartOutlined />,
+  //   label: 'Reports',
+  //   link: '/reports',
+  // },
+
 ];
 
 const LayoutComponent: React.FC<{ children: React.ReactNode }> = ({ children }) => {

@@ -112,6 +112,7 @@ const ProductionLogsPage: React.FC = () => {
   
     // Fetch production logs and dropdown data
     const fetchProductionLogs = async () => {
+      alert("1")
       setLoading(true);
       try {
         const logs:ApiResponse = await apiService.get('/productionlog', 'applicationq/json');
