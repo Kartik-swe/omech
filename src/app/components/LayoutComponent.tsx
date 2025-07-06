@@ -45,6 +45,11 @@ const menuItems = [
         label: 'Shift Material',
         link: '/materials/dash1',
       },
+       {
+        key: 'PRODUCTION_ANALYSIS',
+        label: 'Production Analysis',
+        link: '/dashboard/production',
+      },
       
       // {
       //   key: 'slitting_process',
@@ -155,15 +160,27 @@ const menuItems = [
   //   link: '/reports',
   // },
   {
+    key: 'Scheduling',
+    icon: <StockOutlined />,
+    label: 'Scheduling',
+    subMenu: [
+      {
+        key: 'SchedulingPage',
+        label: 'Scheduling Analysis',
+        link: '/schedule',
+      },
+      {
+        key: 'scheduleAdd',
+        label: 'Add PO',
+        link: '/PO/schedule',
+      },
+          ],
+  },
+  {
     key: 'master',
     icon: <DatabaseOutlined />,
     label: 'Master',
     subMenu: [
-      // {
-      //   key: 'User Master',
-      //   label: 'usreMaster',
-      //   link: '/master/userMaster',
-      // },
       {
         key: 'Grades & Thickness',
         label: 'Material',

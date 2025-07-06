@@ -19,7 +19,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    debugger;
     // Check for token in cookies on mount
     const token = Cookies.get("token");
     const userData = Cookies.get("user");

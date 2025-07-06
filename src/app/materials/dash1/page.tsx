@@ -643,6 +643,13 @@ const RawMaterialsShiftHis = () => {
                           />
                         </Form.Item>
 
+                        <Form.Item name={['SLITTED_WIDTH']} style={{ marginBottom: 8 }}
+        hidden={activeTab != "SLITTED"}
+        >
+          <Input placeholder="Width" />
+
+                        </Form.Item>
+
                         <Form.Item name={['TUBE_MILL_SRNO']} style={{ marginBottom: 8 }}
         hidden={activeTab != "PRODUCTION"}
         >

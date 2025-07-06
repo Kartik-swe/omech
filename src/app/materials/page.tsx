@@ -30,14 +30,14 @@ const Dashboard = () => {
   });
 
    useEffect(() => {
-      FetchPlCommon();
+     // FetchPlCommon();
       FetchRawMaterials();
     }, []);
   
 
      // Function to fetch common dropdown options
   const FetchPlCommon = async () => {
-    const response = await apiClient<Record<string, any>>(`${API_BASE_URL}Pl_Common?USER_SRNO=${USER_SRNO}&UT_SRNO=${UT_SRNO}&TBL_SRNO=1,3,4,5`, 'GET');
+    const response = await apiClient(`${API_BASE_URL}Pl_Common?USER_SRNO=${USER_SRNO}&UT_SRNO=${UT_SRNO}&TBL_SRNO=1,3,4,5`, 'GET');
     if (response.msgId === 200) {
       if (!response.data) { return; }
       const { Table1, Table3, Table4, Table5 } = response.data;
@@ -67,7 +67,7 @@ const Dashboard = () => {
           { title: 'Mother coil weight', value: row.T_MOTHER_WEIGHT || 0 },
           { title: 'Semi-slitted weight', value: row.T_SLITTING_WEIGHT || 0},
           { title: 'slitted weight', value: row.T_SLITTED_WEIGHT || 0 },
-          { title: 'Scrap', value: row.T_SCRAP || 0 },
+          { title: 'Total Stock', value: row.T_STOCK || 0 },
         ]
 
         const gradeWiseStockDataTemp = response.data.Table1.map((item:any) => ({

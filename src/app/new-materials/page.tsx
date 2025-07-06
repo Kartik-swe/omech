@@ -207,7 +207,7 @@ const RawMaterialDashboard = () => {
       const values = SearchForm.getFieldsValue();
       console.log(values);
       
-      const query = `CHALLAN_NO=${values.CHALLAN_NO || ''}&DT_REG_FROM=${values.RECEIVED_DATE || ''}&DT_REG_TO=${values.DT_REG_TO || ''}&SUPPLIER=${values.SUPPLIER || ''}&GRADE_SRNO=${values.MATERIAL_GRADE_SRNO || ''}&THICKNESS_SRNO=${values.MATERIAL_THICKNESS_SRNO || ''}`
+      const query = `CHALLAN_NO=${values.CHALLAN_NO || ''}&DT_REG_FROM=${values.RECEIVED_DATE_FROM || ''}&DT_REG_TO=${values.RECEIVED_DATE_TO || ''}&SUPPLIER=${values.SUPPLIER || ''}&GRADE_SRNO=${values.MATERIAL_GRADE_SRNO || ''}&THICKNESS_SRNO=${values.MATERIAL_THICKNESS_SRNO || ''}`
       const response = await apiClient(`${API_BASE_URL}DtRawMaterial?${query}`, 'GET');
       if (response.msgId === 200) {
         if (!response.data) { return; }
@@ -450,71 +450,81 @@ return (
         form={SearchForm}
       >
 
-      <Row gutter={16}>
-          <Col span={4}>
-            <Form.Item name="CHALLAN_NO" label="Challan No" rules={[{ required: false, message: 'Please enter challan number' }]}>
-              <Input placeholder="Enter Challan No" />
-            </Form.Item>
-          </Col>
-          <Col span={4}>
-            <Form.Item name="RECEIVED_DATE" label="Date" rules={[{ required: false, message: 'Please select date' }]}>
-              <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" />
-            </Form.Item>
-          </Col>
-          <Col span={4}>
-            <Form.Item name="SUPPLIER" label="Supiler" rules={[{ required: false, message: 'Please select date' }]}>
-            <Input placeholder="Enter Supiler" />
-            </Form.Item>
-          </Col>
-         
-          <Col span={3}>
-            <Form.Item name="MATERIAL_GRADE_SRNO" label="Grade" rules={[{ required: false, message: 'Please select grade' }]}>
-              <Select showSearch placeholder="Select Grade" options={optGrades} filterOption={(input: any, option: any) =>
-                option?.label.toLowerCase().includes(input.toLowerCase())
-              } allowClear></Select>
-            </Form.Item>
-          </Col>
-          <Col span={3}>
-            <Form.Item name="MATERIAL_THICKNESS_SRNO" label="Thickness" rules={[{ required: false, message: 'Select Thickness' }]}>
-              <Select showSearch placeholder="Select Thickness" options={optThickNess} filterOption={(input: any, option: any) =>
-                option?.label.toLowerCase().includes(input.toLowerCase())
-              } allowClear></Select>
-            </Form.Item>
-          </Col>
-          <Col span={2}>
-            {/* Search Button */}
-            <Form.Item>
-              
-                    <Button type="primary" htmlType="submit" style={{ marginTop: '30px', width: '100%' }}>
-              Search
-              </Button>
-              </Form.Item>
-          </Col>
-          <Col span={3}>
-            {/* Search Button */}
-            <Form.Item>
-              
-                    <Button onClick={() => setMotherModalVisible(true)}  type="default" style={{ marginTop: '30px', width: '100%', backgroundColor: 'red', color: 'white' }}>
-                      Add Coil
-                    </Button>
-              </Form.Item>
-          </Col>
+     <Row gutter={8} align="bottom">
+  <Col span={3}>
+    <Form.Item name="CHALLAN_NO" label="Challan No">
+      <Input placeholder="Enter Challan No" />
+    </Form.Item>
+  </Col>
+  <Col span={3}>
+    <Form.Item name="RECEIVED_DATE_FROM" label="From">
+      <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" />
+    </Form.Item>
+  </Col>
+  <Col span={3}>
+    <Form.Item name="RECEIVED_DATE_TO" label="To">
+      <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" />
+    </Form.Item>
+  </Col>
+  <Col span={3}>
+    <Form.Item name="SUPPLIER" label="Supplier">
+      <Input placeholder="Enter Supplier" />
+    </Form.Item>
+  </Col>
+  <Col span={3}>
+    <Form.Item name="MATERIAL_GRADE_SRNO" label="Grade">
+      <Select
+        showSearch
+        placeholder="Select Grade"
+        options={optGrades}
+        filterOption={(input, option) =>
+          option ? option.label.toLowerCase().includes(input.toLowerCase()) : false
+        }
+        allowClear
+      />
+    </Form.Item>
+  </Col>
+  <Col span={3}>
+    <Form.Item name="MATERIAL_THICKNESS_SRNO" label="Thickness">
+      <Select
+        showSearch
+        placeholder="Select Thickness"
+        options={optThickNess}
+        filterOption={(input, option) =>
+          option ? option.label.toLowerCase().includes(input.toLowerCase()) : false
+        }
+        allowClear
+      />
+    </Form.Item>
+  </Col>
+  <Col span={2}>
+    <Form.Item>
+      <Button
+        type="primary"
+        htmlType="submit"
+        style={{ width: '100%' }}
+      >
+        Search
+      </Button>
+    </Form.Item>
+  </Col>
+  <Col span={4}>
+    <Form.Item>
+      <Button
+        onClick={() => setMotherModalVisible(true)}
+        type="default"
+        style={{
+          width: '100%',
+          backgroundColor: 'red',
+          color: 'white',
+        }}
+      >
+        Add Coil
+      </Button>
+    </Form.Item>
+  </Col>
+</Row>
 
-
-          {/* <Col span={8}>
-            <Form.Item name="MATERIAL_C_LOCATION_SRNO" label="Shift To" rules={[{ required: true, message: 'Please select Shift to' }]}>
-              <Select
-                showSearch
-                placeholder="Select"
-                options={optVendors}
-                filterOption={(input: any, option: any) =>
-                  option?.label.toLowerCase().includes(input.toLowerCase())
-                }
-              ></Select>
-            </Form.Item>
-          </Col> */}
-          
-        </Row>
       </Form>
         
 

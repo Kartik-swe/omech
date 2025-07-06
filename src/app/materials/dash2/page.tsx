@@ -151,7 +151,7 @@ const Dashboard = () => {
       <Layout.Content style={{ padding: '0 20px', marginTop: 64 }}>
         <Row gutter={16} style={{ marginBottom: 20 }}>
          {modalVisible &&  <RawInventoryDtl modalVisible={modalVisible} setModalVisible={setModalVisible} selectedMaterialSrnos={selectedMaterialSrnos} selectedSlittingSrnos={selectedSlittingSrnos}  selectedCoilTypeFlag={selectedCoilTypeFlag} /> }
-          <Col span={6}>
+          <Col span={12}>
             <Card title="Filters" bordered={false}>
                 <Form layout="vertical" form={SearchForm} onReset={() => SearchForm.resetFields()}>
                 <Form.Item name={['MATERIAL_FLAG']} style={{ marginBottom: 8 }} initialValue={'A'}>
@@ -171,58 +171,67 @@ const Dashboard = () => {
                   />
                 </Form.Item>
 
-                <Form.Item name={['C_LOCATION']} style={{ marginBottom: 8 }}>
-                  <Select 
-                  showSearch
-                  onChange={FetchRawMaterials}
-                  placeholder="Select Location" 
-                  options={optVendors} 
-                  filterOption={(input: any, option: any) => option?.label.toLowerCase().includes(input.toLowerCase())}
-                  allowClear
-                  />
-                </Form.Item>
+                <Row gutter={8}>
+                  <Col span={12}>
+                    <Form.Item name={['C_LOCATION']} style={{ marginBottom: 8 }}>
+                      <Select 
+                        showSearch
+                        onChange={FetchRawMaterials}
+                        placeholder="Select Location" 
+                        options={optVendors} 
+                        filterOption={(input: any, option: any) => option?.label.toLowerCase().includes(input.toLowerCase())}
+                        allowClear
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item name={['GRADE_SRNO']} style={{ marginBottom: 8 }}>
+                      <Select 
+                        showSearch 
+                        onChange={FetchRawMaterials}
+                        placeholder="Select Grade" 
+                        options={optGrades} 
+                        filterOption={(input: any, option: any) => option?.label.toLowerCase().includes(input.toLowerCase())}
+                        allowClear
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
 
-                <Form.Item name={['GRADE_SRNO']} style={{ marginBottom: 8 }}>
-                  <Select 
-                  showSearch 
-                  onChange={FetchRawMaterials}
-                  placeholder="Select Grade" 
-                  options={optGrades} 
-                  filterOption={(input: any, option: any) => option?.label.toLowerCase().includes(input.toLowerCase())}
-                  allowClear
-                  />
-                </Form.Item>
-
-                <Form.Item name={['WIDTH']} style={{ marginBottom: 8 }}>
-                  <Input
-                  onChange={FetchRawMaterials}
-                  placeholder="Enter width"
-                  style={{ width: '100%' }}
-                  allowClear
-                  />
-                </Form.Item>
-
-                <Form.Item name={['THICNESS_SRNO']} style={{ marginBottom: 8 }}>
-                  <Select 
-                  showSearch 
-                  onChange={FetchRawMaterials}
-                  placeholder="Select Thickness" 
-                  options={optThickNess} 
-                  filterOption={(input: any, option: any) => option?.label.toLowerCase().includes(input.toLowerCase())}
-                  allowClear
-                  />
-                </Form.Item>
+                <Row gutter={8}>
+                  <Col span={12}>
+                    <Form.Item name={['WIDTH']} style={{ marginBottom: 8 }}>
+                      <Input
+                        onChange={FetchRawMaterials}
+                        placeholder="Enter width"
+                        style={{ width: '100%' }}
+                        allowClear
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item name={['THICNESS_SRNO']} style={{ marginBottom: 8 }}>
+                      <Select 
+                        showSearch 
+                        onChange={FetchRawMaterials}
+                        placeholder="Select Thickness" 
+                        options={optThickNess} 
+                        filterOption={(input: any, option: any) => option?.label.toLowerCase().includes(input.toLowerCase())}
+                        allowClear
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
 
                 <Form.Item name={['STATUS_SRNO']} style={{ marginBottom: 8 }}>
                   <Select
-                  onChange={FetchRawMaterials}
-                  placeholder="Select Status"
-                  style={{ width: '100%' }}
-                  options={optStatus} 
-                  filterOption={(input: any, option: any) => option?.label.toLowerCase().includes(input.toLowerCase())}
-                  allowClear
+                    onChange={FetchRawMaterials}
+                    placeholder="Select Status"
+                    style={{ width: '100%' }}
+                    options={optStatus} 
+                    filterOption={(input: any, option: any) => option?.label.toLowerCase().includes(input.toLowerCase())}
+                    allowClear
                   >
-                  
                   </Select>
                 </Form.Item>
 
@@ -245,8 +254,36 @@ const Dashboard = () => {
                 </Form>
             </Card>
           </Col>
-
-          <Col span={18}>
+          <Col span={12}>
+            <Card title="Raw Materials" bordered={false} style={{ height: '100%' }}>
+              <Row gutter={16} style={{ marginBottom: 16 }}>
+                <Col span={8}>
+                  <Card>
+                    <div style={{ fontSize: 14, color: '#888' }}>Total Records</div>
+                    <div style={{ fontSize: 24, fontWeight: 600 }}>{DT_DATA.length}</div>
+                  </Card>
+                </Col>
+                <Col span={8}>
+                  <Card>
+                    <div style={{ fontSize: 14, color: '#888' }}>Total Quantity</div>
+                    <div style={{ fontSize: 24, fontWeight: 600 }}>
+                      {DT_DATA.reduce((acc: number, item: any) => acc + item.QUANTITY, 0)}
+                    </div>
+                  </Card>
+                </Col>
+                <Col span={8}>
+                  <Card>
+                    <div style={{ fontSize: 14, color: '#888' }}>Total Weight (kg)</div>
+                    <div style={{ fontSize: 24, fontWeight: 600 }}>
+                      {DT_DATA.reduce((acc: number, item: any) => acc + item.BALANCE_WEIGHT * item.QUANTITY, 0).toFixed(2)}
+                    </div>
+                  </Card>
+                </Col>
+                
+              </Row>
+            </Card>
+          </Col>
+          <Col span={24} style={{ marginTop: 20 }}>
             <Card title="Data Overview" bordered={false}>
               {/* Displaying Table with Data */}
               <Table
