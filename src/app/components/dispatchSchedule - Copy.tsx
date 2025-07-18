@@ -5,25 +5,21 @@ import {
   Card, Table, Button, InputNumber, Input, message, Modal,
   Descriptions, Typography, Tag, Spin,
   Popconfirm,
-  Tooltip,
-  Space
+  Tooltip
 } from 'antd';
 
-import { CloseCircleOutlined, RedoOutlined, SearchOutlined, StopOutlined } from '@ant-design/icons';
+import { CloseCircleOutlined, RedoOutlined, StopOutlined } from '@ant-design/icons';
 
-import type { ColumnsType, ColumnType } from 'antd/es/table';
+import type { ColumnsType } from 'antd/es/table';
 import { apiClient } from '@/utils/apiClient';
 import { getCookieData } from '@/utils/common';
 import { Console } from 'console';
-import { set } from '@ant-design/plots/es/core/utils';
 
 const { Text } = Typography;
 
 interface DispatchModalProps {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
-  itemType: 'PIPE' | 'COIL' | 'SHEET' | null;
-  setItemType: (type: 'PIPE' | 'COIL' | 'SHEET' | null) => void;
   SCHEDULE_SRNO: number;
 }
 
@@ -31,19 +27,17 @@ interface DispatchHistory {
   DISPATCH_SRNO: number;
   DISPATCH_DATE: string;
   DISPATCH_QTY: number;
+  REJECTED_QTY : number;
   REJECTED_REMARK?: string;
 }
 
 interface DispatchItem {
   SCHEDULE_DT_SRNO: number;
-  ITEM_TYPE: string;
+  ITEM_NAME: string;
   OD: string;
   THICKNESS: string;
   GRADE: string;
   LENGTH: string;
-  WIDTH?: string;
-  BREADTH?: string;
-  WEIGHT_KG?: string;
   ORDERED_WEIGHT : number;
   ORDERED_QTY: number;
   DISPATCHED_QTY: number;
@@ -65,12 +59,11 @@ interface PoData {
   items: DispatchItem[];
 }
 
-const DispatchModal: React.FC<DispatchModalProps> = ({ isOpen, setIsOpen,itemType,setItemType,SCHEDULE_SRNO }) => {
+const DispatchModal: React.FC<DispatchModalProps> = ({ isOpen, setIsOpen, SCHEDULE_SRNO }) => {
   const { USER_SRNO, API_BASE_URL, UT_SRNO } = getCookieData();
 
   const [poData, setPoData] = useState<PoData | null>(null);
   const [dispatchQty, setDispatchQty] = useState<{ [key: number]: number }>({});
-  const [dispatchWt, setDispatchWt] = useState<{ [key: number]: number }>({});
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -83,7 +76,6 @@ const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
 const [rejectItem, setRejectItem] = useState<DispatchItem | null>(null);
 const [rejectedQty, setRejectedQty] = useState<number | null>(null);
 const [rejectionRemark, setRejectionRemark] = useState<string>('');
-
 
 
   useEffect(() => {
@@ -104,14 +96,11 @@ const [rejectionRemark, setRejectionRemark] = useState<string>('');
           SCHEDULE_DATE: Table[0].SCHEDULE_DATE,
           items: Table1?.map((item: any) => ({
             SCHEDULE_DT_SRNO: item.SCHEDULE_DT_SRNO,
-            ITEM_TYPE: item.ITEM_TYPE,
+            ITEM_NAME: item.ITEM_NAME,
             OD: item.OD,
             THICKNESS: item.THICKNESS,
             GRADE: item.GRADE,
             LENGTH: item.LENGTH,
-            WIDTH: item.WIDTH,
-            BREADTH: item.BREADTH,
-            WEIGHT_KG: item.WEIGHT_KG,
             ORDERED_QTY: item.ORDERED_QTY,
             ORDERED_WEIGHT: item.ORDERED_WEIGHT,
             DISPATCHED_QTY: item.DISPATCHED_QTY,
@@ -127,13 +116,13 @@ const [rejectionRemark, setRejectionRemark] = useState<string>('');
     .map((dispItem: any) => ({
             DISPATCH_SRNO : dispItem.DISPATCH_SRNO,
             DISPATCH_QTY: dispItem.DISPATCH_QTY,
+            REJECTED_QTY: dispItem.REJECTED_QTY,
             DISPATCH_DATE: dispItem.  DISPATCH_DATE}))
           }))
         };
         console.log('Mapped Dispatch Data:', mappedData);
         setPoData(mappedData);
         setDispatchQty({});
-        setDispatchWt({});
       } else {
         message.error(res.msg || 'Failed to fetch dispatch schedule.');
       }
@@ -148,17 +137,12 @@ const [rejectionRemark, setRejectionRemark] = useState<string>('');
   const handleQtyChange = (itemSrno: number, value: number | null) => {
     setDispatchQty((prev) => ({ ...prev, [itemSrno]: value || 0 }));
   };
-  const handleWtChange = (itemSrno: number, value: number | null) => {
-    setDispatchWt((prev) => ({ ...prev, [itemSrno]: value || 0 }));
-  };
-
 
   const handleDispatch = (item: DispatchItem) => {
     const qty = dispatchQty[item.SCHEDULE_DT_SRNO] || 0;
-    const remaining = itemType === 'PIPE' ? item.REMAINING_QTY : item.REMAINING_WEIGHT;
-    // const remaining = item.REMAINING_QTY || 0;
+    const remaining = item.REMAINING_QTY || 0;
 
-    if (qty < 1) return message.warning('Please enter a dispatch value greater than zero.');
+    if (qty < 1) return message.warning('Please enter a dispatch quantity greater than zero.');
 
     const doDispatch = async () => {
       setSaving(true);
@@ -174,7 +158,7 @@ const [rejectionRemark, setRejectionRemark] = useState<string>('');
         const res = await apiClient(`${API_BASE_URL}IUDispatch`, 'POST', payload);
 
         if (res.msgId === 200) {
-          message.success(`Dispatched ${qty} of ${item.ITEM_TYPE} successfully.`);
+          message.success(`Dispatched ${qty} of ${item.ITEM_NAME} successfully.`);
           setDispatchQty((prev) => ({ ...prev, [item.SCHEDULE_DT_SRNO]: 0 }));
           fetchDispatchSchedule();
         } else {
@@ -351,66 +335,28 @@ const handleDispatchClose = async (item: DispatchItem) => {
           setSaving(false);
         }
       };
-  type DataIndex = keyof DispatchItem;
-  const getColumnSearchProps = (dataIndex: DataIndex): ColumnType<DispatchItem> => ({
-  title: dataIndex,
-  dataIndex,
-  filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
-    <div style={{ padding: 8 }}>
-      <Input
-        placeholder={`Search ${dataIndex}`}
-        value={selectedKeys[0]}
-        onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-        onPressEnter={() => confirm()}
-        style={{ width: 188, marginBottom: 8, display: 'block' }}
-      />
-      <Space>
-        <Button type="primary" onClick={() => confirm()} icon={<SearchOutlined />} size="small">
-          Search
-        </Button>
-        <Button onClick={() => clearFilters?.()} size="small">Reset</Button>
-      </Space>
-    </div>
-  ),
-  filterIcon: (filtered: boolean) => (
-    <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />
-  ),
-  onFilter: (value, record) =>
-    !!record[dataIndex]?.toString().toLowerCase().includes((value as string).toLowerCase()),
-});
 
   const itemColumns: ColumnsType<DispatchItem> = [
-    { title: 'GRADE', dataIndex: 'GRADE',
-      ...getColumnSearchProps('GRADE'),
-
-      }, // Hide GRADE for PIPE
-    { title: 'THICKNESS', dataIndex: 'THICKNESS', ...getColumnSearchProps('THICKNESS'), },
-    { title: 'OD', dataIndex: 'OD' ,
-       ...getColumnSearchProps('OD'),
-       hidden:itemType =='COIL' || itemType == 'SHEET' },
-
-    { title: 'LENGTH', dataIndex: 'LENGTH',
-       ...getColumnSearchProps('LENGTH'),
-        hidden:itemType =='COIL' },
-    { title: 'WIDTH', dataIndex: 'WIDTH',hidden:itemType =='PIPE' || itemType == 'SHEET' }, // Hide WIDTH for PIPE and SHEET
-    {title:'BREADTH', dataIndex: 'BREADTH', hidden:itemType =='PIPE' || itemType == 'COIL' }, // Hide BREADTH for PIPE and COIL
-    { title: 'WEIGHT', dataIndex: 'WEIGHT_KG' }, // Updated to use WEIGHT_KG
+    { title: 'OD', dataIndex: 'OD' },
+    { title: 'THICKNESS', dataIndex: 'THICKNESS' },
+    { title: 'GRADE', dataIndex: 'GRADE' },
+    { title: 'LENGTH', dataIndex: 'LENGTH' },
     // { title: 'WEIGHT', dataIndex: 'WEIGHT' },
   // Grouped: Ordered
   {
-  title: 'Ordered',
-  render: (_, item) => (
-    <div>
-      {itemType === 'PIPE' ? (<> Qty: {item.ORDERED_QTY} <br /> </> ) : null}
-      Wt: {item.ORDERED_WEIGHT} kg
-    </div>
-  ),
-},
+    title: 'Ordered',
+    render: (_, item) => (
+      <div>
+        Qty: {item.ORDERED_QTY}<br />
+        Wt : {item.ORDERED_WEIGHT} kg
+      </div>
+    ),
+  },
   {
     title: 'Dispatched',
     render: (_, item) => (
       <div>
-        {itemType === 'PIPE' ? (<> Qty: {item.DISPATCHED_QTY} <br /> </> ) : null}
+        Qty: {item.DISPATCHED_QTY}<br />
         Wt : {item.DISPATCHED_WEIGHT} kg
       </div>
     ),
@@ -419,23 +365,16 @@ const handleDispatchClose = async (item: DispatchItem) => {
     title: 'Rejected',
     render: (_, item) => (
       <div>
-        {itemType === 'PIPE' ? (<> Qty: {item.REJECTED_QTY} <br /> </> ) : null}        
+        Qty: {item.REJECTED_QTY}<br />
         Wt : {item.REJECTED_WEIGHT} kg
       </div>
     ),
-    hidden:itemType =='COIL' || itemType == 'SHEET'
   },
  
 
 
       {
       title: 'Remaining',
-      filters: [
-    { text: 'Pending', value: 'P' },
-    { text: 'Completed', value: 'C' },
-    { text: 'Closed', value: 'E' },
-  ],
-  onFilter: (value, record) => record.STATUS_FLAG === value,
       render: (_, item) => {
         const remaining = item.REMAINING_QTY;
         // Status color logic
@@ -455,22 +394,13 @@ const handleDispatchClose = async (item: DispatchItem) => {
           label = "Pending";
         }
         return <>
-                {itemType === 'PIPE' ? (
-                  <> 
-                    <Tag color={color}>{label} ({remaining})</Tag> <br /> Wt : {item.REMAINING_WEIGHT} kg
-                  </> 
-                ) : 
-                <>
-                <Tag color={color}>{label} ({item.REMAINING_WEIGHT} KG)</Tag> <br />
-                </>
-                }
-
+            <Tag color={color}>{label} ({remaining})</Tag> <br /> Wt : {item.REMAINING_WEIGHT} kg
 
         </>
       },
     },
     {
-      title: itemType === 'PIPE' ? 'Dispatch Qty' : 'Dispatch Wt',
+      title: 'Dispatch Qty',
       render: (_, item) => {
         const remaining = item.REMAINING_QTY;
         const isCompleted = remaining <= 0;
@@ -482,7 +412,7 @@ const handleDispatchClose = async (item: DispatchItem) => {
               onChange={(val) => handleQtyChange(item.SCHEDULE_DT_SRNO, val)}
               style={{ width: 80 }}
               disabled={saving}
-              placeholder={itemType === 'PIPE' ? 'Qty' : 'Wt in KG'}
+              placeholder="Qty"
             />
             <Tooltip title={item.IS_CLOSED === 'Y' ? 'Cannot dispatch, Order is Closed' : undefined}>
               <Button
@@ -544,7 +474,6 @@ const handleDispatchClose = async (item: DispatchItem) => {
           )}
 
           {/* Add Rejected Quantity Button */}
-          { itemType === 'PIPE' && (
           <Tooltip title="Add Rejected Quantity">
             <Button
               icon={<StopOutlined style={{ color: '#fa8c16' }} />}
@@ -555,8 +484,6 @@ const handleDispatchClose = async (item: DispatchItem) => {
               Reject
             </Button>
           </Tooltip>
-          )}
-
         </div>
       ),
     },
@@ -618,13 +545,13 @@ const expandedRowRender = (item: DispatchItem) => (
     size="small"
     columns={[
       {
-        title: 'Dispatched Date',
+        title: 'Dispatch Date',
         dataIndex: 'DISPATCH_DATE',
         key: 'DISPATCH_DATE',
         render: (text) => new Date(text).toLocaleDateString(),
       },
       {
-        title: itemType == 'PIPE' ? 'Dispatched Qty' : 'Dispatched Wt',
+        title: 'Dispatch Quantity',
         dataIndex: 'DISPATCH_QTY',
         key: 'DISPATCH_QTY',
         render: (text, record, index) => {
@@ -710,10 +637,7 @@ const expandedRowRender = (item: DispatchItem) => (
     <Modal
       title={`Dispatch for Schedule #${SCHEDULE_SRNO}`}
       open={isOpen}
-      onCancel={() => {
-    setIsOpen(false);
-    setItemType(null);
-  }}
+      onCancel={() => setIsOpen(false)}
       footer={<Button onClick={() => setIsOpen(false)}>Close</Button>}
       width={1400}
       destroyOnClose
