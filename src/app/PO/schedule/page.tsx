@@ -1,8 +1,8 @@
 // schedule/page.tsx
 'use client';
-import { PlusOutlined, DeleteOutlined, EditOutlined, SaveOutlined, CloseOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, EditOutlined, SaveOutlined, CloseOutlined, MergeCellsOutlined } from '@ant-design/icons';
 import ScheduleModal from "@/app/components/schedule";
-import { Button, Card, Col, Form, Input, message, Popconfirm, Row, Select, Table, Tooltip, DatePicker, Tag } from "antd";
+import { Button, Card, Col, Form, Input, message, Popconfirm, Row, Select, Table, Tooltip, DatePicker, Tag, Checkbox } from "antd";
 const { Option } = Select;
 const { RangePicker } = DatePicker;
 import { useEffect, useState } from "react";
@@ -11,6 +11,8 @@ import { getCookieData } from '@/utils/common';
 import { apiClient } from '@/utils/apiClient';
 // top
 import DispatchModal from "@/app/components/dispatchSchedule";
+import PoAnalysis from "@/app/components/PO/PoAnalysis";
+import DispatchAnalysisModal from '@/app/components/PO/PoAnalysis';
 
 
 export default function SchedulePage() {
@@ -18,7 +20,9 @@ export default function SchedulePage() {
     const [editScheduleSrno, setEditScheduleSrno] = useState<number | null>(null);
 const [form] = Form.useForm();
 const [isDispatchOpen, setIsDispatchOpen] = useState(false);
+const [isPoAnalysis, setIsPoAnalysis] = useState(false);
 const [selectedSchedule, setSelectedSchedule] = useState<number | null>(null);
+const [SCHEDULE_SRNOS_MAP, setSCHEDULE_SRNOS_MAP] = useState<number[]>([]);
   const [selectedItemType, setSelectedItemType] = useState<'PIPE' | 'COIL' | 'SHEET' | null>('PIPE');
 
 
@@ -97,8 +101,49 @@ const [selectedSchedule, setSelectedSchedule] = useState<number | null>(null);
   setIsModalOpen(true);
 };
 
+ const handleCheckboxChange = (checked: boolean, srno: number) => {
+    setSCHEDULE_SRNOS_MAP(prev =>
+      checked ? [...prev, srno] : prev.filter(id => id !== srno)
+    );
+  };
+
+  const handleAutoMap = () => {
+    console.log('Selected SCHEDULE_SRNOs:', SCHEDULE_SRNOS_MAP);
+    if (SCHEDULE_SRNOS_MAP.length === 0) {
+      message.warning('Please select at least one PO to auto-map with stock.');
+      return;
+    }
+    setIsPoAnalysis(true); // Your action
+  };
+  
+
+
     
         const columns = [
+          {
+      title: (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Tooltip title="Auto Map With Stock">
+            <Button
+              type="link"
+              icon={<MergeCellsOutlined />}
+              size="small"
+              onClick={handleAutoMap}
+            />
+          </Tooltip>
+        </div>
+      ),
+      key: 'checkbox',
+      width: 50,
+      render: (_: any, record: any) => (
+        <Checkbox
+          checked={SCHEDULE_SRNOS_MAP.includes(record.SCHEDULE_SRNO)}
+          onChange={(e) =>
+            handleCheckboxChange(e.target.checked, record.SCHEDULE_SRNO)
+          }
+        />
+      ),
+    },
             {
                 title: 'Party Name',
                 dataIndex: 'PARTY_NAME',
@@ -143,32 +188,7 @@ const [selectedSchedule, setSelectedSchedule] = useState<number | null>(null);
       },
     ],
   },
-        //  {
-//   title: 'Total Ordered',
-//   align: 'center',
-//   render: (item: any) => {
-//     if (item.ITEM_TYPE === 'PIPE') {
-//       return (
-//         <div style={{ textAlign: 'center' }}>
-//           <div>Qty: <b>{item.T_ORDER_QTY}</b></div>
-//           <div>Wt: <b>{item.T_ORDER_WEIGHT} kg</b></div>
-//         </div>
-//       );
-//     } else {
-//       return (
-//         <div style={{ textAlign: 'center' }}>
-//           <div>Wt: <b>{item.T_ORDER_WEIGHT} kg</b></div>
-//         </div>
-//       );
-//     }
-//   },
-// },
-
-            // {
-            //     title: 'ITEM Type',
-            //     dataIndex: 'ITEM_TYPE',
-            //     hidden: true, // Hide this column by default
-            // },
+       
              {
     title: 'Status',
     dataIndex: 'STATUS_NAME',
@@ -331,8 +351,15 @@ const [selectedSchedule, setSelectedSchedule] = useState<number | null>(null);
 />
 )}
 
+{isPoAnalysis && SCHEDULE_SRNOS_MAP && (
+  <DispatchAnalysisModal
+  open={isPoAnalysis}
+  onCancel={() => setIsPoAnalysis(false)}
+  scheduleSrno= {SCHEDULE_SRNOS_MAP.toString()}
+/>
+)}
 
 
-                </>
+ </>
   )
 }

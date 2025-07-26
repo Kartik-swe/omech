@@ -174,6 +174,11 @@ const menuItems = [
         label: 'Add PO',
         link: '/PO/schedule',
       },
+      {
+        key: 'poMaterialMapping',
+        label: 'PO Material Mapping',
+        link: '/po-material-mapping',
+      },
           ],
   },
   {

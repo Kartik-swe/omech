@@ -307,21 +307,6 @@ const [groupedSummary, setGroupedSummary] = useState<
                     <Table
                       dataSource={pipes}
                       columns={[
-                        // {
-                        //   title: 'OD',
-                        //   dataIndex: 'OD',
-                        //   key: 'OD',
-                        // },
-                        // {
-                        //   title: 'Thickness',
-                        //   dataIndex: 'THICKNESS',
-                        //   key: 'THICKNESS',
-                        // },
-                        // {
-                        //   title: 'Grade',
-                        //   dataIndex: 'GRADE',
-                        //   key: 'GRADE',
-                        // },
                         {
                           title: 'Location',
                           dataIndex: 'C_LOCATION',
@@ -337,19 +322,7 @@ const [groupedSummary, setGroupedSummary] = useState<
                           dataIndex: 'AVAILABLE_QUANTITY',
                           key: 'AVAILABLE_QUANTITY',
                         },
-                        // {
-                        //   title: 'QUANTITY_PER_PIPE',
-                        //   dataIndex: 'QUANTITY_PER_PIPE',
-                        //   key: 'QUANTITY_PER_PIPE',
-                        // },
-                        // {
-                        //   title: 'Total TOTAL_QUANTITY_PER_PIPE',
-                        //   dataIndex: 'TOTAL_QUANTITY_PER_PIPE',
-                        //   key: 'TOTAL_QUANTITY_PER_PIPE',
-                        // },
-                        // ADD HERE RANDOR AND SHOW DETAILS like 
-                        // quantity per pipe * Total Quantity = Total Quantity
-                        {
+                     {
                           title: 'Pipe Can Be Produced',
                           key: 'actions',
                           render: (text: any, record: any) => (
@@ -393,16 +366,7 @@ const [groupedSummary, setGroupedSummary] = useState<
                             </Space>
                           ),
                         },
-                        // {
-                        //   title: 'QUANTITY_PER_PIPE',
-                        //   dataIndex: 'QUANTITY_PER_PIPE',
-                        //   key: 'QUANTITY_PER_PIPE',
-                        // },
-                        // {
-                        //   title: 'Total TOTAL_QUANTITY_PER_PIPE',
-                        //   dataIndex: 'TOTAL_QUANTITY_PER_PIPE',
-                        //   key: 'TOTAL_QUANTITY_PER_PIPE',
-                        // },
+             
                         
                       ]}
                       loading={loading}

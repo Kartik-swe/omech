@@ -2,8 +2,6 @@
 "use client"
 import { useState, useEffect } from "react";
 import { Table, Button, Form, Input, Tabs, Select, Modal, Card, Spin, Row, Col, message } from "antd";
-import { apiService } from "../../../../utils-old/apiUtils";
-import { ApiResponse } from "../../../../utils-old/common_utils";
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { apiClient } from "@/utils/apiClient";
 import { getCookieData } from "@/utils/common";
@@ -252,16 +250,16 @@ const SystemUserManagement = () => {
   const handleDelete = async () => {
     try {
       // Call the API to delete the user
-      const response: ApiResponse = await apiService.post('master/user', 'application/json', {
+      const response = await apiClient(`${API_BASE_URL}IuUser`, "POST", {
         USER_SRNO: userToDelete.USER_SRNO,
         IU_FLAG: 'D', // Deletion flag
       });
 
-      if (response.MsgId === 1) {
+      if (response.msgId === 1) {
         alert('User deleted successfully!');
         fetchUsers(); // Refresh the list after deletion
       } else {
-        alert(response.Msg); // Show error message
+        alert(response.msg); // Show error message
       }
     } catch (err) {
       alert('Failed to delete data.');
