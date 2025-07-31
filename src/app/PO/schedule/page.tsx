@@ -2,7 +2,7 @@
 'use client';
 import { PlusOutlined, DeleteOutlined, EditOutlined, SaveOutlined, CloseOutlined, MergeCellsOutlined } from '@ant-design/icons';
 import ScheduleModal from "@/app/components/schedule";
-import { Button, Card, Col, Form, Input, message, Popconfirm, Row, Select, Table, Tooltip, DatePicker, Tag, Checkbox } from "antd";
+import { Button, Card, Col, Form, Input, message, Popconfirm, Row, Select, Table, Tooltip, DatePicker, Tag, Progress} from "antd";
 const { Option } = Select;
 const { RangePicker } = DatePicker;
 import { useEffect, useState } from "react";
@@ -11,8 +11,6 @@ import { getCookieData } from '@/utils/common';
 import { apiClient } from '@/utils/apiClient';
 // top
 import DispatchModal from "@/app/components/dispatchSchedule";
-import PoAnalysis from "@/app/components/PO/PoAnalysis";
-import DispatchAnalysisModal from '@/app/components/PO/PoAnalysis';
 
 
 export default function SchedulePage() {
@@ -20,9 +18,7 @@ export default function SchedulePage() {
     const [editScheduleSrno, setEditScheduleSrno] = useState<number | null>(null);
 const [form] = Form.useForm();
 const [isDispatchOpen, setIsDispatchOpen] = useState(false);
-const [isPoAnalysis, setIsPoAnalysis] = useState(false);
 const [selectedSchedule, setSelectedSchedule] = useState<number | null>(null);
-const [SCHEDULE_SRNOS_MAP, setSCHEDULE_SRNOS_MAP] = useState<number[]>([]);
   const [selectedItemType, setSelectedItemType] = useState<'PIPE' | 'COIL' | 'SHEET' | null>('PIPE');
 
 
@@ -100,51 +96,9 @@ const [SCHEDULE_SRNOS_MAP, setSCHEDULE_SRNOS_MAP] = useState<number[]>([]);
   setEditScheduleSrno(SCHEDULE_SRNO);
   setIsModalOpen(true);
 };
-
- const handleCheckboxChange = (checked: boolean, srno: number) => {
-    setSCHEDULE_SRNOS_MAP(prev =>
-      checked ? [...prev, srno] : prev.filter(id => id !== srno)
-    );
-  };
-
-  const handleAutoMap = () => {
-    console.log('Selected SCHEDULE_SRNOs:', SCHEDULE_SRNOS_MAP);
-    if (SCHEDULE_SRNOS_MAP.length === 0) {
-      message.warning('Please select at least one PO to auto-map with stock.');
-      return;
-    }
-    setIsPoAnalysis(true); // Your action
-  };
-  
-
-
     
         const columns = [
           {
-      title: (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Tooltip title="Auto Map With Stock">
-            <Button
-              type="link"
-              icon={<MergeCellsOutlined />}
-              size="small"
-              onClick={handleAutoMap}
-            />
-          </Tooltip>
-        </div>
-      ),
-      key: 'checkbox',
-      width: 50,
-      render: (_: any, record: any) => (
-        <Checkbox
-          checked={SCHEDULE_SRNOS_MAP.includes(record.SCHEDULE_SRNO)}
-          onChange={(e) =>
-            handleCheckboxChange(e.target.checked, record.SCHEDULE_SRNO)
-          }
-        />
-      ),
-    },
-            {
                 title: 'Party Name',
                 dataIndex: 'PARTY_NAME',
             },
@@ -188,6 +142,25 @@ const [SCHEDULE_SRNOS_MAP, setSCHEDULE_SRNOS_MAP] = useState<number[]>([]);
       },
     ],
   },
+             {
+    title: 'Pending',
+    children: [
+      {
+        title: 'Qty',
+        dataIndex: 'T_PENDING_QTY',
+        key: 't_pending_qty',
+        align: 'center',
+        width: 80,
+      },
+      {
+        title: 'Wt (kg)',
+        dataIndex: 'T_PENDING_WEIGHT',
+        key: 't_pending_weight',
+        align: 'center',
+        width: 100,
+      },
+    ],
+  },
        
              {
     title: 'Status',
@@ -195,6 +168,7 @@ const [SCHEDULE_SRNOS_MAP, setSCHEDULE_SRNOS_MAP] = useState<number[]>([]);
     key: 'STATUS_NAME',
     render: (text: string, record: any) => {
         let color = '';
+        const completionColor = record.COMPLETION_PERCENTAGE === 100 ? 'green' : record.COMPLETION_PERCENTAGE >= 75 ? 'blue' : record.COMPLETION_PERCENTAGE >= 50 ? 'orange' : 'red';
 
         switch (record.STATUS_SRNO) {
             case 11:
@@ -210,9 +184,40 @@ const [SCHEDULE_SRNOS_MAP, setSCHEDULE_SRNOS_MAP] = useState<number[]>([]);
                 color = 'default';
         }
 
-        return <Tag color={color}>{text}</Tag>;
+        return <>
+        <Tag color={color}>{text}</Tag>
+        <Tooltip title={`${record.COMPLETION_PERCENTAGE}% Dispatched`}>
+          <Progress
+            percent={parseFloat(record.COMPLETION_PERCENTAGE)}
+            strokeColor={color}
+            size="small"
+            status={record.COMPLETION_PERCENTAGE === 100 ? 'success' : 'active'}
+          />
+        </Tooltip>
+        </>
     }
 },
+// {
+//   title: 'Completion',
+//   dataIndex: 'COMPLETION_PERCENTAGE',
+//   key: 'completion_percentage',
+//   align: 'center',
+//   width: 150,
+//   render: (text: string, record: any) => {
+//     const color = record.COMPLETION_PERCENTAGE === 100 ? 'green' : record.COMPLETION_PERCENTAGE >= 75 ? 'blue' : record.COMPLETION_PERCENTAGE >= 50 ? 'orange' : 'red';
+//     return (
+//       <Tooltip title={`${record.COMPLETION_PERCENTAGE}% Dispatched`}>
+//         <Progress
+//           percent={parseFloat(record.COMPLETION_PERCENTAGE)}
+//           strokeColor={color}
+//           size="small"
+//           status={record.COMPLETION_PERCENTAGE === 100 ? 'success' : 'active'}
+//         />
+//       </Tooltip>
+//     );
+//   }
+// },
+
 
             {
                 title: 'Actions',
@@ -351,13 +356,7 @@ const [SCHEDULE_SRNOS_MAP, setSCHEDULE_SRNOS_MAP] = useState<number[]>([]);
 />
 )}
 
-{isPoAnalysis && SCHEDULE_SRNOS_MAP && (
-  <DispatchAnalysisModal
-  open={isPoAnalysis}
-  onCancel={() => setIsPoAnalysis(false)}
-  scheduleSrno= {SCHEDULE_SRNOS_MAP.toString()}
-/>
-)}
+
 
 
  </>

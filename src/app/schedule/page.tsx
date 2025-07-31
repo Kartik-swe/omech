@@ -30,7 +30,25 @@ type Coil = {
   balanceWeight: number
 }
 
-export default function SheddingPage() {
+type ScheduleAnalysisProps = {
+  GRADE_SRNO?: string | null;
+  OD_SRNO?: string | null;
+  THICKNESS_SRNO?: string | null;
+  PR_LENGTH?: number | null;
+  PR_PRICE?: number | null;
+  PR_QUANTITY?: number | null;
+  autoSearch?: boolean;
+}
+
+export default function ScheduleAnalysis({
+  GRADE_SRNO=null,
+  OD_SRNO=null,
+  THICKNESS_SRNO=null,
+  PR_LENGTH=0,
+  PR_PRICE=0,
+  PR_QUANTITY=null,
+  autoSearch = false
+}: ScheduleAnalysisProps) {
  
   const [pipes, setPipes] = useState<Pipe[]>([])
   const [coils, setCoils] = useState<Coil[]>([])
@@ -59,6 +77,14 @@ const [groupedSummary, setGroupedSummary] = useState<
        FetchPlCommon();
      }, []);
 
+useEffect(() => {
+  if (autoSearch) {
+      let queryString = `GRADE_SRNO=${GRADE_SRNO}&OD_SRNO=${OD_SRNO}&THICKNESS_SRNO=${THICKNESS_SRNO}&PR_LENGTH=${PR_LENGTH}&PR_PRICE=${PR_PRICE}&PR_QUANTITY=${PR_QUANTITY}`;
+
+    // Call search function
+    handleSearch(queryString);
+  }
+}, [autoSearch, GRADE_SRNO, OD_SRNO, THICKNESS_SRNO, PR_LENGTH, PR_PRICE, PR_QUANTITY]);
        //clear selected srnos
        useEffect(() => {
          if (!!!modalVisible) {
@@ -66,6 +92,8 @@ const [groupedSummary, setGroupedSummary] = useState<
            setSelectedSlittingSrnos(null);
          }
        }, [modalVisible]);
+
+
 
    // Fetch dropdown options for locations
      const FetchPlCommon = async () => {
@@ -86,8 +114,9 @@ const [groupedSummary, setGroupedSummary] = useState<
      };
 
 
-  const handleSearch = async () => {
+  const handleSearch = async (autoQueryString: string) => {
     setLoading(true)
+    debugger
     try {
          const searchFromValues = searchForm.getFieldsValue();
     const searchParam = {
@@ -106,8 +135,10 @@ const [groupedSummary, setGroupedSummary] = useState<
         queryString += `${queryKey}=${searchParam[queryKey]}&`;
       }
     });
-    console.log(searchFromValues, "searchFromValues");
-    console.log(queryString, "queryString");
+    // Final Query String if autoQueryString is not empty
+    if (autoQueryString) {
+      queryString = autoQueryString;
+    }
     
      const response = await apiClient(`${API_BASE_URL}getInvStatusScheduleWise?${USER_SRNO}&${queryString}`, "GET");
       
@@ -210,12 +241,12 @@ const [groupedSummary, setGroupedSummary] = useState<
   
   return (
     <div className="p-6 max-w-4xl mx-auto">
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-6" hidden={autoSearch}>
             <h1 className="text-2xl font-bold mb-4">Scheduling Page</h1>
             <Form
                 layout="vertical"
                 className="mb-6"
-                onFinish={handleSearch}
+                onFinish={() => handleSearch("")}
                 form={searchForm}
             >
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
