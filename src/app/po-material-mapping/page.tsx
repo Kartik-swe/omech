@@ -8,7 +8,7 @@ import { SearchOutlined, SyncOutlined, CheckCircleOutlined, CloseCircleOutlined,
 import { apiClient } from '@/utils/apiClient';
 import { getCookieData } from '@/utils/common';
 import RawInventoryDtl from '../components/RawInvetoryDtl';
-import ScheduleAnalysis from '../schedule/page';
+import ScheduleClient from '../schedule/ScheduleClient';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -660,12 +660,12 @@ const fetchSchedules = async () => {
               }
             
             >
-          <ScheduleAnalysis 
-            GRADE_SRNO={selectedPo?.GRADE_SRNO?.toString()}
-            OD_SRNO={selectedPo?.OD_SRNO?.toString()}
-            THICKNESS_SRNO={selectedPo?.THICKNESS_SRNO?.toString()}
-            PR_LENGTH={selectedPo?.LENGTH ? parseFloat(selectedPo.LENGTH) : undefined}
-            PR_QUANTITY={selectedPo?.REMAINING_QTY}
+          <ScheduleClient 
+            GRADE_SRNO={selectedPo?.GRADE_SRNO?.toString() || ""}
+            OD_SRNO={selectedPo?.OD_SRNO?.toString() || ""}
+            THICKNESS_SRNO={selectedPo?.THICKNESS_SRNO?.toString() || ""}
+            PR_LENGTH={selectedPo?.LENGTH ? parseFloat(selectedPo.LENGTH) : 0}
+            PR_QUANTITY={selectedPo?.REMAINING_QTY || 0}
             autoSearch={true}
           />
           </Card>
