@@ -1,8 +1,20 @@
 // src/components/LayoutComponent.tsx
 'use client'
-import React from 'react';
-import { Layout, Menu, Breadcrumb, theme } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { 
+  Layout, 
+  Menu, 
+  Breadcrumb, 
+  theme, 
+  Avatar, 
+  Dropdown, 
+  Badge, 
+  Button, 
+  Space, 
+  Typography 
+} from 'antd';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   DashboardOutlined,
   DatabaseOutlined,
@@ -13,7 +25,38 @@ import {
   UsergroupAddOutlined,
   SyncOutlined,
   BarChartOutlined,
+  BellOutlined,
+  UserOutlined,
+  LogoutOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+  ScheduleOutlined,
+  ToolOutlined,
+  HomeOutlined,
+  PlusCircleOutlined,
+  ApartmentOutlined,
+  EnvironmentOutlined,
+  DesktopOutlined,
+  FileAddOutlined,
+  FileSearchOutlined,
+  FileTextOutlined,
+  FileOutlined,
+  FileDoneOutlined,
+  FileExcelOutlined,
+  FileExclamationOutlined,
+  FileProtectOutlined,
+  FileUnknownOutlined,
+  FileZipOutlined,
+  FilePdfOutlined,
+  FileWordOutlined,
+  FilePptOutlined,
+  FileMarkdownOutlined,
+  FileImageOutlined,
+  FileGifOutlined,
+  FileSyncOutlined
 } from '@ant-design/icons';
+
+const { Text } = Typography;
 
 const { Header, Sider, Content, Footer } = Layout;
 
@@ -238,62 +281,189 @@ const menuItems = [
 
 const LayoutComponent: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const {
-    token: { colorBgContainer, borderRadiusLG },
+    token: { colorBgContainer, borderRadiusLG, colorPrimary, colorBgElevated },
   } = theme.useToken();
+  
+  const [collapsed, setCollapsed] = useState(false);
+  const [selectedKeys, setSelectedKeys] = useState<string[]>(['dashboard']);
+  const pathname = usePathname();
+  
+  // Find active menu item based on current path
+  useEffect(() => {
+    const findActiveMenuItem = () => {
+      // Find the submenu item that matches the current path
+      for (const item of menuItems) {
+        if (item.subMenu) {
+          const matchingSubItem = item.subMenu.find(subItem => pathname === subItem.link);
+          if (matchingSubItem) {
+            setSelectedKeys([matchingSubItem.key]);
+            return;
+          }
+        } else if (item.link === pathname) {
+          setSelectedKeys([item.key]);
+          return;
+        }
+      }
+      // Default to dashboard if no match found
+      setSelectedKeys(['dashboard']);
+    };
+    
+    findActiveMenuItem();
+  }, [pathname]);
+  
+  // User profile dropdown items
+  const userMenuItems = [
+    {
+      key: '1',
+      label: 'Profile',
+      icon: <UserOutlined />,
+    },
+    {
+      key: '2',
+      label: 'Settings',
+      icon: <SettingOutlined />,
+    },
+    {
+      type: 'divider',
+      key: 'divider',
+    },
+    {
+      key: '3',
+      label: 'Logout',
+      icon: <LogoutOutlined />,
+      onClick: () => {
+        window.location.href = '/logout';
+      },
+    },
+  ];
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
-      <Sider collapsible>
-        <div className="demo-logo" style={{ color: 'white', padding: '16px', fontSize: '18px', textAlign: 'center' }}>
-          Omech
+    <Layout className="app-layout" style={{ minHeight: '100vh' }}>
+      <Sider 
+        collapsible 
+        collapsed={collapsed} 
+        onCollapse={(value) => setCollapsed(value)}
+        style={{
+          boxShadow: '2px 0 8px 0 rgba(29,35,41,.05)',
+          zIndex: 10,
+        }}
+        width={250}
+        theme="light"
+      >
+        <div className="logo" style={{ 
+          height: '64px', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: collapsed ? 'center' : 'flex-start',
+          padding: collapsed ? '0' : '0 24px',
+          borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
+          overflow: 'hidden',
+        }}>
+          <div style={{ 
+            fontSize: '20px', 
+            fontWeight: 'bold', 
+            color: colorPrimary,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px'
+          }}>
+            <DatabaseOutlined style={{ fontSize: '24px' }} />
+            {!collapsed && <span>OMECH ERP</span>}
+          </div>
         </div>
-        <Menu theme="dark" mode="inline" defaultSelectedKeys={['dashboard']}>
-  {menuItems.map(item =>
-    item.subMenu ? (
-      <Menu.SubMenu key={item.key} icon={item.icon} title={item.label}>
-        {item.subMenu.map(subItem => (
-          <Menu.Item key={subItem.key}>
-            <Link href={subItem.link}>{subItem.label}</Link>
-          </Menu.Item>
-        ))}
-      </Menu.SubMenu>
-    ) : (
-      <Menu.Item key={item.key} icon={item.icon}>
-        <Link href={item.link}>{item.label}</Link>
-      </Menu.Item>
-    )
-  )}
-</Menu>
+        
+        <Menu 
+          theme="light" 
+          mode="inline" 
+          selectedKeys={selectedKeys}
+          style={{ borderRight: 0 }}
+          items={menuItems.map(item => {
+            if (item.subMenu) {
+              return {
+                key: item.key,
+                icon: item.icon,
+                label: item.label,
+                children: item.subMenu.map(subItem => ({
+                  key: subItem.key,
+                  label: <Link href={subItem.link}>{subItem.label}</Link>
+                }))
+              };
+            }
+            return {
+              key: item.key,
+              icon: item.icon,
+              label: <Link href={item.link}>{item.label}</Link>
+            };
+          })}
+        />
       </Sider>
 
       <Layout>
-        <Header style={{ background: colorBgContainer, padding: 0, display: 'flex', alignItems: 'center' }}>
-          <div style={{ flex: 1, paddingLeft: 24, fontSize: 18 }}>
-            {/* Optional: Add your logo here */}
-            <span>Inventory management System</span>
+        <Header style={{ 
+          background: colorBgContainer, 
+          padding: '0 16px', 
+          display: 'flex', 
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          boxShadow: '0 1px 4px rgba(0,21,41,.08)',
+          zIndex: 9,
+          height: '64px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <Button 
+              type="text" 
+              icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />} 
+              onClick={() => setCollapsed(!collapsed)}
+              style={{ fontSize: '16px', marginRight: '12px' }}
+            />
+            <Breadcrumb 
+              style={{ margin: 0 }}
+              items={pathname.split('/').filter(Boolean).map((path, index, array) => {
+                const url = `/${array.slice(0, index + 1).join('/')}`;
+                return {
+                  key: url,
+                  title: <Link href={url}>{path.charAt(0).toUpperCase() + path.slice(1).replace(/-/g, ' ')}</Link>
+                };
+              })}
+            />
           </div>
-          {/* Placeholder for User Profile, Notifications, etc. */}
+          
+          <Space size={16}>
+            
+            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" arrow>
+              <Space style={{ cursor: 'pointer' }}>
+                <Avatar style={{ backgroundColor: colorPrimary }} icon={<UserOutlined />} />
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                  <Text strong>Admin User</Text>
+                  <Text type="secondary" style={{ fontSize: '12px' }}>Administrator</Text>
+                </div>
+              </Space>
+            </Dropdown>
+          </Space>
         </Header>
 
-        <Content style={{ padding: '0 24px' }}>
-          <Breadcrumb style={{ margin: '16px 0' }}>
-            <Breadcrumb.Item>Home</Breadcrumb.Item>
-            <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
-          </Breadcrumb>
+        <Content style={{ padding: '24px', overflow: 'auto' }}>
           <div
             style={{
               background: colorBgContainer,
               minHeight: 280,
               padding: 24,
               borderRadius: borderRadiusLG,
+              boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
             }}
           >
             {children}
           </div>
         </Content>
 
-        <Footer style={{ textAlign: 'center' }}>
-          {/* Manufacturing System ©{new Date().getFullYear()} Created by Your Team */}
+        <Footer style={{ 
+          textAlign: 'center', 
+          padding: '16px 50px',
+          backgroundColor: colorBgElevated,
+          color: 'rgba(0, 0, 0, 0.45)',
+          fontSize: '14px',
+        }}>
+          OMECH ERP System ©{new Date().getFullYear()} All Rights Reserved
         </Footer>
       </Layout>
     </Layout>

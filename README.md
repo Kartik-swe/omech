@@ -2,40 +2,99 @@
 
 ## Overview
 
-Omech is a comprehensive manufacturing management system built with Next.js, designed to streamline operations for manufacturing businesses. The application provides tools for inventory management, production scheduling, material tracking, and more.
+Omech is a comprehensive manufacturing management system built with Next.js and React, designed to streamline operations for manufacturing businesses. The application provides tools for inventory management, production scheduling, material tracking, purchase order management, and more.
 
 ## Features
 
-- **Authentication System**: Secure login with JWT token-based authentication
-- **Dashboard**: Visual representation of key metrics and production data
-- **Raw Materials Management**: 
-  - Track raw material inventory
-  - Monitor material stock levels
-  - Manage material shifts
-  - Production analysis
-- **Pipe Management**:
-  - Inventory tracking
-  - Inventory logs
-  - Stock adjustments
-- **Purchase Order Management**:
-  - Schedule management
-  - Dispatch tracking
-- **User Management**: Role-based access control
+### Authentication & User Management
+- Secure JWT token-based authentication
+- User management with secure password policies
+- Session management with automatic timeout
+
+### Dashboard
+- Visual representation of key metrics and production data
+- Production trends and analytics
+- Inventory status overview
+- Shift management information
+
+### Raw Materials Management
+- Comprehensive inventory tracking
+- Material stock level monitoring
+- Grade and thickness filtering
+- Vendor management
+- Material status tracking
+- Stock adjustments with audit trail
+
+### Pipe Management
+- Detailed pipe inventory tracking
+- Inventory logs with history
+- Stock adjustments with validation
+- Machine and staff allocation
+- Production tracking
+
+### Purchase Order Management
+- Schedule creation and management
+- Delivery date tracking
+- Dispatch management
+- Item type categorization (Pipe, Coil, Sheet)
+- Progress tracking
+
+### Master Data Management
+- User management
+- Location management
+- Machine configuration
+- Material specifications
 
 ## Technology Stack
 
-- **Frontend**: 
-  - Next.js 14
-  - React 18
-  - TypeScript
-  - Ant Design (UI components)
-  - Recharts & Chart.js (Data visualization)
-  - Tailwind CSS (Styling)
+### Frontend
+- **Framework**: Next.js 14
+- **UI Library**: React 18
+- **Language**: TypeScript
+- **UI Components**: Ant Design
+- **Styling**: Tailwind CSS
+- **Data Visualization**: Recharts, Chart.js, Ant Design Charts
+- **State Management**: React Context API
+- **Authentication**: JWT with secure cookie storage
 
-- **Backend Integration**:
-  - RESTful API integration
-  - JWT authentication
-  - MS SQL Server database connection
+### API Integration
+- RESTful API integration with axios
+- JWT token authentication
+- Secure cookie management with js-cookie
+
+### Data Processing
+- Excel file handling with xlsx
+- CSV processing with papaparse and json2csv
+- Date handling with moment.js
+
+## Project Structure
+
+```
+src/
+├── app/                    # Next.js App Router structure
+│   ├── components/         # Reusable UI components
+│   ├── context/            # React Context providers
+│   ├── dashboard/          # Dashboard views
+│   ├── login/              # Authentication pages
+│   ├── master/             # Master data management
+│   │   ├── location/       # Location management
+│   │   ├── machine/        # Machine configuration
+│   │   ├── material/       # Material specifications
+│   │   └── users/          # User management
+│   ├── materials/          # Raw materials management
+│   ├── pipe/               # Pipe inventory management
+│   │   ├── inventory/      # Inventory tracking
+│   │   └── logs/           # Inventory history
+│   ├── PO/                 # Purchase order management
+│   │   └── schedule/       # Schedule management
+│   └── schedule/           # Production scheduling
+├── config/                 # Configuration files
+├── lib/                    # Library code and utilities
+└── utils/                  # Utility functions
+    ├── apiClient.ts        # API request handling
+    ├── common.ts           # Common utility functions
+    └── constants.ts        # Application constants
+```
 
 ## Getting Started
 
@@ -43,6 +102,7 @@ Omech is a comprehensive manufacturing management system built with Next.js, des
 
 - Node.js (v18 or higher)
 - npm, yarn, or pnpm
+- Access to the backend API service (.NET Core)
 
 ### Installation
 
@@ -69,16 +129,7 @@ Create a `.env.local` file in the root directory with the following variables:
 
 ```
 NEXT_PUBLIC_API_BASE_URL=<your-api-base-url>
-NEXT_PUBLIC_AUTH_EXPIRY_TIME=30
-```
-
-For database configuration (used in API routes):
-
-```
-DATABASE_USER=<db-username>
-DATABASE_PASSWORD=<db-password>
-DATABASE_HOST=<db-host>
-DATABASE_NAME=<db-name>
+NEXT_PUBLIC_AUTH_EXPIRY_TIME=660
 ```
 
 ### Development
@@ -105,7 +156,7 @@ yarn build
 pnpm build
 ```
 
-### Starting Production Server
+Start the production server:
 
 ```bash
 npm run start
@@ -115,29 +166,28 @@ yarn start
 pnpm start
 ```
 
-## Project Structure
+## Security Features
 
-- `/src/app`: Main application code
-  - `/components`: Reusable UI components
-  - `/context`: React context providers (e.g., authentication)
-  - `/dashboard`: Dashboard pages
-  - `/login`: Authentication pages
-  - `/materials`: Material management pages
-  - `/pipe`: Pipe inventory management
-  - `/PO`: Purchase order management
-- `/src/config`: Configuration files
-- `/src/lib`: Library code
-- `/src/utils`: Utility functions
-- `/public`: Static assets
+- JWT token-based authentication
+- Secure cookie storage with appropriate flags
+- CSRF protection
+- Role-based access control
+- Password validation and security policies
+- Session timeout management
 
-## Contributing
+## Workflow
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+1. **Authentication**: Users log in through the secure login page
+2. **Dashboard**: View key metrics and production data
+3. **Materials Management**: Track and manage raw materials inventory
+4. **Pipe Management**: Monitor pipe inventory and production
+5. **Purchase Orders**: Create and manage purchase orders and schedules
+6. **Master Data**: Maintain system configuration and user access
 
 ## License
 
 Proprietary - All rights reserved
+
+## Support
+
+For support, please contact the system administrator or development team.
