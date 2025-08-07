@@ -38,6 +38,7 @@ type ScheduleAnalysisProps = {
   PR_PRICE?: number;
   PR_QUANTITY?: number;
   autoSearch?: boolean;
+  isLengthModal?: boolean;
 }
 
 export default function ScheduleClient({
@@ -47,7 +48,8 @@ export default function ScheduleClient({
   PR_LENGTH=0,
   PR_PRICE=0,
   PR_QUANTITY=0,
-  autoSearch = false
+  autoSearch = false,
+  isLengthModal = false
 }: ScheduleAnalysisProps) {
  
   const [pipes, setPipes] = useState<Pipe[]>([])

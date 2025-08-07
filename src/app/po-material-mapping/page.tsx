@@ -35,21 +35,6 @@ interface PoItem {
   OD_SRNO?: number;
 }
 
-interface RawMaterial {
-  MATERIAL_SRNO: number;
-  CHALLAN_NO: string;
-  GRADE: string;
-  THICKNESS: string;
-  C_LOCATION: string;
-  BALANCE_WIDTH: number;
-  BALANCE_WEIGHT: number;
-  STATUS_NAME: string;
-  COIL_TYPE: string;
-  MATERIAL_SRNOS: string;
-  SLITTING_SRNOS: string;
-  COIL_TYPE_FLAG: string;
-  QUANTITY: number;
-}
 
 
 interface GroupedPoItem {
@@ -66,6 +51,8 @@ interface GroupedPoItem {
   PO_NUMBER: string;
   SCHEDULE_SRNOS: number;
   SCHEDULE_DT_SRNOS: number;
+  LENGTH?: string;
+
 }
 
 const PoMaterialMapping = () => {
@@ -74,9 +61,9 @@ const PoMaterialMapping = () => {
   const [loading, setLoading] = useState(false);
   const [poItems, setPoItems] = useState<PoItem[]>([]);  
   const [selectedPo, setSelectedPo] = useState<PoItem | null>(null);
-  const [selectedPoItems, setSelectedPoItems] = useState<number[]>([]);
   const [groupedPoItems, setGroupedPoItems] = useState<GroupedPoItem[]>([]);
-  const [showGrouped, setShowGrouped] = useState(false);
+  const [groupedPoItemsLength, setGroupedPoItemsLength] = useState<GroupedPoItem[]>([]);
+
   
   // States for raw inventory detail modal
   const [modalVisible, setModalVisible] = useState(false);
@@ -89,9 +76,11 @@ const PoMaterialMapping = () => {
   const [optThickness, setOptThickness] = useState<{ label: string; value: string }[]>([]);
   const [optOD, setOptOD] = useState<{ label: string; value: string }[]>([]);
 
+  const [isLengthModal, setIsLengthModal] = useState(false);
+
+
   useEffect(() => {
     fetchCommonData();
-    fetchSchedules();
   }, []);
 
   // Clear selected material details when modal is closed
@@ -127,80 +116,16 @@ const fetchCommonData = async () => {
   }
 };
 
-const handleSearch = async (type: 'POS' | 'POS_ITEM') => {
+const handleSearch = async () => {
   // Clear previous search results and reset view state
-  setSelectedPo(null);
-  setSelectedPoItems([]);
   
-  if (type === 'POS') {
-    // Clear all previous data when searching for POs
-    setPoItems([]);
-    setGroupedPoItems([]);
-    setShowGrouped(false);
-    await fetchSchedules();
-  } else if (type === 'POS_ITEM') {
-    setPoItems([]);
     setGroupedPoItems([]);
     await handleGroupPOs();
-  }
+  
 };
-
-const fetchSchedules = async () => {
-  setLoading(true);
-  try {
-    // Clear any existing data before fetching new data
-    setPoItems([]);
-    
-    const values = searchForm.getFieldsValue();
-    const { ENTRY_DATE, DELIVERY_DATE, ...rest } = values;
-
-    const filters: any = {
-      ...rest,
-    };
-
-    if (ENTRY_DATE && ENTRY_DATE.length === 2) {
-      filters.ENTRY_DATE_FROM = ENTRY_DATE[0]?.format('YYYY-MM-DD');
-      filters.ENTRY_DATE_TO = ENTRY_DATE[1]?.format('YYYY-MM-DD');
-    }
-
-    if (DELIVERY_DATE && DELIVERY_DATE.length === 2) {
-      filters.DELIVERY_DATE_FROM = DELIVERY_DATE[0]?.format('YYYY-MM-DD');
-      filters.DELIVERY_DATE_TO = DELIVERY_DATE[1]?.format('YYYY-MM-DD');
-    }
-
-    const cleanedFilters = Object.fromEntries(
-      Object.entries(filters).filter(([_, v]) => v !== undefined && v !== null && v !== '')
-    );
-
-    const stringFilters = Object.fromEntries(
-      Object.entries(cleanedFilters).map(([k, v]) => [k, String(v)])
-    );
-
-    const queryParams = new URLSearchParams(stringFilters).toString();
-    const res = await apiClient(`${API_BASE_URL}DtScheduleAnalysis?${queryParams}`, 'GET');
-    setPoItems(res.data.Table || []);
-  } catch (err) {
-    message.error('Failed to load schedules.');
-  } finally {
-    setLoading(false);
-  }
-};
-
-  
-  
-  const handleCheckboxChange = (checked: boolean, scheduleDtSrno: number) => {
-    setSelectedPoItems(prev => {
-      if (checked) {
-        return [...prev, scheduleDtSrno];
-      } else {
-        return prev.filter(id => id !== scheduleDtSrno);
-      }
-    });
-  };
-  
+ 
   const handleGroupPOs = async () => {
-    // Check if any PO items are selected
-    if (selectedPoItems.length === 0) {
+    
       // Get current form values
       const formValues = searchForm.getFieldsValue();
       const hasFilters = Object.values(formValues).some(value => 
@@ -210,18 +135,15 @@ const fetchSchedules = async () => {
   
       // If no filters are selected either, show warning
       if (!hasFilters) {
-        message.warning('Please either select PO items or specify search filters');
+        message.warning('Please specify search filters');
         return;
       }
-    }
+    
     
     setLoading(true);
     try {
       // e.g. SCHEDULE_SRNOS = '1,2,3'
-      const SCHEDULE_SRNOS = poItems
-        .filter(item => selectedPoItems.includes(item.SCHEDULE_SRNO))
-        .map(item => item.SCHEDULE_SRNO)
-        .join(',');
+      const SCHEDULE_SRNOS = '';
       
       const values = searchForm.getFieldsValue();
       const { ENTRY_DATE, DELIVERY_DATE, ...rest } = values;
@@ -250,12 +172,7 @@ const fetchSchedules = async () => {
   
       const queryParams = new URLSearchParams(stringFilters).toString();
       const res = await apiClient(`${API_BASE_URL}DispPoAutoMap?SCHEDULE_SRNOS=${SCHEDULE_SRNOS}&${queryParams}`, 'GET');
-     debugger
-      setGroupedPoItems(res.data.Table || []);
-      setShowGrouped(true);
-      
-      // Clear PO items when showing grouped view
-      setPoItems([]);
+      setGroupedPoItems(res.data.Table || []);      
       setLoading(false);
   
       message.success('POs Item fetch successfully');
@@ -280,6 +197,7 @@ const fetchSchedules = async () => {
         THICKNESS: record.THICKNESS,
         GRADE: record.GRADE,
         OD: record.OD,
+        LENGTH: record.LENGTH?.includes(',') ? undefined : record.LENGTH,
         ORDERED_QTY: record.PIPE_QTY,
         ORDERED_WEIGHT: record.COIL_SHEET_WEIGHT,
         REMAINING_QTY: record.PIPE_QTY,
@@ -289,9 +207,20 @@ const fetchSchedules = async () => {
         THICKNESS_SRNO: record.THICKNESS_SRNO,
         OD_SRNO: record.OD_SRNO
       };
-        setSelectedPo(virtualPo);
-        setLoading(false);
- 
+      // Close the length modal if it's open
+      if (isLengthModal) {
+        setIsLengthModal(false);
+      }
+      setSelectedPo(virtualPo);
+      setLoading(false);
+      
+      // Scroll to the ScheduleClient section
+      setTimeout(() => {
+        const scheduleClientElement = document.querySelector('.material-mapping-section');
+        if (scheduleClientElement) {
+          scheduleClientElement.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
     } catch (error) {
       console.error('Error fetching materials:', error);
       message.error('Failed to fetch materials for grouped POs');
@@ -300,97 +229,35 @@ const fetchSchedules = async () => {
   };
 
 
-  const handleQuantityClick = (record: RawMaterial) => {
-    setModalVisible(true);
-    setSelectedMaterialSrnos(record.MATERIAL_SRNOS);
-    setSelectedSlittingSrnos(record.SLITTING_SRNOS);
-    setSelectedCoilTypeFlag(record.COIL_TYPE_FLAG);
-  };
+const handleLengthDetail = async (record: GroupedPoItem) => {
+  console.log(record);
 
-  // PO Items table columns
-  const poColumns = [
-    {
-      title: (
-        <Tooltip title="Select POs to group items">
-          <Checkbox 
-            indeterminate={selectedPoItems.length > 0 && selectedPoItems.length < poItems.length}
-            checked={selectedPoItems.length > 0 && selectedPoItems.length === poItems.length}
-            onChange={(e) => {
-              if (e.target.checked) {
-                setSelectedPoItems(poItems.map(item => item.SCHEDULE_SRNO));
-              } else {
-                setSelectedPoItems([]);
-              }
-            }}
-          />
-        </Tooltip>
-      ),
-      key: 'selection',
-      width: 50,
-      render: (_: any, record: PoItem) => (
-        <Checkbox
-          checked={selectedPoItems.includes(record.SCHEDULE_SRNO)}
-          onChange={(e) => handleCheckboxChange(e.target.checked, record.SCHEDULE_SRNO)}
-        />
-      ),
-    },
-    {
-      title: 'Party Name',
-      dataIndex: 'PARTY_NAME',
-      key: 'PARTY_NAME',
-    },
-    {
-      title: 'PO Number',
-      dataIndex: 'PO_NUMBER',
-      key: 'PO_NUMBER',
-    },
-    {
-      title: 'PO Date',
-      dataIndex: 'SCHEDULE_DATE',
-      key: 'SCHEDULE_DATE',
-    },
-    {
-      title: 'Pending Ordered',
-      children: [
-        {
-          title: 'Qty',
-          dataIndex: 'T_ORDER_QTY',
-          key: 'T_ORDER_QTY',
-          align: 'center',
-          width: 80,
-        },
-        {
-          title: 'Wt (kg)',
-          dataIndex: 'T_ORDER_WEIGHT',
-          key: 'T_ORDER_WEIGHT',
-          align: 'center',
-          width: 100,
-        },
-      ],
-    },
-    // {
-    //   title: 'Remaining',
-    //   children: [
-    //     {
-    //       title: 'Qty',
-    //       dataIndex: 'REMAINING_QTY',
-    //       key: 'REMAINING_QTY',
-    //       align: 'center',
-    //       width: 80,
-    //     },
-    //     {
-    //       title: 'Wt (kg)',
-    //       dataIndex: 'REMAINING_WEIGHT',
-    //       key: 'REMAINING_WEIGHT',
-    //       align: 'center',
-    //       width: 100,
-    //     },
-    //   ],
-    // },
-  
-    
-  ];
+  setLoading(true);
+  try {
+    // Get length details for the selected PO group
+    //string? SCHEDULE_SRNOS, int? GRADE_SRNO, int? THICKNESS_SRNO, int? OD_SRNO, string? 
+      const query = `SCHEDULE_SRNOS=${record.SCHEDULE_SRNOS}&SCHEDULE_DT_SRNOS=${record.SCHEDULE_DT_SRNOS}&GRADE_SRNO=${record.GRADE_SRNO}&THICKNESS_SRNO=${record.THICKNESS_SRNO}&OD_SRNO=${record.OD_SRNO}&IS_GROUPBY_LENGTH=1`
 
+      const res = await apiClient(`${API_BASE_URL}DispPoAutoMap?${query}`, 'GET');
+
+
+
+    if (res.data && res.data.Table) {
+      // Update the modal data and show modal
+        setGroupedPoItemsLength(res.data.Table);
+      setIsLengthModal(true);
+    } else {
+      message.warning('No length details found');
+    }
+  } catch (error) {
+    console.error('Error fetching length details:', error);
+    message.error('Failed to fetch length details');
+  } finally {
+    setLoading(false);
+  }
+};
+
+ 
   // Grouped PO Items table columns
   const groupedPoColumns = [
     {
@@ -408,11 +275,11 @@ const fetchSchedules = async () => {
       dataIndex: 'OD',
       key: 'OD',
     },
-    {
-      title: 'Item Type',
-      dataIndex: 'ITEM_TYPE',
-      key: 'ITEM_TYPE',
-    },
+    // {
+    //   title: 'Item Type',
+    //   dataIndex: 'ITEM_TYPE',
+    //   key: 'ITEM_TYPE',
+    // },
     {
       title: 'Total Quantity',
       dataIndex: 'PIPE_QTY',
@@ -422,6 +289,24 @@ const fetchSchedules = async () => {
       title: 'Total Weight (kg)',
       dataIndex: 'COIL_SHEET_WEIGHT',
       key: 'COIL_SHEET_WEIGHT',
+    },
+    {
+      title: 'Lengths',
+      dataIndex: 'LENGTH',
+      key: 'LENGTH',
+      render: (_: any, record: GroupedPoItem) => (
+        !isLengthModal ? (
+          <a onClick={() => {
+            if (!isLengthModal) {
+              handleLengthDetail(record);
+            }
+          }}>
+            {record.LENGTH}
+          </a>
+        ) : (
+          <span>{record.LENGTH}</span>
+        )
+      ),
     },
     {
       title: 'Party Names',
@@ -454,16 +339,6 @@ const fetchSchedules = async () => {
         title={
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <span>PO Material Mapping</span>
-            {showGrouped && (
-              <Tag color="blue" style={{ marginLeft: 8 }}>
-                Grouped View
-              </Tag>
-            )}
-            {!showGrouped && poItems.length > 0 && (
-              <Tag color="green" style={{ marginLeft: 8 }}>
-                POs View
-              </Tag>
-            )}
           </div>
         } 
         variant="borderless"
@@ -472,8 +347,8 @@ const fetchSchedules = async () => {
         <Form
           form={searchForm}
           layout="vertical"
-          onFinish={fetchSchedules}
-          style={{ marginBottom: 24 }}
+          // onFinish={fetchSchedules}
+          // style={{ marginBottom: 24 }}
         >
           <Row gutter={16}>
             <Col hidden>
@@ -485,75 +360,73 @@ const fetchSchedules = async () => {
                 </Select>
               </Form.Item>
             </Col>
-            <Col>
+            <Col span={3}>
+
               <Form.Item label="Grade" name="GRADE_SRNO">
                 <Select 
                   allowClear 
-                  style={{ width: 150 }} 
                   placeholder="Select Grade"
                   options={optGrades}
                 />
               </Form.Item>
             </Col>
-            <Col>
+            <Col span={3}>
               <Form.Item label="Thickness" name="THICKNESS_SRNO">
                 <Select 
                   allowClear 
-                  style={{ width: 150 }} 
                   placeholder="Select Thickness"
                   options={optThickness}
                 />
               </Form.Item>
             </Col>
-            <Col>
+            <Col span={3}>
+
               <Form.Item label="OD" name="OD_SRNO">
                 <Select 
                   allowClear 
-                  style={{ width: 150 }} 
                   placeholder="Select OD"
                   options={optOD}
                 />
               </Form.Item>
             </Col>
                       
-            <Col>
+            <Col span={3}>
               <Form.Item label="Party Name" name="PARTY_NAME">
                 <Input placeholder="Party Name" />
               </Form.Item>
             </Col>
-            <Col>
+            <Col span={3}>
+
               <Form.Item label="PO Number" name="PO_NUMBER">
                 <Input placeholder="PO Number" />
               </Form.Item>
             </Col>
-            <Col>
+            <Col span={5}>
               <Form.Item label="PO Entry Date" name="ENTRY_DATE">
                 <DatePicker.RangePicker />
               </Form.Item>
             </Col>
            
-            <Col>
-             <Space>
+            <Col span={2}>
+
+             {/* <Space> */}
+ <Form.Item label=" ">
+
+
   <Button
     type="primary"
-    icon={<SearchOutlined />}
-    onClick={() => handleSearch('POS')}
-    loading={loading && !showGrouped}
+    // icon={<SearchOutlined />}
+    onClick={() => handleSearch()}
+    loading={loading}
   >
-    Search POs
-  </Button>
-  <Button
-    type="primary"
-    icon={<SearchOutlined />}
-    onClick={() => handleSearch('POS_ITEM')}
-    loading={loading && showGrouped}
-  >
-    Search POs Item
-  </Button>
-</Space>
+    Search
+  </Button> 
+</Form.Item>
+{/* </Space> */}
 
             </Col>
-            <Col>
+            <Col span={1}>
+
               <Form.Item label=" " colon={false}>
                 <Button
                   icon={<SyncOutlined />}
@@ -563,14 +436,13 @@ const fetchSchedules = async () => {
                     searchForm.setFieldsValue({ ITEM_TYPE: 'PIPE' });
                     
                     // Clear all data
-                    setPoItems([]);
                     setGroupedPoItems([]);
+                    setGroupedPoItemsLength([]);
                     setSelectedPo(null);
-                    setSelectedPoItems([]);
-                    setShowGrouped(false);
                     
-                    // Fetch fresh data
-                    fetchSchedules();
+                    // Close any open modals
+                    setIsLengthModal(false);
+                    setModalVisible(false);
                   }}
                   loading={loading}
                 >
@@ -581,66 +453,20 @@ const fetchSchedules = async () => {
           </Row>
         </Form>
         
-        {/* Group POs Button */}
-        <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
-          <div>
-            <Button 
-              type="primary" 
-              icon={<MergeCellsOutlined />} 
-              onClick={handleGroupPOs}
-              disabled={selectedPoItems.length === 0}
-              loading={loading && !showGrouped}
-            >
-              Group Selected POs Item
-            </Button>
-           
-          </div>
-          <div>
-            <Text>
-              Selected: <Tag color="blue">{selectedPoItems.length}</Tag> PO items
-              {selectedPoItems.length > 0 && (
-                <Button 
-                  type="link" 
-                  size="small" 
-                  onClick={() => setSelectedPoItems([])}
-                  style={{ marginLeft: 8 }}
-                >
-                  Clear Selection
-                </Button>
-              )}
-            </Text>
-          </div>
-        </div>
-
+        
         {/* PO Items Table or Grouped PO Items Table */}
-        {showGrouped ? (
+        { (
           <Table
           title={() => (
              <div>
-                <Title level={4}>Grouped POs</Title>
-                <Text>Total Grouped POs: <strong>{groupedPoItems.length}</strong></Text>
+                {/* <Title level={4}>POs Items</Title> */}
                 {/* {JSON.stringify(groupedPoItems)} */}
               </div>
             )}
             columns={groupedPoColumns}
             dataSource={groupedPoItems}
             rowKey={(record) => `${record.GRADE_SRNO}-${record.THICKNESS_SRNO}-${record.OD_SRNO || 0}`}
-            loading={loading && showGrouped}
-            pagination={{ pageSize: 10 }}
-            scroll={{ x: 'max-content' }}
-          />
-        ) : (
-          <Table
-            title={() => (
-              <div>
-                <Title level={4}>PO Material Mapping</Title>
-                <Text>Total POs: <strong>{poItems.length}</strong></Text>
-              </div>
-            )}
-            columns={poColumns}
-            dataSource={poItems}
-            rowKey="SCHEDULE_DT_SRNO"
-            loading={loading && !showGrouped}
+            loading={loading}
             pagination={{ pageSize: 10 }}
             scroll={{ x: 'max-content' }}
           />
@@ -649,6 +475,7 @@ const fetchSchedules = async () => {
         {/* Material Mapping Section */}
         {selectedPo && (
             <Card
+              className="material-mapping-section"
               title={
                 <div>
                   <Title level={4}>Material Mapping for PO: {selectedPo.PO_NUMBER}</Title>
@@ -658,7 +485,6 @@ const fetchSchedules = async () => {
                   }</Text>
                 </div>
               }
-            
             >
           <ScheduleClient 
             GRADE_SRNO={selectedPo?.GRADE_SRNO?.toString() || ""}
@@ -685,6 +511,44 @@ const fetchSchedules = async () => {
           />
         )}
       </Card>
+        {isLengthModal && (
+          <Card>
+            <Modal
+              title="Length Details"
+              open={isLengthModal}
+              onCancel={() => setIsLengthModal(false)}
+              width={1000}
+              footer={null}
+            >
+              <Table
+              title={() => (
+                 <div>
+                <Title level={4}>Length-wise PO Items</Title>
+              </div>
+            )}
+            columns={[
+              ...groupedPoColumns.filter(col => col.key !== 'action'),
+              {
+                title: 'Action',
+                key: 'action',
+                render: (_: any, record: GroupedPoItem) => (
+                  <Button type="primary" onClick={() => handleGroupedPoSelect(record)}>
+                    Check Materials
+                  </Button>
+                ),
+              }
+            ]}
+            dataSource={groupedPoItemsLength}
+            rowKey={(record) => `${record.GRADE_SRNO}-${record.THICKNESS_SRNO}-${record.OD_SRNO || 0}`}
+            loading={loading}
+            pagination={{ pageSize: 10 }}
+            scroll={{ x: 'max-content' }}
+          />
+        </Modal>
+
+      </Card>
+      )}
+
     </div>
   );
 };
