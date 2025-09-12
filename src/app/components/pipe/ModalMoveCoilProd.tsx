@@ -55,7 +55,6 @@ interface PipeProductionFormProps {
           const values = await form.validateFields();
 
           const { flag } = selectedMaterial;
-          console.log(values);
           var IS_COIL_COMPLETED = values.IS_COIL_COMPLETED
           const payload = {
             IU_FLAG : 'I',
@@ -103,7 +102,6 @@ interface PipeProductionFormProps {
            
           } else {
           alert(response.msg)
-          console.log(response.msgId);
           
     
             message.error(response.msg);

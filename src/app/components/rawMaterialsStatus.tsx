@@ -32,13 +32,11 @@ function transformToNestedData(flatData: any[]) {
 const RecursiveNestedTable = ({ data, setSlitingLevvel, setSelectedMaterial , setModalVisible, updateSlittedStatus, setIsSlitMaterialEdit}: { data: any[], setSlitingLevvel:any, setSelectedMaterial:any, setModalVisible:any , updateSlittedStatus:any,setIsSlitMaterialEdit:any}) => {
 
     const confirm: PopconfirmProps['onConfirm'] = (e:any) => {
-        // console.log(e.SLITTING_SRNO, "SLITTING_SRNO");
         updateSlittedStatus(e.SLITTING_SRNO);
         message.success('Click on Yes');
       };
       
       const cancel: PopconfirmProps['onCancel'] = (e:any) => {
-        // console.log(e);
         message.error('Click on No');
       };
       
@@ -122,7 +120,6 @@ const RecursiveNestedTable = ({ data, setSlitingLevvel, setSelectedMaterial , se
                      type="primary"
                      icon={<EditOutlined />}
                      onClick={() => {
-                       console.log(record, "record");
                        
                        setIsSlitMaterialEdit(true);
                        setSelectedMaterial(record);
@@ -189,17 +186,13 @@ const RecursiveNestedTable = ({ data, setSlitingLevvel, setSelectedMaterial , se
 
 // Main Table Component
 const rawMaterialsStatus = ({ mainTableData, slittingData ,setSlitingLevvel, setSelectedMaterial,setModalVisible, updateSlittedStatus,setIsRawMaterialEdit , setIsSlitMaterialEdit}: { mainTableData: any[], slittingData: any[], setSlitingLevvel :any ,setSelectedMaterial:any, setModalVisible :any, updateSlittedStatus :any, setIsRawMaterialEdit:any,setIsSlitMaterialEdit:any }) => {
-    // console.log(slittingData, "slittingData");
-      // Calculate remaining weight and width
-      // console.log(mainTableData, "mainTableData");
-      // console.log(slittingData, "slittingData");
+   
       
   const mainTableDataWithRemainingValues = mainTableData.map((record) => {
     // debugger
     const filteredSlittingData = slittingData.filter(
       (item) => (item.MATERIAL_SRNO === record.MATERIAL_SRNO && item.SLITTING_LEVEL === 1 && item.SLITTING_SRNO_FK === null)  
     );
-    // console.log(filteredSlittingData, "filteredSlittingData");
     
     // Calculate total slitted weight and width
     const totalSlittedWeight = filteredSlittingData.reduce((sum, item) => sum + (item.SLITTING_WEIGHT || 0), 0);
@@ -246,11 +239,6 @@ const rawMaterialsStatus = ({ mainTableData, slittingData ,setSlitingLevvel, set
     };
   });
   
-
-  // console.log(mainTableDataWithRemainingValues, "mainTableDataWithRemainingValues");  
-  // console.log(slittingWithRemainingValues, "slittingWithRemainingValues");
-  
-
     const mainTableColumns = [
         {
           title: 'Challan No',

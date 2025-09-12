@@ -41,18 +41,13 @@ const PipeInventory = () => {
 
   // new code
   const handleStartEdit = (record: any, type: "ADD" | "MINUS") => {
-    console.log(record, "record");
     setSelectedMaterial({ ...record,FLAG: type });
     setEditingRowKey(record.PR_INV_SRNO); // Use your actual row key
     setEditType(type);
     setQuantity(0); // Reset quantity
   };
   const handleDone = async (record: any) => {
-    console.log("Confirmed", {
-      id: record.PR_INV_SRNO,
-      type: editType,
-      quantity,
-    });
+  
 
     const payload = {
       IU_FLAG: "I",
@@ -65,7 +60,6 @@ const PipeInventory = () => {
     };
 
     const response = await apiClient(`${API_BASE_URL}IuPipesInvPr`, "POST", payload);
-    console.log(response,"res ");
     
     if (response.msgId === 200) {
       fetchPipes()
@@ -101,7 +95,6 @@ const PipeInventory = () => {
               setOptVendors(Table4)
               setOptPipes(Table9)
               setOptTubeMachines(Table8)
-              console.log(Table8, "Table8");
               
           } else {
             message.error(response.msg);
@@ -154,9 +147,6 @@ const PipeInventory = () => {
           fetchPipes();
         } else {
         alert(response.msg)
-        console.log(response.msgId);
-        
-  
           message.error(response.msg);
         }
       } catch (error: any) {

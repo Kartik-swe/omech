@@ -159,8 +159,6 @@ const RawMaterialsShiftHis = () => {
 
   // Handle "Shift" button click
   const handleStatusLog = (record: any, flag: string) => {
-    console.log(record);
-    
     setSelectedMaterial({ ...record, flag });
     setisStatusLogModalVisible(true);
   };
@@ -207,9 +205,6 @@ const RawMaterialsShiftHis = () => {
           // isMotherCoil ? fetchSemiSlitted() : fetchMotherCoil(); // Refresh the appropriate table
         } else {
         alert(response.msg)
-        console.log(response.msgId);
-        
-  
           message.error(response.msg);
         }
       } catch (error: any) {
@@ -259,9 +254,6 @@ const RawMaterialsShiftHis = () => {
         // isMotherCoil ? fetchSemiSlitted() : fetchMotherCoil(); // Refresh the appropriate table
       } else {
       alert(response.msg)
-      console.log(response.msgId);
-      
-
         message.error(response.msg);
       }
     } catch (error: any) {
@@ -282,7 +274,6 @@ const RawMaterialsShiftHis = () => {
     try {
       const values = await statusLog.validateFields();
       const { flag } = selectedMaterial;
-      console.log(values);
       
       const payload = {
         MATERIAL_SRNO: selectedMaterial.MATERIAL_SRNO ,
@@ -319,9 +310,6 @@ const RawMaterialsShiftHis = () => {
         // isMotherCoil ? fetchSemiSlitted() : fetchMotherCoil(); // Refresh the appropriate table
       } else {
       alert(response.msg)
-      console.log(response.msgId);
-      
-
         message.error(response.msg);
       }
     } catch (error: any) {
@@ -685,32 +673,32 @@ const RawMaterialsShiftHis = () => {
       }  >
         <TabPane tab="Mother Coils" key="MOTHER">
           <Spin spinning={loading}>
-            <Table dataSource={MotherData} columns={generateTableColumns('M')} pagination={false} />
+            <Table dataSource={MotherData} columns={generateTableColumns('M')}  />
           </Spin>
         </TabPane>
         <TabPane tab="Semi-Slitted Coils" key="SEMI_SLITTED">
           <Spin spinning={loading}>
-            <Table dataSource={SemiSlittedData} columns={generateTableColumns('P')} pagination={false} />
+            <Table dataSource={SemiSlittedData} columns={generateTableColumns('P')} />
           </Spin>
         </TabPane>
         <TabPane tab="Slitted Coils" key="SLITTED">
           <Spin spinning={loading}>
-            <Table dataSource={SlittedData} columns={generateTableColumns('S')} pagination={false} />
+            <Table dataSource={SlittedData} columns={generateTableColumns('S')}  />
           </Spin>
         </TabPane>
         <TabPane tab="Production Coils" key="PRODUCTION">
           <Spin spinning={loading}>
-            <Table dataSource={fetchCoilsData} columns={generateTableColumns('F')} pagination={false} />
+            <Table dataSource={fetchCoilsData} columns={generateTableColumns('F')}  />
           </Spin>
         </TabPane>
         <TabPane tab="Return Coils" key="RETURNED">
           <Spin spinning={loading}>
-            <Table dataSource={fetchCoilsData} columns={generateTableColumns('R')} pagination={false} />
+            <Table dataSource={fetchCoilsData} columns={generateTableColumns('R')}  />
           </Spin>
         </TabPane>
         <TabPane tab="Sold Coils" key="SOLD">
           <Spin spinning={loading}>
-            <Table dataSource={fetchCoilsData} columns={generateTableColumns('O')} pagination={false} />
+            <Table dataSource={fetchCoilsData} columns={generateTableColumns('O')}  />
           </Spin>
         </TabPane>
       </Tabs>

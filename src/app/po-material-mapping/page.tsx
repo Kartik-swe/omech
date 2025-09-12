@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import {
-  Card, Table, Button, Form, Select, Input, Space, Spin, Tabs, Tag, Tooltip, Typography, Empty, Modal, DatePicker, Row, Col, message, Checkbox
+  Card, Table, Button, Form, Select, Input, Space, Spin, Tabs, Tag, Tooltip, Typography, Empty, Modal, DatePicker, Row, Col, message, Checkbox, Statistic
 } from 'antd';
 import { SearchOutlined, SyncOutlined, CheckCircleOutlined, CloseCircleOutlined, InfoCircleOutlined, MergeCellsOutlined } from '@ant-design/icons';
 import { apiClient } from '@/utils/apiClient';
@@ -14,6 +14,7 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 
 interface PoItem {
+  RowNum?: number;
   SCHEDULE_SRNO: number;
   SCHEDULE_DT_SRNO: number;
   PARTY_NAME: string;
@@ -38,6 +39,7 @@ interface PoItem {
 
 
 interface GroupedPoItem {
+  RowNum: number;
   GRADE: string;
   GRADE_SRNO: number;
   THICKNESS: string;
@@ -59,7 +61,6 @@ const PoMaterialMapping = () => {
   const { USER_SRNO, API_BASE_URL, UT_SRNO } = getCookieData();
   const [searchForm] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [poItems, setPoItems] = useState<PoItem[]>([]);  
   const [selectedPo, setSelectedPo] = useState<PoItem | null>(null);
   const [groupedPoItems, setGroupedPoItems] = useState<GroupedPoItem[]>([]);
   const [groupedPoItemsLength, setGroupedPoItemsLength] = useState<GroupedPoItem[]>([]);
@@ -81,6 +82,7 @@ const PoMaterialMapping = () => {
 
   useEffect(() => {
     fetchCommonData();
+    handleSearch();
   }, []);
 
   // Clear selected material details when modal is closed
@@ -118,26 +120,27 @@ const fetchCommonData = async () => {
 
 const handleSearch = async () => {
   // Clear previous search results and reset view state
-  
-    setGroupedPoItems([]);
-    await handleGroupPOs();
-  
+  setGroupedPoItems([]);
+  setSelectedPo(null); // Clear selected PO to hide Material Mapping section
+  await handleGroupPOs();
 };
  
   const handleGroupPOs = async () => {
+    // Get current form values
+    const formValues = searchForm.getFieldsValue();
+    const hasFilters = Object.values(formValues).some(value => 
+      value !== undefined && value !== null && value !== '' && 
+      (!Array.isArray(value) || value.length > 0)
+    );
+
+    // If no filters are selected either, show warning
+    // if (!hasFilters) {
+    //   message.warning('Please specify search filters');
+    //   return;
+    // }
     
-      // Get current form values
-      const formValues = searchForm.getFieldsValue();
-      const hasFilters = Object.values(formValues).some(value => 
-        value !== undefined && value !== null && value !== '' && 
-        (!Array.isArray(value) || value.length > 0)
-      );
-  
-      // If no filters are selected either, show warning
-      if (!hasFilters) {
-        message.warning('Please specify search filters');
-        return;
-      }
+    // Clear selected PO to hide Material Mapping section
+    setSelectedPo(null);
     
     
     setLoading(true);
@@ -188,6 +191,7 @@ const handleSearch = async () => {
     try {
       // Create a virtual PO item to display in the UI
       const virtualPo: PoItem = {
+        RowNum: record.RowNum,
         SCHEDULE_SRNO: record.SCHEDULE_SRNOS || 0,
         SCHEDULE_DT_SRNO: record.SCHEDULE_DT_SRNOS || 0,
         PARTY_NAME: record.PARTY_NAME,
@@ -230,8 +234,6 @@ const handleSearch = async () => {
 
 
 const handleLengthDetail = async (record: GroupedPoItem) => {
-  console.log(record);
-
   setLoading(true);
   try {
     // Get length details for the selected PO group
@@ -260,6 +262,11 @@ const handleLengthDetail = async (record: GroupedPoItem) => {
  
   // Grouped PO Items table columns
   const groupedPoColumns = [
+      {
+      title: 'SRNO',
+      dataIndex: 'RowNum',
+      key: 'RowNum',
+    },
     {
       title: 'Grade',
       dataIndex: 'GRADE',
@@ -281,12 +288,12 @@ const handleLengthDetail = async (record: GroupedPoItem) => {
     //   key: 'ITEM_TYPE',
     // },
     {
-      title: 'Total Quantity',
+      title: 'Pipe Qty',
       dataIndex: 'PIPE_QTY',
       key: 'PIPE_QTY',
     },
     {
-      title: 'Total Weight (kg)',
+      title: 'Pending Wt',
       dataIndex: 'COIL_SHEET_WEIGHT',
       key: 'COIL_SHEET_WEIGHT',
     },
@@ -353,7 +360,14 @@ const handleLengthDetail = async (record: GroupedPoItem) => {
           <Row gutter={16}>
             <Col hidden>
               <Form.Item label="Item Type" name="ITEM_TYPE">
-                <Select style={{ width: 150 }} defaultValue="PIPE">
+                <Select 
+                  style={{ width: 150 }} 
+                  defaultValue="PIPE"
+                  // showSearch
+                  // filterOption={(input, option) =>
+                  //   (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
+                  // }
+                >
                   <Option value="PIPE">PIPE</Option>
                   <Option value="COIL">COIL</Option>
                   <Option value="SHEET">SHEET</Option>
@@ -365,8 +379,12 @@ const handleLengthDetail = async (record: GroupedPoItem) => {
               <Form.Item label="Grade" name="GRADE_SRNO">
                 <Select 
                   allowClear 
+                  showSearch
                   placeholder="Select Grade"
                   options={optGrades}
+                  filterOption={(input, option) =>
+                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                  }
                 />
               </Form.Item>
             </Col>
@@ -374,8 +392,12 @@ const handleLengthDetail = async (record: GroupedPoItem) => {
               <Form.Item label="Thickness" name="THICKNESS_SRNO">
                 <Select 
                   allowClear 
+                  showSearch
                   placeholder="Select Thickness"
                   options={optThickness}
+                  filterOption={(input, option) =>
+                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                  }
                 />
               </Form.Item>
             </Col>
@@ -384,8 +406,12 @@ const handleLengthDetail = async (record: GroupedPoItem) => {
               <Form.Item label="OD" name="OD_SRNO">
                 <Select 
                   allowClear 
+                  showSearch
                   placeholder="Select OD"
                   options={optOD}
+                  filterOption={(input, option) =>
+                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                  }
                 />
               </Form.Item>
             </Col>
@@ -453,22 +479,87 @@ const handleLengthDetail = async (record: GroupedPoItem) => {
           </Row>
         </Form>
         
+        {/* Summary Section */}
+        {groupedPoItems.length > 0 && (
+          <Card style={{ marginBottom: 16 }} bordered={false}>
+            <Row gutter={16}>
+              <Col span={6}>
+                <Statistic 
+                  title="Total PO Items" 
+                  value={groupedPoItems.length} 
+                  prefix={<InfoCircleOutlined />} 
+                />
+              </Col>
+              <Col span={6}>
+                <Statistic 
+                  title="Total Pipe Quantity" 
+                  value={groupedPoItems.reduce((sum, item) => sum + (item.PIPE_QTY || 0), 0)} 
+                  prefix={<InfoCircleOutlined />} 
+                />
+              </Col>
+              <Col span={6}>
+                <Statistic 
+                  title="Total Pending Weight (kg)" 
+                  value={groupedPoItems.reduce((sum, item) => sum + (item.COIL_SHEET_WEIGHT || 0), 0).toFixed(2)} 
+                  prefix={<InfoCircleOutlined />} 
+                />
+              </Col>
+              <Col span={6}>
+                <Statistic 
+                  title="Unique Grades" 
+                  value={new Set(groupedPoItems.map(item => item.GRADE)).size} 
+                  prefix={<InfoCircleOutlined />} 
+                />
+              </Col>
+            </Row>
+          </Card>
+        )}
         
         {/* PO Items Table or Grouped PO Items Table */}
         { (
           <Table
           title={() => (
              <div>
-                {/* <Title level={4}>POs Items</Title> */}
+                <Title level={4}>POs Items</Title>
                 {/* {JSON.stringify(groupedPoItems)} */}
               </div>
             )}
             columns={groupedPoColumns}
             dataSource={groupedPoItems}
-            rowKey={(record) => `${record.GRADE_SRNO}-${record.THICKNESS_SRNO}-${record.OD_SRNO || 0}`}
+            rowKey={(record) => record.RowNum}
             loading={loading}
-            pagination={{ pageSize: 10 }}
+            // pagination={{ pageSize: 10 }}
             scroll={{ x: 'max-content' }}
+            footer={() => (
+              <div>
+                <Row gutter={16}>
+                  <Col span={8}>
+                    <Text strong>Grade Distribution: </Text>
+                    {Array.from(new Set(groupedPoItems.map(item => item.GRADE)))
+                      .sort((a, b) => a.localeCompare(b))
+                      .map(grade => (
+                        <Tag color="blue" key={grade}>{grade}</Tag>
+                    ))}
+                  </Col>
+                  <Col span={8}>
+                    <Text strong>Thickness Distribution: </Text>
+                    {Array.from(new Set(groupedPoItems.map(item => item.THICKNESS)))
+                      .sort((a, b) => parseFloat(a) - parseFloat(b))
+                      .map(thickness => (
+                        <Tag color="green" key={thickness}>{thickness}</Tag>
+                    ))}
+                  </Col>
+                  <Col span={8}>
+                    <Text strong>OD Distribution: </Text>
+                    {Array.from(new Set(groupedPoItems.map(item => item.OD).filter(Boolean)))
+                      .sort((a:any, b:any) => parseFloat(a) - parseFloat(b))
+                      .map(od => (
+                        <Tag color="purple" key={od}>{od}</Tag>
+                    ))}
+                  </Col>
+                </Row>
+              </div>
+            )}
           />
         )}
 
@@ -520,6 +611,43 @@ const handleLengthDetail = async (record: GroupedPoItem) => {
               width={1000}
               footer={null}
             >
+              <>
+              {/* Summary Section for Modal */}
+              {groupedPoItemsLength.length > 0 && (
+                <Card style={{ marginBottom: 16 }} bordered={false}>
+                  <Row gutter={16}>
+                    <Col span={6}>
+                      <Statistic 
+                        title="Total Length Items" 
+                        value={groupedPoItemsLength.length} 
+                        prefix={<InfoCircleOutlined />} 
+                      />
+                    </Col>
+                    <Col span={6}>
+                      <Statistic 
+                        title="Total Pipe Quantity" 
+                        value={groupedPoItemsLength.reduce((sum, item) => sum + (item.PIPE_QTY || 0), 0)} 
+                        prefix={<InfoCircleOutlined />} 
+                      />
+                    </Col>
+                    <Col span={6}>
+                      <Statistic 
+                        title="Total Pending Weight (kg)" 
+                        value={groupedPoItemsLength.reduce((sum, item) => sum + (item.COIL_SHEET_WEIGHT || 0), 0).toFixed(2)} 
+                        prefix={<InfoCircleOutlined />} 
+                      />
+                    </Col>
+                    <Col span={6}>
+                      <Statistic 
+                        title="Unique Lengths" 
+                        value={new Set(groupedPoItemsLength.map(item => item.LENGTH).filter(Boolean)).size} 
+                        prefix={<InfoCircleOutlined />} 
+                      />
+                    </Col>
+                  </Row>
+                </Card>
+              )}
+              
               <Table
               title={() => (
                  <div>
@@ -539,11 +667,42 @@ const handleLengthDetail = async (record: GroupedPoItem) => {
               }
             ]}
             dataSource={groupedPoItemsLength}
-            rowKey={(record) => `${record.GRADE_SRNO}-${record.THICKNESS_SRNO}-${record.OD_SRNO || 0}`}
+            rowKey={(record) => record.RowNum}
             loading={loading}
-            pagination={{ pageSize: 10 }}
+            // pagination={{ pageSize: 10 }}
             scroll={{ x: 'max-content' }}
+            footer={() => (
+              <div>
+                <Row gutter={16}>
+                  <Col span={8}>
+                    <Text strong>Grade Distribution: </Text>
+                    {Array.from(new Set(groupedPoItemsLength.map(item => item.GRADE)))
+                      .sort((a, b) => a.localeCompare(b))
+                      .map(grade => (
+                        <Tag color="blue" key={grade}>{grade}</Tag>
+                    ))}
+                  </Col>
+                  <Col span={8}>
+                    <Text strong>Thickness Distribution: </Text>
+                    {Array.from(new Set(groupedPoItemsLength.map(item => item.THICKNESS)))
+                      .sort((a, b) => parseFloat(a) - parseFloat(b))
+                      .map(thickness => (
+                        <Tag color="green" key={thickness}>{thickness}</Tag>
+                    ))}
+                  </Col>
+                  <Col span={8}>
+                    <Text strong>Length Distribution: </Text>
+                    {Array.from(new Set(groupedPoItemsLength.map(item => item.LENGTH).filter(Boolean)))
+                      .sort((a:any, b:any) => parseFloat(a) - parseFloat(b))
+                      .map(length => (
+                        <Tag color="purple" key={length}>{length}</Tag>
+                    ))}
+                  </Col>
+                </Row>
+              </div>
+            )}
           />
+          </>
         </Modal>
 
       </Card>

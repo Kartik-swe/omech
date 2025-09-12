@@ -21,9 +21,6 @@ const PipeInventoryLogs = () => {
   const [optInvType, setOptInvType] = useState<{ label: string; value: string }[]>([]);
   
 
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedMaterial, setSelectedMaterial] = useState<any>(null);
-  const { TextArea } = Input;
 
     useEffect(() => {
       FetchPl();
@@ -176,12 +173,12 @@ const PipeInventoryLogs = () => {
             </Form.Item>
           </Col> */}
           <Col span={2}>
-            <Button type="primary" htmlType="submit">Search</Button>
+            <Button type="primary" htmlType="submit" loading={loading}>Search</Button>
           </Col>
         </Row>
       </Form>
       
-      <Table dataSource={pipesLogs} columns={columns} rowKey="id" />
+      <Table dataSource={pipesLogs} columns={columns} rowKey="id" loading={loading} />
       
     </Card>
   );

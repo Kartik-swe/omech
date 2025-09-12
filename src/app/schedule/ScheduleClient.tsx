@@ -142,9 +142,6 @@ useEffect(() => {
     }
     
      const response = await apiClient(`${API_BASE_URL}getInvStatusScheduleWise?${USER_SRNO}&${queryString}`, "GET");
-      
-     console.log(response, "response");
-     
        if (response.msgId === 200) {
         if (!response.data) return;
          setPipes(response.data.Table)

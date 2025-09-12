@@ -1,7 +1,7 @@
 "use client"
 import dayjs from 'dayjs';
 import React, { useState } from 'react';
-import { Form, Input, Button, InputNumber, DatePicker, Modal, message, Row, Col, Select, notification, Space } from 'antd';
+import { Form, Input, Button, InputNumber, DatePicker, Modal, message, Row, Col, Select, notification, Space, Switch } from 'antd';
 import { PlusCircleOutlined, MinusCircleOutlined } from '@ant-design/icons';
 import { apiClient } from '@/utils/apiClient';
 import { getCookieData, getSelectedText } from '@/utils/common';
@@ -204,10 +204,10 @@ const RawMaterialDashboard = () => {
   //  fUNCTION TO FETCH RAW MATERIALS
   const FetchRawMaterials = async () => {
     try {
+      debugger
       const values = SearchForm.getFieldsValue();
-      console.log(values);
-      
-      const query = `CHALLAN_NO=${values.CHALLAN_NO || ''}&DT_REG_FROM=${values.RECEIVED_DATE_FROM || ''}&DT_REG_TO=${values.RECEIVED_DATE_TO || ''}&SUPPLIER=${values.SUPPLIER || ''}&GRADE_SRNO=${values.MATERIAL_GRADE_SRNO || ''}&THICKNESS_SRNO=${values.MATERIAL_THICKNESS_SRNO || ''}`
+
+      const query = `CHALLAN_NO=${values.CHALLAN_NO || ''}&DT_REG_FROM=${values.RECEIVED_DATE_FROM || ''}&DT_REG_TO=${values.RECEIVED_DATE_TO || ''}&SUPPLIER=${values.SUPPLIER || ''}&GRADE_SRNO=${values.MATERIAL_GRADE_SRNO || ''}&THICKNESS_SRNO=${values.MATERIAL_THICKNESS_SRNO || ''}&IS_SHOW_ALL=${values.IS_SHOW_ALL ? "Y" : 'N'}`
       const response = await apiClient(`${API_BASE_URL}DtRawMaterial?${query}`, 'GET');
       if (response.msgId === 200) {
         if (!response.data) { return; }
@@ -497,6 +497,19 @@ return (
       />
     </Form.Item>
   </Col>
+<Col span={2}>
+  <Form.Item 
+    name="IS_SHOW_ALL" 
+    label=""
+    valuePropName="checked"
+  >
+    <Switch 
+      size="small"
+      checkedChildren="Show All" 
+      unCheckedChildren="Show All"
+    />
+  </Form.Item>
+</Col>
   <Col span={2}>
     <Form.Item>
       <Button
@@ -508,7 +521,7 @@ return (
       </Button>
     </Form.Item>
   </Col>
-  <Col span={4}>
+  <Col span={2}>
     <Form.Item>
       <Button
         onClick={() => setMotherModalVisible(true)}
@@ -806,8 +819,6 @@ return (
                         placeholder="Width (mm)"
                         style={{ width: '100%' }}
                         // onChange={(value: any) => {
-                        //   // console.log(selectedMaterial, "selectedMaterial");
-                        //   // debugger
                         //   const slittingDetails = slitForm.getFieldValue('SLITTING_DTL') || [];
                         //   if (!selectedMaterial) return;
                         //   // if (selectedMaterial.SLITTING_LEVEL) {
@@ -865,7 +876,6 @@ return (
                         placeholder="Nos"
                         // onChange={(value: any) => {
                         //   const slittingDetails = slitForm.getFieldValue('SLITTING_DTL')[name].SLITTING_WIDTH || 0;
-                        //   // console.log(slittingDetails, "slittingDetails");
                           
                         // }
                         // }

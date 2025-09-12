@@ -89,7 +89,6 @@ const SystemUserManagement = () => {
           {/* Edit Button */}
           <Button 
             onClick={() => {
-              console.log('Editing record:', record);
               handleEdit(record, 'USER');
             }} 
             icon={<EditOutlined />} 
@@ -114,7 +113,6 @@ const SystemUserManagement = () => {
       form_UM.setFieldsValue(record)
     } else if (type === 'USER_TYPE') {
       // setEditingUser(record); // Set the user to be edited
-      console.log('Editing record:', record);
       
       form_UT.setFieldsValue(record)
       setIsModalVisible_UT(true); // Show the modal for editing
@@ -149,7 +147,6 @@ const SystemUserManagement = () => {
       if (response.msgId === 200) {
         if (!response.data) return;
         setUserData(response.data.Table);
-        console.log("User Data:", response.data.Table);
         
       } else {
         message.error(response.msg);

@@ -55,18 +55,15 @@ function transformToNestedData(flatData: any[]) {
 const RecursiveNestedTable = ({ data, setSlitingLevvel, setSelectedMaterial , setModalVisible, updateSlittedStatus,delRawSlit, setIsSlitMaterialEdit}: { data: any[], setSlitingLevvel:any, setSelectedMaterial:any, setModalVisible:any,  updateSlittedStatus:any,delRawSlit:any,setIsSlitMaterialEdit:any}) => {
 
     const confirmSlit: PopconfirmProps['onConfirm'] = (e:any) => {
-        // console.log(e.SLITTING_SRNO, "SLITTING_SRNO");
         updateSlittedStatus(e.SLITTING_SRNO,'P','S');
         // message.success('Click on Yes');
       };
     const confirmSlitDelete: PopconfirmProps['onConfirm'] = (e:any) => {
-        // console.log(e.SLITTING_SRNO, "SLITTING_SRNO");
         delRawSlit(e.SLITTING_SRNO, false);
         // message.success('Click on Yes');
       };
       
       const cancel: PopconfirmProps['onCancel'] = (e:any) => {
-        // console.log(e);
         // message.error('Click on No');
       };
       
@@ -182,7 +179,6 @@ const RecursiveNestedTable = ({ data, setSlitingLevvel, setSelectedMaterial , se
                      type="primary"
                      icon={<EditOutlined />}
                      onClick={() => {
-                      //  console.log(record, "record");
                        
                        setIsSlitMaterialEdit(true);
                        setSelectedMaterial(record);
@@ -296,13 +292,11 @@ const SlittingTable = ({ mainTableData, slittingData ,setSlitingLevvel, setSelec
   const searchInput = useRef<InputRef>(null);  
  
   const confirmMotherDelete: PopconfirmProps['onConfirm'] = (e:any) => {
-    // console.log(e.SLITTING_SRNO, "SLITTING_SRNO");
     delRawSlit(e.MATERIAL_SRNO, true);
     // message.success('Click on Yes');
   };
   
   const cancel: PopconfirmProps['onCancel'] = (e:any) => {
-    // console.log(e);
     // message.error('Click on No');
   };
       
@@ -311,11 +305,6 @@ const SlittingTable = ({ mainTableData, slittingData ,setSlitingLevvel, setSelec
     const filteredSlittingData = slittingData.filter(
       (item) => (item.MATERIAL_SRNO === record.MATERIAL_SRNO && item.SLITTING_LEVEL === 1 && item.SLITTING_SRNO_FK === null)  
     );
-    // console.log(record,"record");
-    
-    // console.log(slittingData, "slittingData");
-    // console.log(filteredSlittingData, "filteredSlittingData");
-    
     // Calculate total slitted weight and width
     const totalSlittedWeight = filteredSlittingData.reduce((sum, item) => sum + (item.SLITTING_WEIGHT || 0), 0);
     const totalSlittedWidth = filteredSlittingData.reduce((sum, item) => sum + (item.SLITTING_WIDTH || 0), 0);
@@ -326,9 +315,6 @@ const SlittingTable = ({ mainTableData, slittingData ,setSlitingLevvel, setSelec
     // const scrap_weight = ((record.MATERIAL_SCRAP * record.MATERIAL_WEIGHT / record.MATERIAL_WIDTH) || 0)
     const remainingWeight = (record.MATERIAL_WEIGHT || 0) - totalSlittedWeight - (record.MATERIAL_SCRAP_WEIGHT || 0);
     const remainingWidth = (record.MATERIAL_WIDTH || 0) - totalSlittedWidth - (record.MATERIAL_SCRAP || 0);
-
-    // console.log(totalSlittedWidth,'remainingWidth');
-    
 
     return {
       ...record,
@@ -372,9 +358,6 @@ const SlittingTable = ({ mainTableData, slittingData ,setSlitingLevvel, setSelec
   });
   
 
-  // console.log(mainTableDataWithRemainingValues, "mainTableDataWithRemainingValues");  
-  // console.log(slittingWithRemainingValues, "slittingWithRemainingValues");
-  
 
    
 
@@ -673,7 +656,7 @@ const mainTableColumns = [
             );
           },
         }}
-        pagination={false}
+        // pagination={false}
       />
     </div>
   );

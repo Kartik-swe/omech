@@ -176,8 +176,6 @@ const RawMaterialDashboard = () => {
 
   // Adjusted function to handle adding raw material with API request
   const handleAddRawMaterial = async (values: any) => {
-    console.log(values, "values");
-    console.log(selectedMaterial, "selectedMaterial");
     let MATERIAL_STATUS_SRNO = 0;
     
     try {
@@ -747,13 +745,9 @@ return (
                         placeholder="Width (mm)"
                         style={{ width: '100%' }}
                         onChange={(value: any) => {
-                          // console.log(selectedMaterial, "selectedMaterial");
-                          // debugger
                           const slittingDetails = slitForm.getFieldValue('SLITTING_DTL') || [];
                           if (!selectedMaterial) return;
-                          // if (selectedMaterial.SLITTING_LEVEL) {
-
-                          // }
+                        
                           const calculatedWeight = selectedMaterial && 'MATERIAL_WIDTH' in selectedMaterial
                             ? ((value / Number(selectedMaterial.MATERIAL_WIDTH)) * Number(selectedMaterial.MATERIAL_WEIGHT)).toFixed(2)
                             : ((value / Number(selectedMaterial.SLITTING_WIDTH)) * Number(selectedMaterial.SLITTING_WEIGHT)).toFixed(2);
@@ -805,8 +799,6 @@ return (
                         placeholder="Nos"
                         onChange={(value: any) => {
                           const slittingDetails = slitForm.getFieldValue('SLITTING_DTL')[name].SLITTING_WIDTH || 0;
-                          // console.log(slittingDetails, "slittingDetails");
-                          
                         }
                         }
                         style={{ width: '100%' }}

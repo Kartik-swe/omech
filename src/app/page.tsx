@@ -20,6 +20,7 @@ import {
 } from '@ant-design/icons';
 import { apiClient } from '@/utils/apiClient';
 import { getCookieData } from '@/utils/common';
+import { useRouter } from 'next/navigation';
 
 const { Title, Text } = Typography;
 
@@ -37,6 +38,7 @@ const getColorByIndex = (index: number): string => {
 };
 
 const DashboardPage: React.FC = () => {
+  const router = useRouter();
   const [loading, setLoading] = useState<boolean>(false);
   const [productionData, setProductionData] = useState<any[]>([
     { date: '2023-01', value: 500, type: 'Production' },
@@ -130,6 +132,14 @@ const DashboardPage: React.FC = () => {
   const { USER_SRNO, API_BASE_URL, UT_SRNO } = cookiesData;
   
   useEffect(() => {
+    if (!USER_SRNO) {
+      router.replace('/logout');
+    }else{
+      router.replace('/materials');
+    }
+  }, [USER_SRNO, router]);
+  
+  useEffect(() => {
     // In a real implementation, you would fetch data from your API
     fetchDashboardData();
   }, []);
@@ -165,7 +175,7 @@ const DashboardPage: React.FC = () => {
           <Title level={4}>
             <DashboardOutlined /> Dashboard Overview
           </Title>
-          <Text type="secondary">Welcome to the OMECH ERP system dashboard</Text>
+          <Text type="secondary">Welcome to the  system dashboard</Text>
         </div>
         <DatePicker.RangePicker 
           style={{ width: 300 }}

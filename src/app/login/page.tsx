@@ -26,12 +26,11 @@ const LoginPage = () => {
       const data = await response.json();
 
       if (response.ok) {
-        console.log(data,"login data"); // Debugging
         const expMin = Number(process.env.NEXT_PUBLIC_AUTH_EXPIRY_TIME || 30)
         const expirationTime = new Date(new Date().getTime() + expMin * 60 * 1000);
 
-        Cookies.set("token", data.token, { expires: expirationTime, secure: false, sameSite: "strict" });
-        Cookies.set("user", JSON.stringify(data.user), { expires: expirationTime, secure: false, sameSite: "strict" });
+        Cookies.set("token", data.token, { expires: expirationTime, secure: true, sameSite: "strict" });
+        Cookies.set("user", JSON.stringify(data.user), { expires: expirationTime, secure: true, sameSite: "strict" });
 
 
         message.success("Login successful!");

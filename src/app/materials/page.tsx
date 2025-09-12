@@ -60,7 +60,6 @@ const Dashboard = () => {
       const response = await apiClient(`${API_BASE_URL}DtDashRawInventory?${param}`, 'GET');
       if (response.msgId === 200) {
         if (!response.data) { return; }
-        console.log(response.data);
         
         const row = response.data.Table[0];
         const keyCardData = [
@@ -110,9 +109,6 @@ const Dashboard = () => {
         setGradeWiseStockData(gradeWiseStockDataTemp);
         setgradeVendorData(gradeVendorDataTemp);
         setAllLocations(allLocationsTemp)
-        console.log(gradeVendorDataTemp,"gradeVendorDataTemp");
-        console.log(allLocationsTemp,"allLocationsTemp");
-        console.log(locationSetTemp,"locationSetTemp");
         
       } else {
         message.error(response.msg)

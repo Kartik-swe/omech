@@ -54,6 +54,16 @@ export interface ApiResponse<T = any> {
       };
     }
 
+    // handle 403
+    if (response.status === 403) {
+      message.error("Forbidden. You do not have permission to access this resource.");
+      handleLogout();
+      return {
+        msgId: -1,
+        msg: "Forbidden. You do not have permission to access this resource.",
+      };
+    }
+
       if (!response.ok) {
         throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
       }

@@ -111,7 +111,7 @@ const [selectedSchedule, setSelectedSchedule] = useState<number | null>(null);
                 dataIndex: 'SCHEDULE_DATE',
             },
            {
-  title: 'Est. Delivery Date',
+  title: 'Est. Delivery',
   dataIndex: 'ESTIMATED_DELIVERY_DATE',
   render: (date:any,record:any) => {
     const isUrgent = record.IS_URGENT_DELIVERY === 'Y';
@@ -143,7 +143,27 @@ const [selectedSchedule, setSelectedSchedule] = useState<number | null>(null);
     ],
   },
              {
+    title: 'Dispatched',
+    children: [
+      {
+        title: 'Qty',
+        dataIndex: 'T_DISPATCHED_QTY',
+        key: 't_dispatched_qty',
+        align: 'center',
+        width: 80,
+      },
+      {
+        title: 'Wt (kg)',
+        dataIndex: 'T_DISPATCHED_WEIGHT',
+        key: 't_dispatched_weight',
+        align: 'center',
+        width: 100,
+      },
+    ],
+  },
+             {
     title: 'Pending',
+    hidden: true,
     children: [
       {
         title: 'Qty',
@@ -270,48 +290,48 @@ const [selectedSchedule, setSelectedSchedule] = useState<number | null>(null);
   style={{ marginBottom: 24 }}
 >
   <Row gutter={16}>
-    <Col>
+    <Col span={2}>
       <Form.Item label="Item Type" name="ITEM_TYPE">
-        <Select style={{ width: 150 }}>
+        <Select >
           <Option value="PIPE">PIPE</Option>
           <Option value="COIL">COIL</Option>
           <Option value="SHEET">SHEET</Option>
         </Select>
       </Form.Item>
     </Col>
-     <Col>
+     <Col span={6}>   
     <Form.Item label="Party Name" name="PARTY_NAME">
       <Input placeholder="Party Name" />
     </Form.Item>
   </Col>
 
-    <Col>
+    <Col span={5}>
       <Form.Item label="PO Entry Date" name="ENTRY_DATE">
         <RangePicker />
       </Form.Item>
     </Col>
-    <Col>
+    <Col span={5}>
       <Form.Item label="Est. Delivery Date" name="DELIVERY_DATE">
         <RangePicker />
       </Form.Item>
     </Col>
-    <Col>
+    <Col span={2}>
       <Form.Item label="Status" name="STATUS_SRNO">
-        <Select allowClear style={{ width: 150 }} placeholder="Select Status">
+        <Select allowClear  placeholder="Select Status">
           <Option value="11">Pending</Option>
           <Option value="12">Completed</Option>
           <Option value="13">Closed</Option>
         </Select>
       </Form.Item>
     </Col>
-    <Col>
+    <Col span={2}>  
       <Form.Item label=" " colon={false}>
         <Button type="primary" htmlType="submit">
           Search
         </Button>
       </Form.Item>
     </Col>
-    <Col>
+    <Col span={2}>
       <Form.Item label=" " colon={false}>
         <Button
           onClick={() => {

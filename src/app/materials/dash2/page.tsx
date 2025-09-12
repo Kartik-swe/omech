@@ -37,9 +37,6 @@ const Dashboard = () => {
 
   //clear selected srnos
   useEffect(() => {
-    console.log(selectedMaterialSrnos, selectedSlittingSrnos);
-    
-    
     if (!!!modalVisible) {
       setSelectedMaterialSrnos(null);
       setSelectedSlittingSrnos(null);

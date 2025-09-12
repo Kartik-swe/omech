@@ -13,6 +13,8 @@ import {
   Space, 
   Typography 
 } from 'antd';
+import type { MenuProps } from 'antd';
+import type { ItemType, MenuDividerType } from 'antd/es/menu/interface';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -312,7 +314,7 @@ const LayoutComponent: React.FC<{ children: React.ReactNode }> = ({ children }) 
   }, [pathname]);
   
   // User profile dropdown items
-  const userMenuItems = [
+  const userMenuItems: ItemType[] = [
     {
       key: '1',
       label: 'Profile',
@@ -326,7 +328,8 @@ const LayoutComponent: React.FC<{ children: React.ReactNode }> = ({ children }) 
     {
       type: 'divider',
       key: 'divider',
-    },
+      dashed: false,
+    } as MenuDividerType,
     {
       key: '3',
       label: 'Logout',
@@ -367,8 +370,22 @@ const LayoutComponent: React.FC<{ children: React.ReactNode }> = ({ children }) 
             alignItems: 'center',
             gap: '10px'
           }}>
-            <DatabaseOutlined style={{ fontSize: '24px' }} />
-            {!collapsed && <span>OMECH ERP</span>}
+            {collapsed ? (
+              <img 
+                src="/Omech_Components_Logo.png" 
+                alt="Omech Logo"
+                style={{ height: '40px', width: 'auto' }}
+              />
+            ) : (
+              <>
+                <img 
+                  src="/Omech_Components_Logo.png" 
+                  alt="Omech Logo"
+                  style={{ height: '40px', width: 'auto' }}
+                />
+                {/* <span>OMECH INVENTORY</span> */}
+              </>
+            )}
           </div>
         </div>
         
@@ -429,7 +446,6 @@ const LayoutComponent: React.FC<{ children: React.ReactNode }> = ({ children }) 
           </div>
           
           <Space size={16}>
-            
             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" arrow>
               <Space style={{ cursor: 'pointer' }}>
                 <Avatar style={{ backgroundColor: colorPrimary }} icon={<UserOutlined />} />
@@ -450,6 +466,8 @@ const LayoutComponent: React.FC<{ children: React.ReactNode }> = ({ children }) 
               padding: 24,
               borderRadius: borderRadiusLG,
               boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+              height: 'calc(100vh - 184px)', /* 64px header + 56px footer + 24px*2 padding */
+              overflowY: 'auto',
             }}
           >
             {children}
@@ -463,7 +481,7 @@ const LayoutComponent: React.FC<{ children: React.ReactNode }> = ({ children }) 
           color: 'rgba(0, 0, 0, 0.45)',
           fontSize: '14px',
         }}>
-          OMECH ERP System ©{new Date().getFullYear()} All Rights Reserved
+          OMECH INVENTORY System ©{new Date().getFullYear()} All Rights Reserved
         </Footer>
       </Layout>
     </Layout>

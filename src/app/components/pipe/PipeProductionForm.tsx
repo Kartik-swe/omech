@@ -23,7 +23,6 @@ interface PipeProductionFormProps {
     };
   
     const handleFinish = (values:any) => {
-      console.log("Submitted Data:", { ...values, coil, totalWeight });
       onClose();
     };
   

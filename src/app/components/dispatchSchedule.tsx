@@ -9,11 +9,11 @@ import {
   Space
 } from 'antd';
 
-import { CloseCircleOutlined, RedoOutlined, SearchOutlined, StopOutlined } from '@ant-design/icons';
+import { CloseCircleOutlined, RedoOutlined, SearchOutlined, StopOutlined, DownloadOutlined } from '@ant-design/icons';
 
 import type { ColumnsType, ColumnType } from 'antd/es/table';
 import { apiClient } from '@/utils/apiClient';
-import { getCookieData } from '@/utils/common';
+import { getCookieData, exportToExcel } from '@/utils/common';
 import { Console } from 'console';
 import { set } from '@ant-design/plots/es/core/utils';
 
@@ -130,7 +130,6 @@ const [rejectionRemark, setRejectionRemark] = useState<string>('');
             DISPATCH_DATE: dispItem.  DISPATCH_DATE}))
           }))
         };
-        console.log('Mapped Dispatch Data:', mappedData);
         setPoData(mappedData);
         setDispatchQty({});
         setDispatchWt({});
@@ -208,7 +207,6 @@ const handleDispatchEdit = (record: DispatchHistory, rowKey: string) => {
 };
 
 const handleDispatchUpdate = async (record: DispatchHistory, item: DispatchItem) => {
-  console.log('Updating dispatch:', record, item);
   if (editedQty == null || editedQty <= 0) {
     message.warning('Please enter a valid dispatch quantity.');
     return;
@@ -255,6 +253,110 @@ const handleAddRejectedQty = (item: DispatchItem) => {
   setRejectionRemark('');
   setIsRejectModalOpen(true);
 };
+
+const handleExportToExcel = () => {
+    if (!poData || !poData.items) {
+      message.error('No data to export');
+      return;
+    }
+
+    try {
+      // Create two separate worksheets - one for main items and one for dispatch history
+      const mainExportData = poData.items.map(item => {
+        // Create a flattened version of the item for export
+        return {
+          ITEM_TYPE: item.ITEM_TYPE,
+          OD: item.OD || '',
+          THICKNESS: item.THICKNESS || '',
+          GRADE: item.GRADE || '',
+          LENGTH: item.LENGTH || '',
+          WIDTH: item.WIDTH || '',
+          BREADTH: item.BREADTH || '',
+          ORDERED_QTY: item.ORDERED_QTY,
+          ORDERED_WEIGHT: item.ORDERED_WEIGHT,
+          DISPATCHED_QTY: item.DISPATCHED_QTY,
+          DISPATCHED_WEIGHT: item.DISPATCHED_WEIGHT,
+          REJECTED_QTY: item.REJECTED_QTY,
+          REJECTED_WEIGHT: item.REJECTED_WEIGHT,
+          REMAINING_QTY: item.REMAINING_QTY,
+          REMAINING_WEIGHT: item.REMAINING_WEIGHT,
+          IS_CLOSED: item.IS_CLOSED === 'Y' ? 'Yes' : 'No',
+          STATUS_NAME: item.STATUS_NAME
+        };
+      });
+
+      // Prepare dispatch history data
+      let historyExportData: any[] = [];
+      poData.items.forEach(item => {
+        if (item.DISPATCH_HISTORY && item.DISPATCH_HISTORY.length > 0) {
+          // Add each dispatch history entry with item details for reference
+          item.DISPATCH_HISTORY.forEach(history => {
+            historyExportData.push({
+              ITEM_TYPE: item.ITEM_TYPE,
+              OD: item.OD || '',
+              THICKNESS: item.THICKNESS || '',
+              GRADE: item.GRADE || '',
+              LENGTH: item.LENGTH || '',
+              DISPATCH_DATE: new Date(history.DISPATCH_DATE).toLocaleDateString(),
+              DISPATCH_QTY: history.DISPATCH_QTY,
+              REJECTED_REMARK: history.REJECTED_REMARK || ''
+            });
+          });
+        }
+      });
+
+      // Define headers for the main Excel sheet
+      const mainHeaders = [
+        // { title: 'Item Type', dataIndex: 'ITEM_TYPE' },
+        { title: 'Grade', dataIndex: 'GRADE' },
+        { title: 'OD', dataIndex: 'OD' },
+        { title: 'Thickness', dataIndex: 'THICKNESS' },
+        { title: 'Length', dataIndex: 'LENGTH' },
+        // { title: 'Width', dataIndex: 'WIDTH' },
+        // { title: 'Breadth', dataIndex: 'BREADTH' },
+        { title: 'Ordered Qty', dataIndex: 'ORDERED_QTY' },
+        { title: 'Ordered Weight', dataIndex: 'ORDERED_WEIGHT' },
+        { title: 'Dispatched Qty', dataIndex: 'DISPATCHED_QTY' },
+        { title: 'Dispatched Weight', dataIndex: 'DISPATCHED_WEIGHT' },
+        { title: 'Rejected Qty', dataIndex: 'REJECTED_QTY' },
+        { title: 'Rejected Weight', dataIndex: 'REJECTED_WEIGHT' },
+        { title: 'Remaining Qty', dataIndex: 'REMAINING_QTY' },
+        { title: 'Remaining Weight', dataIndex: 'REMAINING_WEIGHT' },
+        { title: 'Is Closed', dataIndex: 'IS_CLOSED' },
+        { title: 'Status', dataIndex: 'STATUS_NAME' }
+      ];
+
+      // Define headers for the history Excel sheet
+      const historyHeaders = [
+        // { title: 'Item Type', dataIndex: 'ITEM_TYPE' },
+        { title: 'Grade', dataIndex: 'GRADE' },
+        { title: 'OD', dataIndex: 'OD' },
+        { title: 'Thickness', dataIndex: 'THICKNESS' },
+        { title: 'Length', dataIndex: 'LENGTH' },
+        { title: 'Dispatch Date', dataIndex: 'DISPATCH_DATE' },
+        { title: 'Dispatch Qty', dataIndex: 'DISPATCH_QTY' },
+        { title: 'Rejection Remark', dataIndex: 'REJECTED_REMARK' }
+      ];
+
+      // Generate a title for the Excel file
+      const headerText = `Dispatch Schedule - PO: ${poData.PO_NUMBER} - ${poData.PARTY_NAME}`;
+
+      // Export main data
+      exportToExcel(mainExportData, 'Dispatch_Schedule_Summary', mainHeaders, headerText);
+      
+      // If there's history data, export it as well
+      if (historyExportData.length > 0) {
+        setTimeout(() => {
+          exportToExcel(historyExportData, 'Dispatch_Schedule_History', historyHeaders, `${headerText} - Dispatch History`);
+        }, 1000); // Add a small delay to prevent issues with multiple downloads
+      }
+      
+      message.success('Export successful');
+    } catch (error) {
+      console.error('Export error:', error);
+      message.error('Failed to export data');
+    }
+  };
 
 const handleRejectQtySubmit = async (item:any, REJECTED_QTY:number, REJECTED_REMARK:string) => {
   try {
@@ -394,7 +496,7 @@ const handleDispatchClose = async (item: DispatchItem) => {
         hidden:itemType =='COIL' },
     { title: 'WIDTH', dataIndex: 'WIDTH',hidden:itemType =='PIPE' || itemType == 'SHEET' }, // Hide WIDTH for PIPE and SHEET
     {title:'BREADTH', dataIndex: 'BREADTH', hidden:itemType =='PIPE' || itemType == 'COIL' }, // Hide BREADTH for PIPE and COIL
-    { title: 'WEIGHT', dataIndex: 'WEIGHT_KG' }, // Updated to use WEIGHT_KG
+    // { title: 'WEIGHT', dataIndex: 'WEIGHT_KG' }, // Updated to use WEIGHT_KG
     // { title: 'WEIGHT', dataIndex: 'WEIGHT' },
   // Grouped: Ordered
   {
@@ -402,7 +504,7 @@ const handleDispatchClose = async (item: DispatchItem) => {
   render: (_, item) => (
     <div>
       {itemType === 'PIPE' ? (<> Qty: {item.ORDERED_QTY} <br /> </> ) : null}
-      Wt: {item.ORDERED_WEIGHT} kg
+      Wt: {item.ORDERED_WEIGHT}
     </div>
   ),
 },
@@ -411,7 +513,7 @@ const handleDispatchClose = async (item: DispatchItem) => {
     render: (_, item) => (
       <div>
         {itemType === 'PIPE' ? (<> Qty: {item.DISPATCHED_QTY} <br /> </> ) : null}
-        Wt : {item.DISPATCHED_WEIGHT} kg
+        Wt : {item.DISPATCHED_WEIGHT}
       </div>
     ),
   },
@@ -420,7 +522,7 @@ const handleDispatchClose = async (item: DispatchItem) => {
     render: (_, item) => (
       <div>
         {itemType === 'PIPE' ? (<> Qty: {item.REJECTED_QTY} <br /> </> ) : null}        
-        Wt : {item.REJECTED_WEIGHT} kg
+        Wt : {item.REJECTED_WEIGHT}
       </div>
     ),
     hidden:itemType =='COIL' || itemType == 'SHEET'
@@ -708,13 +810,28 @@ const expandedRowRender = (item: DispatchItem) => (
 
   return (
     <Modal
-      title={`Dispatch for Schedule #${SCHEDULE_SRNO}`}
+      title={
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>Dispatch for Schedule #{SCHEDULE_SRNO}</span>
+          <Button 
+            type="primary" 
+            icon={<DownloadOutlined />} 
+            onClick={handleExportToExcel}
+            disabled={loading || !poData}
+            size="small"
+          >
+            Export to Excel
+          </Button>
+        </div>
+      }
       open={isOpen}
       onCancel={() => {
-    setIsOpen(false);
-    setItemType(null);
-  }}
-      footer={<Button onClick={() => setIsOpen(false)}>Close</Button>}
+        setIsOpen(false);
+        setItemType(null);
+      }}
+      footer={
+        <Button onClick={() => setIsOpen(false)}>Close</Button>
+      }
       width={1400}
       destroyOnClose
     >

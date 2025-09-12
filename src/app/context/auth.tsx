@@ -23,7 +23,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const token = Cookies.get("token");
     const userData = Cookies.get("user");
 
-    console.log(token, userData, "token and user data");  
     
     if (token && userData) {
       setUser(JSON.parse(userData)); // Restore user data
