@@ -25,6 +25,9 @@ const RawMaterialsShiftHis = () => {
     const [optThickNess, setoptThickNess] = useState<{ label: string; value: string }[]>([]);
     const [optVendors, setOptVendors] = useState<{ label: string; value: string }[]>([]);
     const [optTubeMachines, setoptTubeMachines] = useState<{ label: string; value: string }[]>([]);
+    const [optWorkingUsers, setOptWorkingUsers] = useState<{ label: string; value: string }[]>([]);
+    const [optODs, setOptODs] = useState<{ label: string; value: string }[]>([]);
+    const [optWorkingShifts, setOptWorkingShifts] = useState<{ label: string; value: string }[]>([]);
     
 
   const [form] = Form.useForm();
@@ -38,16 +41,32 @@ const RawMaterialsShiftHis = () => {
   // Fetch dropdown options for locations
   const FetchPlCommon = async () => {
     const response = await apiClient<Record<string, any>>(
-      `${API_BASE_URL}Pl_Common?USER_SRNO=${USER_SRNO}&UT_SRNO=${UT_SRNO}&TBL_SRNO=1,3,4,8`,
+      `${API_BASE_URL}Pl_Common?USER_SRNO=${USER_SRNO}&UT_SRNO=${UT_SRNO}&TBL_SRNO=1,2,3,4,8,11`,
       "GET"
     );
     if (response.msgId === 200) {
       if (!response.data) return;
-      const { Table1, Table3, Table4,Table8 } = response.data;
+      const { Table1,Table2, Table3, Table4,Table8,Table11 } = response.data;
       setOptGrades(Table1)
       setoptThickNess(Table3)
       setOptVendors(Table4)
       setoptTubeMachines(Table8)
+      setOptWorkingUsers(Table11)
+      setOptODs(Table2)
+
+     // workingShifts 1) Morning 2 ) evening
+      const workingShifts = [
+        {
+          label: "Morning Shift",
+          value: "MORNING",
+        },
+        {
+          label: "Evening Shift",
+          value: "EVENING",
+        },
+      ]
+
+      setOptWorkingShifts(workingShifts)
     } else {
       message.error(response.msg);
       console.error("API Error:", response.msg);
@@ -204,11 +223,9 @@ const RawMaterialsShiftHis = () => {
           // }
           // isMotherCoil ? fetchSemiSlitted() : fetchMotherCoil(); // Refresh the appropriate table
         } else {
-        alert(response.msg)
           message.error(response.msg);
         }
       } catch (error: any) {
-        alert(error)
         message.error(error.message);
       }
   }
@@ -253,11 +270,9 @@ const RawMaterialsShiftHis = () => {
         }
         // isMotherCoil ? fetchSemiSlitted() : fetchMotherCoil(); // Refresh the appropriate table
       } else {
-      alert(response.msg)
         message.error(response.msg);
       }
     } catch (error: any) {
-      alert(error)
       message.error(error.message);
     }
   };
@@ -274,7 +289,6 @@ const RawMaterialsShiftHis = () => {
     try {
       const values = await statusLog.validateFields();
       const { flag } = selectedMaterial;
-      
       const payload = {
         MATERIAL_SRNO: selectedMaterial.MATERIAL_SRNO ,
         SLITTING_SRNO: flag==='M' ? null : selectedMaterial.SLITTING_SRNO ,
@@ -282,6 +296,9 @@ const RawMaterialsShiftHis = () => {
         DESCRIPTION: values.MACHINE_SRNO.toString(), // PASSING TUBE MILL SRNO INSETED OF DESC NOW
         REMARKS: values.REMARKS,
         STATUS_CHANGE_DATE: values.STATUS_CHANGE_DATE,
+        OD_SRNO : values.OD_SRNO,
+        WORKING_USER_SRNO : values.WORKING_USER,
+        WORKING_SHIFT : values.WORKING_SHIFT, 
         USER_SRNO: USER_SRNO,
         UT_SRNO: UT_SRNO,
         LOG_STATUS_SRNO: 0,
@@ -317,6 +334,53 @@ const RawMaterialsShiftHis = () => {
       message.error(error.message);
     }
   };
+  //  const handleStatusLogOk = async () => {
+  //   try {
+  //     const values = await statusLog.validateFields();
+  //     const { flag } = selectedMaterial;
+  //     alert(flag)
+  //     const payload = {
+  //       MATERIAL_SRNO: selectedMaterial.MATERIAL_SRNO ,
+  //       SLITTING_SRNO: flag==='M' ? null : selectedMaterial.SLITTING_SRNO ,
+  //       PRE_LOG_STATUS_SRNO: selectedMaterial.LOG_STATUS_SRNO,
+  //       DESCRIPTION: values.MACHINE_SRNO.toString(), // PASSING TUBE MILL SRNO INSETED OF DESC NOW
+  //       REMARKS: values.REMARKS,
+  //       STATUS_CHANGE_DATE: values.STATUS_CHANGE_DATE,
+  //       USER_SRNO: USER_SRNO,
+  //       UT_SRNO: UT_SRNO,
+  //       LOG_STATUS_SRNO: 0,
+  //     };
+
+  //     const response = await apiClient(`${API_BASE_URL}IuStatusLog`, "POST", payload);
+
+  //     if (response.msgId === 200) {
+  //       message.success("Issued successful!");
+  //       setisStatusLogModalVisible(false);
+  //       statusLog.resetFields();
+  //       // add case statement for falg and call the appropriate function to refresh the table for M, P, S
+  //       switch (flag) {
+  //         case 'M':
+  //           fetchMotherCoil('');
+  //           break;
+  //         case 'P':
+  //           fetchSemiSlitted('');
+  //           break;
+  //         case 'S':
+  //           fetchSlitted('');
+  //           break;
+  //         default:
+  //           break;
+  //       }
+  //       // isMotherCoil ? fetchSemiSlitted() : fetchMotherCoil(); // Refresh the appropriate table
+  //     } else {
+  //     alert(response.msg)
+  //       message.error(response.msg);
+  //     }
+  //   } catch (error: any) {
+  //     alert(error)
+  //     message.error(error.message);
+  //   }
+  // };
 
   // Handle modal Cancel button click
   const handleStatusLogCancel = () => {
@@ -347,8 +411,11 @@ const RawMaterialsShiftHis = () => {
 
     ];
     if (flag === 'F') {
+      baseColumns1.splice(1, 0, { title: "Shift", dataIndex: "WORKING_SHIFT", key: "WORKING_SHIFT" });
+      baseColumns1.splice(1, 0, { title: "Operator", dataIndex: "WORKING_USER", key: "WORKING_USER" });
+      baseColumns1.splice(1, 0, { title: "OD", dataIndex: "OD", key: "OD" });
       baseColumns1.splice(1, 0, { title: "Tube Mill", dataIndex: "STATUS_lOG_DESC", key: "STATUS_lOG_DESC" });
-      baseColumns1.splice(1, 0, { title: "Issue Date", dataIndex: "STATUS_LOG_DATE", key: "STATUS_LOG_DATE" });
+      baseColumns1.splice(1, 0, { title: "Issue Date", dataIndex: "STATUS_LOG_DATE_STR", key: "STATUS_LOG_DATE_STR" });
     }
     if (flag === 'M' || flag === 'P' || flag === 'S') {
       baseColumns.splice(1, 0, { title: "Location", dataIndex: "FROM_LOCATION", key: "FROM_LOCATION" });
@@ -356,6 +423,7 @@ const RawMaterialsShiftHis = () => {
     if (flag === 'P' || flag === 'S' ) {
       baseColumns.splice(1, 0, { title: "DC No", dataIndex: "DC_NO", key: "DC_NO" });
     }
+    
    
     
 
@@ -639,12 +707,21 @@ const RawMaterialsShiftHis = () => {
                         </Form.Item>
 
                         <Form.Item name={['TUBE_MILL_SRNO']} style={{ marginBottom: 8 }}
-        hidden={activeTab != "PRODUCTION"}
-        >
+                          hidden={activeTab != "PRODUCTION"} > 
                           <Select 
                           showSearch
                           placeholder="Select Tube Mill" 
                           options={optTubeMachines} 
+                          filterOption={(input: any, option: any) => option?.label.toLowerCase().includes(input.toLowerCase())}
+                          allowClear
+                          />
+                        </Form.Item>
+                          <Form.Item name={['WORKING_USER']} style={{ marginBottom: 8 }}
+                          hidden={activeTab != "PRODUCTION"} > 
+                          <Select 
+                          showSearch
+                          placeholder="Select Operator" 
+                          options={optWorkingUsers} 
                           filterOption={(input: any, option: any) => option?.label.toLowerCase().includes(input.toLowerCase())}
                           allowClear
                           />
@@ -751,7 +828,52 @@ const RawMaterialsShiftHis = () => {
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+                <Col span={12}>
+              <Form.Item
+                label="OD"
+                name="OD_SRNO"
+                rules={[{ required: false, message: "Select OD" }]}
+              >
+                <Select 
+                    showSearch 
+                    placeholder="Select OD" 
+                    options={optODs} 
+                    filterOption={(input: any, option: any) => option?.label.toLowerCase().includes(input.toLowerCase())}
+                    allowClear
+                />
+              </Form.Item>
+            </Col>
+             <Col span={8}>
+              <Form.Item
+                label="Operator"
+                name="WORKING_USER"
+                rules={[{ required: false, message: "Select Operator" }]}
+              >
+                <Select 
+                    showSearch 
+                    placeholder="Select Operator" 
+                    options={optWorkingUsers} 
+                    filterOption={(input: any, option: any) => option?.label.toLowerCase().includes(input.toLowerCase())}
+                    allowClear
+                />
+              </Form.Item>
+            </Col>
+             <Col span={8}>
+              <Form.Item
+                label="Shift Name"
+                name="WORKING_SHIFT"
+                rules={[{ required: false, message: "Select shift name" }]}
+              >
+                <Select 
+                    showSearch 
+                    placeholder="Select Working Shift" 
+                    options={optWorkingShifts} 
+                    filterOption={(input: any, option: any) => option?.label.toLowerCase().includes(input.toLowerCase())}
+                    allowClear
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
               <Form.Item
           label="Issue Date"
           name="STATUS_CHANGE_DATE"
