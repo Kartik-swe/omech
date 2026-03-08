@@ -28,7 +28,7 @@ const RawMaterialsShiftHis = () => {
     const [optWorkingUsers, setOptWorkingUsers] = useState<{ label: string; value: string }[]>([]);
     const [optODs, setOptODs] = useState<{ label: string; value: string }[]>([]);
     const [optWorkingShifts, setOptWorkingShifts] = useState<{ label: string; value: string }[]>([]);
-    
+    const [optResponsibleSupervisors, setOptResponsibleSupervisors] = useState<{ label: string; value: string }[]>([]);
 
   const [form] = Form.useForm();
   const [searchForm] = Form.useForm();
@@ -41,18 +41,19 @@ const RawMaterialsShiftHis = () => {
   // Fetch dropdown options for locations
   const FetchPlCommon = async () => {
     const response = await apiClient<Record<string, any>>(
-      `${API_BASE_URL}Pl_Common?USER_SRNO=${USER_SRNO}&UT_SRNO=${UT_SRNO}&TBL_SRNO=1,2,3,4,8,11`,
+      `${API_BASE_URL}Pl_Common?USER_SRNO=${USER_SRNO}&UT_SRNO=${UT_SRNO}&TBL_SRNO=1,2,3,4,8,11,12`,
       "GET"
     );
     if (response.msgId === 200) {
       if (!response.data) return;
-      const { Table1,Table2, Table3, Table4,Table8,Table11 } = response.data;
+      const { Table1,Table2, Table3, Table4,Table8,Table11,Table12 } = response.data;
       setOptGrades(Table1)
       setoptThickNess(Table3)
       setOptVendors(Table4)
       setoptTubeMachines(Table8)
       setOptWorkingUsers(Table11)
       setOptODs(Table2)
+      setOptResponsibleSupervisors(Table12)
 
      // workingShifts 1) Morning 2 ) evening
       const workingShifts = [
@@ -299,6 +300,7 @@ const RawMaterialsShiftHis = () => {
         OD_SRNO : values.OD_SRNO,
         WORKING_USER_SRNO : values.WORKING_USER,
         WORKING_SHIFT : values.WORKING_SHIFT, 
+        RESPONSIBLE_SUPERVISOR_SRNO : values.RESPONSIBLE_SUPERVISOR,
         USER_SRNO: USER_SRNO,
         UT_SRNO: UT_SRNO,
         LOG_STATUS_SRNO: 0,
@@ -411,7 +413,8 @@ const RawMaterialsShiftHis = () => {
 
     ];
     if (flag === 'F') {
-      baseColumns1.splice(1, 0, { title: "Shift", dataIndex: "WORKING_SHIFT", key: "WORKING_SHIFT" });
+      baseColumns1.splice(1, 0, { title: "Responsible Supervisor", dataIndex: "RESPONSIBLE_SUPERVISOR", key: "RESPONSIBLE_SUPERVISOR" });
+      // baseColumns1.splice(1, 0, { title: "Shift", dataIndex: "WORKING_SHIFT", key: "WORKING_SHIFT" });
       baseColumns1.splice(1, 0, { title: "Operator", dataIndex: "WORKING_USER", key: "WORKING_USER" });
       baseColumns1.splice(1, 0, { title: "OD", dataIndex: "OD", key: "OD" });
       baseColumns1.splice(1, 0, { title: "Tube Mill", dataIndex: "STATUS_lOG_DESC", key: "STATUS_lOG_DESC" });
@@ -858,7 +861,7 @@ const RawMaterialsShiftHis = () => {
                 />
               </Form.Item>
             </Col>
-             <Col span={8}>
+             <Col span={8} hidden>
               <Form.Item
                 label="Shift Name"
                 name="WORKING_SHIFT"
@@ -868,6 +871,21 @@ const RawMaterialsShiftHis = () => {
                     showSearch 
                     placeholder="Select Working Shift" 
                     options={optWorkingShifts} 
+                    filterOption={(input: any, option: any) => option?.label.toLowerCase().includes(input.toLowerCase())}
+                    allowClear
+                />
+              </Form.Item>
+            </Col>
+             <Col span={8}>
+              <Form.Item
+                label="Responsible Supervisor"
+                name="RESPONSIBLE_SUPERVISOR"
+                rules={[{ required: false, message: "Select responsible supervisor" }]}
+              >
+                <Select 
+                    showSearch 
+                    placeholder="Select Responsible Supervisor" 
+                    options={optResponsibleSupervisors} 
                     filterOption={(input: any, option: any) => option?.label.toLowerCase().includes(input.toLowerCase())}
                     allowClear
                 />

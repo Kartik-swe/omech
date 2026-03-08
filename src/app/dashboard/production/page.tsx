@@ -39,10 +39,12 @@ export default function ProductionDashboard() {
 
   const [selectedMachine, setSelectedMachine] = useState<string | undefined>();
   const [selectedLocation, setSelectedLocation] = useState<string | undefined>();
+  const [selectedOperator, setSelectedOperator] = useState<string | undefined>();
   const [dateRange, setDateRange] = useState<any[]>([]);
 
   const [optMachines, setOptMachines] = useState<OptionType[]>([]);
   const [optLocations, setOptLocations] = useState<OptionType[]>([]);
+  const [optOperators, setOptOperators] = useState<OptionType[]>([]);
 
   const cookiesData = getCookieData();
   const { USER_SRNO, API_BASE_URL, UT_SRNO } = cookiesData;
@@ -53,12 +55,14 @@ export default function ProductionDashboard() {
 }, []);
   // Function to fetch common dropdown options
       const FetchPlCommon = async () => {
-        const response = await apiClient<Record<string, any>>(`${API_BASE_URL}Pl_Common?USER_SRNO=${USER_SRNO}&UT_SRNO=${UT_SRNO}&TBL_SRNO=4,8`, 'GET');
+        const response = await apiClient<Record<string, any>>(`${API_BASE_URL}Pl_Common?USER_SRNO=${USER_SRNO}&UT_SRNO=${UT_SRNO}&TBL_SRNO=4,8,11`, 'GET');
         if (response.msgId === 200) {
           if (!response.data) { return; }
-            const { Table4, Table8 } = response.data;
+            const { Table4, Table8, Table11 } = response.data;
             setOptLocations(Table4);
             setOptMachines(Table8);
+            setOptOperators(Table11);
+
 
           } else {
           message.error(response.msg)
@@ -77,6 +81,7 @@ export default function ProductionDashboard() {
       STATUS_SRNO: '',
       C_LOCATION: selectedLocation || '',
       TUBE_MILL_SRNO: selectedMachine || '',
+      WORKING_USER: selectedOperator || null
     };
 
     const param = `MATERIAL_FLAG=F&REG_DATE_FROM=${values.REG_DATE_FROM}&REG_DATE_TO=${values.REG_DATE_TO}&GRADE_SRNO=${values.GRADE_SRNO}&THICNESS_SRNO=${values.THICNESS_SRNO}&WIDTH=${values.WIDTH}&STATUS_SRNO=${values.STATUS_SRNO}&C_LOCATION=${values.C_LOCATION}&TUBE_MILL_SRNO=${values.TUBE_MILL_SRNO}&USER_SRNO=${USER_SRNO}`;
@@ -99,7 +104,7 @@ export default function ProductionDashboard() {
 
   useEffect(() => {
     fetchData();
-  }, [selectedMachine,selectedLocation, dateRange]);
+  }, [selectedMachine,selectedLocation, selectedOperator, dateRange]);
 
   // useEffect(() => {
   //   let result = data;
@@ -111,6 +116,7 @@ export default function ProductionDashboard() {
   const resetFilters = () => {
     setSelectedMachine(undefined);
     setSelectedLocation(undefined);
+    setSelectedOperator(undefined);
     setDateRange([]);
   };
 
@@ -119,7 +125,7 @@ export default function ProductionDashboard() {
       <Title level={3}>Production Dashboard</Title>
 
       <Row gutter={16} className="mb-4">
-        <Col span={6}>
+        <Col span={4}>
           <Select
             allowClear
             placeholder="Select Machine"
@@ -133,7 +139,7 @@ export default function ProductionDashboard() {
           </Select>
         </Col>
 
-        <Col span={6}>
+        <Col span={4}>
           <Select
             allowClear
             placeholder="Select Location"
@@ -146,6 +152,22 @@ export default function ProductionDashboard() {
             
           </Select>
         </Col>
+        <Col span={4}>
+          <Select
+            allowClear
+            placeholder="Select Operator"
+            className="w-full"
+            showSearch
+            value={selectedOperator}
+            onChange={value => setSelectedOperator(value)}
+            options={optOperators}
+          >
+            
+          </Select>
+        </Col>
+
+
+        
 
         <Col span={8}>
           <RangePicker
@@ -186,7 +208,7 @@ export default function ProductionDashboard() {
               </ResponsiveContainer>
             </Card>
           </Col>
-
+            {/* {JSON.stringify(aggregateByMonth(dsData))} */}
           <Col span={24}>
             <Card title="Production Trend (Month-wise)">
               <ResponsiveContainer width="100%" height={250}>
@@ -258,12 +280,17 @@ export default function ProductionDashboard() {
             loading={loading}
             dataSource={dsData.map((d, i) => ({ ...d, key: i }))}
             columns={[
+              { title: "Issue Date", dataIndex: "STATUS_LOG_DATE_STR", key: "STATUS_LOG_DATE_STR" },
               { title: 'Machine', dataIndex: 'MACHINE', sorter: (a, b) => (a.MACHINE || '').localeCompare(b.MACHINE || '') },
               { title: 'Location', dataIndex: 'C_LOCATION', sorter: (a, b) => (a.C_LOCATION || '').localeCompare(b.C_LOCATION || '') },
+              { title: 'Weight (kg)', dataIndex: 'WEIGHT', sorter: (a, b) => parseFloat(a.WEIGHT || 0) - parseFloat(b.WEIGHT || 0) },
+              { title: "Width", dataIndex: "WIDTH", key: "WIDTH" },
               { title: 'Grade', dataIndex: 'GRADE', sorter: (a, b) => (a.GRADE || '').localeCompare(b.GRADE || '') },
               { title: 'Thickness', dataIndex: 'THICKNESS', sorter: (a, b) => parseFloat(a.THICKNESS || 0) - parseFloat(b.THICKNESS || 0) },
-              { title: 'Slitting Date', dataIndex: 'SLITTING_DATE', sorter: (a, b) => new Date(a.SLITTING_DATE).getTime() - new Date(b.SLITTING_DATE).getTime() },
-              { title: 'Weight (kg)', dataIndex: 'WEIGHT', sorter: (a, b) => parseFloat(a.WEIGHT || 0) - parseFloat(b.WEIGHT || 0) },
+              { title: "OD", dataIndex: "OD", key: "OD" },
+              // { title: 'Slitting Date', dataIndex: 'SLITTING_DATE', sorter: (a, b) => new Date(a.SLITTING_DATE).getTime() - new Date(b.SLITTING_DATE).getTime() },
+              { title: "Responsible Supervisor", dataIndex: "RESPONSIBLE_SUPERVISOR", key: "RESPONSIBLE_SUPERVISOR" },
+              { title: "Operator", dataIndex: "WORKING_USER", key: "WORKING_USER" },
               { title: 'Coil Type', dataIndex: 'COIL_TYPE' }
             ]}
             pagination={{ pageSize: 10 }}
@@ -290,7 +317,7 @@ function aggregateByMonth(data: any[]) {
   const map: Record<string, number> = {};
 
   for (const item of data) {
-    const rawDate = item.SLITTING_DATE;
+    const rawDate = item.STATUS_LOG_DATE;
 
     if (!rawDate) continue; // skip if null/undefined
 
