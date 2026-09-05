@@ -9,6 +9,8 @@ import { table } from 'console';
 import ProtectedRoute from '../components/ProtectedRoute';
 const { Title: AntTitle } = Typography;
 
+const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
+
 const Dashboard = () => {
   const [CARD_DATA, setCARD_DATA] = useState<any>([]);
   const [gradeWiseStockData, setGradeWiseStockData] = useState<any>([]);
@@ -67,11 +69,13 @@ const Dashboard = () => {
           { title: 'Semi-slitted weight', value: row.T_SLITTING_WEIGHT || 0},
           { title: 'slitted weight', value: row.T_SLITTED_WEIGHT || 0 },
           { title: 'Total Stock', value: row.T_STOCK || 0 },
+          { title: 'Total Value (₹)', value: round2(row.T_VALUE || 0) },
         ]
 
         const gradeWiseStockDataTemp = response.data.Table1.map((item:any) => ({
           name: item.GRADE,
-          value: item.T_WEIGHT
+          value: item.T_WEIGHT,
+          totalValue: round2(item.T_VALUE || 0),
       }));
 
       debugger
@@ -229,7 +233,7 @@ const Dashboard = () => {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip formatter={(value: any, name: any, props: any) => [`${value} kg (₹${props?.payload?.totalValue ?? 0})`, name]} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>

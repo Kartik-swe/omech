@@ -52,6 +52,7 @@ export default function ScheduleModal({ isMoOpen, setIsMoOpen, SCHEDULE_SRNO }: 
   const [editCache, setEditCache] = useState<ScheduleItem | null>(null);
   const [itemType, setItemType] = useState<'PIPE' | 'COIL' | 'SHEET'>('PIPE');
 
+  const [optPartyName, setOptPartyName] = useState<OptionType[]>([]);
   const [odOptions, setOdOptions] = useState<OptionType[]>([]);
   const [thicknessOptions, setThicknessOptions] = useState<OptionType[]>([]);
   const [gradeOptions, setGradeOptions] = useState<OptionType[]>([]);
@@ -133,12 +134,14 @@ export default function ScheduleModal({ isMoOpen, setIsMoOpen, SCHEDULE_SRNO }: 
   };
 
   const FetchPlCommon = async () => {
-    const response = await apiClient(`${API_BASE_URL}Pl_Common?USER_SRNO=${USER_SRNO}&UT_SRNO=${UT_SRNO}&TBL_SRNO=1,2,3`, 'GET');
+    const response = await apiClient(`${API_BASE_URL}Pl_Common?USER_SRNO=${USER_SRNO}&UT_SRNO=${UT_SRNO}&TBL_SRNO=1,2,3,13`, 'GET');
     if (response.msgId === 200 && response.data) {
-      const { Table1, Table2, Table3 } = response.data;
+      console.log('Pl_Common response:', response.data);
+      const { Table1, Table2, Table3, Table13 } = response.data;
       setGradeOptions(Table1);
       setOdOptions(Table2);
       setThicknessOptions(Table3);
+      setOptPartyName(Table13); 
     } else {
       message.error(response.msg);
     }
@@ -154,6 +157,7 @@ export default function ScheduleModal({ isMoOpen, setIsMoOpen, SCHEDULE_SRNO }: 
           const master = masterData[0];
           form.setFieldsValue({
             PARTY_NAME: master.PARTY_NAME,
+            PARTY_SRNO: master.PARTY_SRNO,
             PO_NUMBER: master.PO_NUMBER,
             SCHEDULE_DATE: master.SCHEDULE_DATE ? dayjs(master.SCHEDULE_DATE) : null,
             ESTIMATED_DELIVERY_DATE: master.ESTIMATED_DELIVERY_DATE ? dayjs(master.ESTIMATED_DELIVERY_DATE) : null,
@@ -359,7 +363,18 @@ export default function ScheduleModal({ isMoOpen, setIsMoOpen, SCHEDULE_SRNO }: 
               <Select.Option value="SHEET">Sheet</Select.Option>
             </Select>
           </Form.Item>
-          <Form.Item name="PARTY_NAME" label="Party Name" rules={[{ required: true }]} style={{ minWidth: 200 }}>
+           <Form.Item name="PARTY_SRNO" label="Party" rules={[{ required: true, message: 'Please select a party' }]} style={{ minWidth: 200 }}>
+                        <Select
+                            showSearch
+                            placeholder="Select Party Name"
+                            options={optPartyName}
+                            filterOption={(input: any, option: any) =>
+                                option?.label.toLowerCase().includes(input.toLowerCase())
+                            }
+                            allowClear
+                        />
+                    </Form.Item>
+          <Form.Item name="PARTY_NAME" label="Party Name" hidden rules={[{ required: false }]} style={{ minWidth: 200 }}>
             <Input />
           </Form.Item>
           <Form.Item name="PO_NUMBER" label="PO Number" rules={[{ required: true }]} style={{ minWidth: 200 }}>

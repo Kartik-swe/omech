@@ -31,6 +31,7 @@ const RawMaterialDashboard = () => {
     SLIT_MATERIAL_SCRAP: Number
     MATERIAL_SCRAP_WEIGHT: Number;
     SLIT_MATERIAL_SCRAP_WEIGHT: Number
+    RATE_PER_KG?: number;
   }
   // interface for slitting data
   interface SlitMaterial {
@@ -58,6 +59,10 @@ const RawMaterialDashboard = () => {
   const [rawMaterials, setRawMaterials] = useState<RawMaterial[]>([]);
   const [slittingData, setslittingData] = useState<SlitMaterial[]>([]);
   const [form] = Form.useForm();
+  // Live Rate x Weight preview for the Add Coil form - never submitted, just displayed
+  const rateWatch = Form.useWatch('RATE_PER_KG', form);
+  const weightWatch = Form.useWatch('MATERIAL_WEIGHT', form);
+  const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
   const [slitForm] = Form.useForm();
   const [SearchForm] = Form.useForm();
   const [modalVisible, setModalVisible] = useState(false);
@@ -232,6 +237,7 @@ const RawMaterialDashboard = () => {
           MATERIAL_GRADE_SRNO : material.MATERIAL_GRADE_SRNO,
           MATERIAL_C_LOCATION_SRNO : material.MATERIAL_C_LOCATION_SRNO,
           MATERIAL_STATUS : material.MATERIAL_STATUS,
+          RATE_PER_KG: material.RATE_PER_KG,
         }));
 
         setslittingData(response.data.Table1)
@@ -286,6 +292,7 @@ const RawMaterialDashboard = () => {
         MATERIAL_SCRAP: values.MATERIAL_SCRAP || null,
         MATERIAL_SCRAP_WEIGHT: values.MATERIAL_SCRAP_WEIGHT || null,
         MATERIAL_STATUS_SRNO: MATERIAL_STATUS_SRNO, //New
+        RATE_PER_KG: values.RATE_PER_KG || null, // Value (Rate x Weight) is computed on screen only and never sent to the server
         USER_SRNO: USER_SRNO, // Example: replace with actual user ID
         // MATERIAL_SRNO: 0, // Example: replace with actual user ID
       }
@@ -1063,6 +1070,20 @@ return (
               <InputNumber style={{ width: '100%' }} min={0} placeholder="Enter Weight" 
               //disabled={!!(isRawMaterialEdit && selectedMaterial && ('IS_SEMI_SLITTED' in selectedMaterial) && selectedMaterial.IS_SEMI_SLITTED)}
                />
+            </Form.Item>
+          </Col>
+          <Col span={6}>
+            <Form.Item name="RATE_PER_KG" label="Rate (₹/kg)" rules={[{ required: false, message: 'Please enter rate' }]}>
+              <InputNumber style={{ width: '100%' }} min={0} placeholder="Enter Rate per kg" />
+            </Form.Item>
+          </Col>
+          <Col span={6}>
+            <Form.Item label="Value (₹)" tooltip="Rate x Weight - calculated automatically, not saved">
+              <InputNumber
+                style={{ width: '100%' }}
+                disabled
+                value={round2((Number(rateWatch) || 0) * (Number(weightWatch) || 0))}
+              />
             </Form.Item>
           </Col>
           <Col span={6}>

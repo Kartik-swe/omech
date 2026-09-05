@@ -6,7 +6,8 @@ import {
   Descriptions, Typography, Tag, Spin,
   Popconfirm,
   Tooltip,
-  Space
+  Space,
+  DatePicker
 } from 'antd';
 
 import { CloseCircleOutlined, RedoOutlined, SearchOutlined, StopOutlined, DownloadOutlined } from '@ant-design/icons';
@@ -16,6 +17,8 @@ import { apiClient } from '@/utils/apiClient';
 import { getCookieData, exportToExcel } from '@/utils/common';
 import { Console } from 'console';
 import { set } from '@ant-design/plots/es/core/utils';
+import { Date } from 'mssql';
+import dayjs, { Dayjs } from 'dayjs';
 
 const { Text } = Typography;
 
@@ -70,12 +73,14 @@ const DispatchModal: React.FC<DispatchModalProps> = ({ isOpen, setIsOpen,itemTyp
 
   const [poData, setPoData] = useState<PoData | null>(null);
   const [dispatchQty, setDispatchQty] = useState<{ [key: number]: number }>({});
+  const [dispatchDate, setDispatchDate] = useState<{ [key: number]: Date }>({});
   const [dispatchWt, setDispatchWt] = useState<{ [key: number]: number }>({});
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const [editingRow, setEditingRow] = useState<string | null>(null);
 const [editedQty, setEditedQty] = useState<number | null>(null);
+const [editedDispatchDate, setEditedDispatchDate] = useState<Dayjs  | null>(null);
 // const [rejectedQty, setrejectedQty] = useState<number | null>(null);
 // const [rejectionRemark, setRejectionRemark] = useState<string>('');
 
@@ -132,6 +137,7 @@ const [rejectionRemark, setRejectionRemark] = useState<string>('');
         };
         setPoData(mappedData);
         setDispatchQty({});
+        setDispatchDate({});
         setDispatchWt({});
       } else {
         message.error(res.msg || 'Failed to fetch dispatch schedule.');
@@ -147,13 +153,25 @@ const [rejectionRemark, setRejectionRemark] = useState<string>('');
   const handleQtyChange = (itemSrno: number, value: number | null) => {
     setDispatchQty((prev) => ({ ...prev, [itemSrno]: value || 0 }));
   };
+  const handleDispatchDateChange = (itemSrno: number, value:  Date| null) => {
+    const newState = { ...dispatchDate };
+    if (value) {
+      newState[itemSrno] = value;
+    } else {
+      delete newState[itemSrno];
+    }
+    setDispatchDate(newState);
+  };
   const handleWtChange = (itemSrno: number, value: number | null) => {
     setDispatchWt((prev) => ({ ...prev, [itemSrno]: value || 0 }));
   };
 
 
   const handleDispatch = (item: DispatchItem) => {
+    console.log(item);
+    console.log(dispatchDate)
     const qty = dispatchQty[item.SCHEDULE_DT_SRNO] || 0;
+    const dispatchDate_val = dispatchDate[item.SCHEDULE_DT_SRNO] || 0;
     const remaining = itemType === 'PIPE' ? item.REMAINING_QTY : item.REMAINING_WEIGHT;
     // const remaining = item.REMAINING_QTY || 0;
 
@@ -168,6 +186,7 @@ const [rejectionRemark, setRejectionRemark] = useState<string>('');
           SCHEDULE_SRNO,
           SCHEDULE_DT_SRNO: item.SCHEDULE_DT_SRNO,
           DISPATCH_QTY: qty,
+          DISPATCH_DATE: dispatchDate_val,
           DISPATCH_SRNO: 0, // Assuming 0 for new dispatch
         };
         const res = await apiClient(`${API_BASE_URL}IUDispatch`, 'POST', payload);
@@ -175,6 +194,9 @@ const [rejectionRemark, setRejectionRemark] = useState<string>('');
         if (res.msgId === 200) {
           message.success(`Dispatched ${qty} of ${item.ITEM_TYPE} successfully.`);
           setDispatchQty((prev) => ({ ...prev, [item.SCHEDULE_DT_SRNO]: 0 }));
+          const newDates = { ...dispatchDate };
+          delete newDates[item.SCHEDULE_DT_SRNO];
+          setDispatchDate(newDates);
           fetchDispatchSchedule();
         } else {
           message.error(res.msg || 'Dispatch failed.');
@@ -202,7 +224,10 @@ const [rejectionRemark, setRejectionRemark] = useState<string>('');
   // Handle edit dispatch history
 const handleDispatchEdit = (record: DispatchHistory, rowKey: string) => {
   setEditingRow(rowKey);
+  console.log(record);
   setEditedQty(record.DISPATCH_QTY);
+  setEditedDispatchDate(dayjs(record.DISPATCH_DATE) || dayjs());
+  //setEditedDispatchDate(record.DISPATCH_DATE || null);
   
 };
 
@@ -211,6 +236,7 @@ const handleDispatchUpdate = async (record: DispatchHistory, item: DispatchItem)
     message.warning('Please enter a valid dispatch quantity.');
     return;
   }
+  console.log(editedDispatchDate);
 
   try {
     const payload = {
@@ -219,6 +245,7 @@ const handleDispatchUpdate = async (record: DispatchHistory, item: DispatchItem)
           SCHEDULE_SRNO,
           SCHEDULE_DT_SRNO: item.SCHEDULE_DT_SRNO,
           DISPATCH_QTY: editedQty,
+          DISPATCH_DATE: editedDispatchDate?.format('YYYY-MM-DD[T]HH:mm:ss'),
           REJECTED_QTY: rejectedQty,
           DISPATCH_SRNO: record.DISPATCH_SRNO // Assuming 0 for new dispatch
     };
@@ -237,6 +264,7 @@ const handleDispatchUpdate = async (record: DispatchHistory, item: DispatchItem)
   } finally {
     setEditingRow(null);
     setEditedQty(null);
+    setEditedDispatchDate(null);
    // setrejectedQty(null);
     setRejectionRemark('');
   }
@@ -297,7 +325,7 @@ const handleExportToExcel = () => {
               THICKNESS: item.THICKNESS || '',
               GRADE: item.GRADE || '',
               LENGTH: item.LENGTH || '',
-              DISPATCH_DATE: new Date(history.DISPATCH_DATE).toLocaleDateString(),
+              DISPATCH_DATE: history.DISPATCH_DATE || '',
               DISPATCH_QTY: history.DISPATCH_QTY,
               REJECTED_REMARK: history.REJECTED_REMARK || ''
             });
@@ -578,6 +606,12 @@ const handleDispatchClose = async (item: DispatchItem) => {
         const isCompleted = remaining <= 0;
         return (
           <div style={{ display: 'flex', gap: 8 }}>
+            {/* Add Dispach Date */}
+            <DatePicker style={{ width: '100%' }} 
+              value={dispatchDate[item.SCHEDULE_DT_SRNO] || undefined}
+              format="YYYY-MM-DD"
+            onChange={(val) => handleDispatchDateChange(item.SCHEDULE_DT_SRNO, val)} />
+          
             <InputNumber
               min={1}
               value={dispatchQty[item.SCHEDULE_DT_SRNO] || undefined}
@@ -723,7 +757,19 @@ const expandedRowRender = (item: DispatchItem) => (
         title: 'Dispatched Date',
         dataIndex: 'DISPATCH_DATE',
         key: 'DISPATCH_DATE',
-        render: (text) => new Date(text).toLocaleDateString(),
+        render: (text, record, index) => {
+          const rowKey = `${item.SCHEDULE_DT_SRNO}-dispatch-${index}`;
+          return editingRow === rowKey ? (
+            <>
+             <DatePicker 
+             value={editedDispatchDate} 
+             onChange={(date) => setEditedDispatchDate(date)} style={{ width: '100%' }}
+              />
+            </>
+          ) : (
+            text
+          );
+        },
       },
       {
         title: itemType == 'PIPE' ? 'Dispatched Qty' : 'Dispatched Wt',
@@ -732,12 +778,15 @@ const expandedRowRender = (item: DispatchItem) => (
         render: (text, record, index) => {
           const rowKey = `${item.SCHEDULE_DT_SRNO}-dispatch-${index}`;
           return editingRow === rowKey ? (
+            <>
+            
             <InputNumber
               min={1}
               value={editedQty ?? record.DISPATCH_QTY}
               onChange={(value) => setEditedQty(value ?? 0)}
               style={{ width: '100%' }}
             />
+            </>
           ) : (
             text
           );

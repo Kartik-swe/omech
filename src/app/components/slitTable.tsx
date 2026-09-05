@@ -1,8 +1,11 @@
 import React, { useRef, useState } from "react";
 import { Button, Input, InputRef, message, Popconfirm, PopconfirmProps, Space, Table, TableColumnType, Tooltip } from "antd";
-import { EditOutlined, ScissorOutlined, CheckCircleOutlined, SearchOutlined, DeleteColumnOutlined, DeleteFilled,CheckOutlined } from '@ant-design/icons';
+import { EditOutlined, ScissorOutlined, CheckCircleOutlined, SearchOutlined, DeleteColumnOutlined, DeleteFilled,CheckOutlined, FileExcelOutlined } from '@ant-design/icons';
 import Highlighter from 'react-highlight-words';
 import { FilterDropdownProps } from "antd/es/table/interface";
+import { exportExcelPro, sortByDateDesc } from "@/utils/exportExcelPro";
+
+const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 
 
 interface DataType {
@@ -356,7 +359,117 @@ const SlittingTable = ({ mainTableData, slittingData ,setSlitingLevvel, setSelec
 
     };
   });
-  
+
+  // Enriched, flat copy of slitting data (for Excel export only) - adds the parent mother coil's
+  // challan number so each slit/semi-slit row is traceable back to its source coil.
+  const slittingWithRemainingValuesForExport = slittingWithRemainingValues.map((record: any) => {
+    const parentMother = mainTableData.find((m) => m.MATERIAL_SRNO === record.MATERIAL_SRNO);
+    return {
+      ...record,
+      MOTHER_CHALLAN_NO: parentMother ? parentMother.CHALLAN_NO : '',
+    };
+  });
+
+  // ---------------------------------------------------------------------
+  // Excel Exports
+  // ---------------------------------------------------------------------
+
+  const motherCoilExportColumns = [
+    { header: 'Challan No', key: 'CHALLAN_NO' },
+    { header: 'Received Date', key: 'RECEIVED_DATE' },
+    { header: 'Grade', key: 'MATERIAL_GRADE' },
+    { header: 'Thickness (mm)', key: 'MATERIAL_THICKNESS' },
+    { header: 'Width (mm)', key: 'MATERIAL_WIDTH', type: 'number' as const },
+    { header: 'Weight (kg)', key: 'MATERIAL_WEIGHT', type: 'number' as const },
+    { header: 'Balance Width (mm)', key: 'remainingWidth', type: 'number' as const },
+    { header: 'Balance Weight (kg)', key: 'remainingWeight', type: 'number' as const },
+    { header: 'Scrap (mm)', key: 'MATERIAL_SCRAP', type: 'number' as const },
+    { header: 'Scrap (kg)', key: 'MATERIAL_SCRAP_WEIGHT', type: 'number' as const },
+    { header: 'Location', key: 'MATERIAL_C_LOCATION' },
+    { header: 'Status', key: 'MATERIAL_STATUS' },
+    { header: 'Rate (₹/kg)', key: 'RATE_PER_KG', type: 'number' as const },
+    {
+      header: 'Value (₹)',
+      key: 'VALUE',
+      type: 'number' as const,
+      render: (r: any) => round2((Number(r.RATE_PER_KG) || 0) * (Number(r.remainingWeight) || 0)),
+    },
+  ];
+
+  const slittingExportColumns = [
+    { header: 'DC No', key: 'DC_NO' },
+    { header: 'Mother Coil Challan No', key: 'MOTHER_CHALLAN_NO' },
+    { header: 'Slitting Date', key: 'SLITTING_DATE' },
+    { header: 'Grade', key: 'SLITTING_GRADE' },
+    { header: 'Thickness (mm)', key: 'SLITTING_THICKNESS' },
+    { header: 'Width (mm)', key: 'SLITTING_WIDTH', type: 'number' as const },
+    { header: 'Weight (kg)', key: 'SLITTING_WEIGHT', type: 'number' as const },
+    { header: 'Balance Width (mm)', key: 'remainingWidth', type: 'number' as const },
+    { header: 'Balance Weight (kg)', key: 'remainingWeight', type: 'number' as const },
+    { header: 'Scrap (mm)', key: 'SLITTING_SCRAP', type: 'number' as const },
+    { header: 'Scrap (kg)', key: 'SLITTING_SCRAP_WEIGHT', type: 'number' as const },
+    { header: 'Location', key: 'C_LOCATION' },
+    { header: 'Status', key: 'SLITTING_STATUS' },
+  ];
+
+  // 1) RM Stock export - mother (raw) coils only, current on-screen data
+  const handleExportRmStock = async () => {
+    if (!mainTableDataWithRemainingValues || mainTableDataWithRemainingValues.length === 0) {
+      message.warning('No data to export.');
+      return;
+    }
+    try {
+      await exportExcelPro(
+        [
+          {
+            sheetName: 'RM Stock',
+            title: 'Omech - Raw Material (Mother Coil) Stock',
+            columns: motherCoilExportColumns,
+            rows: sortByDateDesc(mainTableDataWithRemainingValues, 'RECEIVED_DATE'),
+          },
+        ],
+        'RM_Stock',
+        'Sorted by Received Date - descending'
+      );
+    } catch (err) {
+      console.error('Export error:', err);
+      message.error('Failed to export RM Stock');
+    }
+  };
+
+  // 2) Mother Coil + Slitting Coil with Position details - combined, two-sheet workbook
+  const handleExportCoilPosition = async () => {
+    if (
+      (!mainTableDataWithRemainingValues || mainTableDataWithRemainingValues.length === 0) &&
+      (!slittingWithRemainingValuesForExport || slittingWithRemainingValuesForExport.length === 0)
+    ) {
+      message.warning('No data to export.');
+      return;
+    }
+    try {
+      await exportExcelPro(
+        [
+          {
+            sheetName: 'Mother Coils',
+            title: 'Omech - Mother Coils (with Position)',
+            columns: motherCoilExportColumns,
+            rows: sortByDateDesc(mainTableDataWithRemainingValues, 'RECEIVED_DATE'),
+          },
+          {
+            sheetName: 'Slitting Coils',
+            title: 'Omech - Slitting Coils (with Position)',
+            columns: slittingExportColumns,
+            rows: sortByDateDesc(slittingWithRemainingValuesForExport, 'SLITTING_DATE'),
+          },
+        ],
+        'Mother_and_Slitting_Coils_Position',
+        'Each sheet sorted by its date column - descending'
+      );
+    } catch (err) {
+      console.error('Export error:', err);
+      message.error('Failed to export coil position report');
+    }
+  };
 
 
    
@@ -555,6 +668,21 @@ const mainTableColumns = [
     key: 'MATERIAL_STATUS',
   },
   {
+    title: 'Rate / Value',
+    key: 'rate_value',
+    width: 140,
+    render: (text: any, record: any) => {
+      const rate = Number(record.RATE_PER_KG) || 0;
+      const value = round2(rate * (Number(record.remainingWeight) || 0));
+      return (
+        <Tooltip title={`Rate: ₹${rate}/kg, Value: ₹${value} (based on balance weight)`}>
+          <div>₹{rate}/kg</div>
+          <div>₹{value}</div>
+        </Tooltip>
+      );
+    },
+  },
+  {
     title: 'Actions',
     key: 'actions',
     render: (text: any, record: any) => (
@@ -631,6 +759,18 @@ const mainTableColumns = [
   return (
     <div>
       {/* <h1>Main Table</h1> */}
+      <Space style={{ marginBottom: 12 }}>
+        <Tooltip title="Export the raw material (mother coil) stock currently listed below">
+          <Button icon={<FileExcelOutlined />} onClick={handleExportRmStock}>
+            Export RM Stock
+          </Button>
+        </Tooltip>
+        <Tooltip title="Export Mother Coils and Slitting Coils together, each with its current location/position">
+          <Button icon={<FileExcelOutlined />} onClick={handleExportCoilPosition}>
+            Export Mother &amp; Slitting Coils (Position)
+          </Button>
+        </Tooltip>
+      </Space>
       <Table
       className="raw-material-table table-red"
         columns={mainTableColumns}

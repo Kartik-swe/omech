@@ -55,7 +55,8 @@ import {
   FileMarkdownOutlined,
   FileImageOutlined,
   FileGifOutlined,
-  FileSyncOutlined
+  FileSyncOutlined,
+  MessageOutlined
 } from '@ant-design/icons';
 
 const { Text } = Typography;
@@ -95,6 +96,11 @@ const menuItems = [
         label: 'Production Analysis',
         link: '/dashboard/production',
       },
+      // {
+      //   key: 'PO_SUMMARY',
+      //   label: 'PO Summary',
+      //   link: '/dashboard/po-summary',
+      // },
       
       // {
       //   key: 'slitting_process',
@@ -224,6 +230,11 @@ const menuItems = [
         label: 'PO Material Mapping',
         link: '/po-material-mapping',
       },
+      {
+        key: 'poAnalysis',
+        label: 'PO Analysis',
+        link: '/PO/analysis',
+      },
           ],
   },
   {
@@ -242,6 +253,11 @@ const menuItems = [
         link: '/master/location',
       },
       {
+        key: 'Party Name',
+        label: 'Party Name',
+        link: '/master/Party',
+      },
+      {
         key: 'Machine',
         label: 'Machine',
         link: '/master/machine',
@@ -253,6 +269,12 @@ const menuItems = [
       },
     ],
   },
+//   {
+//   key: 'ai-reports',
+//   icon: <MessageOutlined />,
+//   label: 'AI Reports',
+//   link: '/ai-reports',
+// },
   {
     key: 'settings',
     icon: <SettingOutlined />,

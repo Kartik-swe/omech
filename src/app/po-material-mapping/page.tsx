@@ -76,7 +76,7 @@ const PoMaterialMapping = () => {
   const [optGrades, setOptGrades] = useState<{ label: string; value: string }[]>([]);
   const [optThickness, setOptThickness] = useState<{ label: string; value: string }[]>([]);
   const [optOD, setOptOD] = useState<{ label: string; value: string }[]>([]);
-
+  const [optPartyNames, setOptPartyNames] = useState<{ label: string; value: string }[]>([]);
   const [isLengthModal, setIsLengthModal] = useState(false);
 
 
@@ -97,15 +97,16 @@ const PoMaterialMapping = () => {
 const fetchCommonData = async () => {
   try {
     const response = await apiClient<Record<string, any>>(
-         `${API_BASE_URL}Pl_Common?USER_SRNO=${USER_SRNO}&UT_SRNO=${UT_SRNO}&TBL_SRNO=1,2,3`,
+         `${API_BASE_URL}Pl_Common?USER_SRNO=${USER_SRNO}&UT_SRNO=${UT_SRNO}&TBL_SRNO=1,2,3,13`,
          "GET"
        );
        if (response.msgId === 200) {
          if (!response.data) return;
-         const { Table1, Table2,Table3 } = response.data;
+         const { Table1, Table2,Table3, Table13 } = response.data;
          setOptGrades(Table1)
          setOptOD(Table2)
          setOptThickness(Table3)
+         setOptPartyNames(Table13)
        } else {
          message.error(response.msg);
          console.error("API Error:", response.msg);
@@ -417,8 +418,16 @@ const handleLengthDetail = async (record: GroupedPoItem) => {
             </Col>
                       
             <Col span={3}>
-              <Form.Item label="Party Name" name="PARTY_NAME">
-                <Input placeholder="Party Name" />
+              <Form.Item label="Party Name" name="PARTY_SRNO">
+                 <Select 
+                  allowClear 
+                  showSearch
+                  placeholder="Select Party Name"
+                  options={optPartyNames}
+                  filterOption={(input, option) =>
+                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                  }
+                />
               </Form.Item>
             </Col>
             <Col span={3}>

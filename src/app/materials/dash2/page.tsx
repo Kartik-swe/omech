@@ -1,11 +1,12 @@
 "use client"
 import React, { useState, useEffect } from 'react';
 import { Layout, Row, Col, Card, Select, DatePicker, Input, Button, Radio, Table, Space, message, Form } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
+import { SearchOutlined, FileExcelOutlined } from '@ant-design/icons';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { apiClient } from '@/utils/apiClient';
 import { getCookieData } from '@/utils/common';
 import RawInventoryDtl from '@/app/components/RawInvetoryDtl';
+import { exportExcelPro, sortByDateDesc } from '@/utils/exportExcelPro';
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -139,10 +140,71 @@ const Dashboard = () => {
         <a onClick={() => handleQuantityClick(record)}>{record.QUANTITY}</a>
       </Space>
       ),
+    },
+    {
+      title: 'Rate / Value',
+      key: 'rate_value',
+      render: (text: any, record: any) => {
+        const rate = Number(record.RATE_PER_KG) || 0;
+        const value = Math.round(((rate * (Number(record.BALANCE_WEIGHT) || 0) * (Number(record.QUANTITY) || 0)) + Number.EPSILON) * 100) / 100;
+        return (
+          <span title={`Rate: ₹${rate}/kg (avg), Value: ₹${value}`}>
+            ₹{rate}/kg · ₹{value}
+          </span>
+        );
+      },
     }
     
   ];
-  
+
+  // Export current RM Stock view (respects whatever filters are applied) to a formatted Excel file
+  const handleExportRmStock = async () => {
+    if (!DT_DATA || DT_DATA.length === 0) {
+      message.warning('No data to export. Please search/filter first.');
+      return;
+    }
+    try {
+      await exportExcelPro(
+        [
+          {
+            sheetName: 'RM Stock',
+            title: 'Omech - Raw Material Stock',
+            columns: [
+              { header: 'Location', key: 'C_LOCATION' },
+              { header: 'Grade', key: 'GRADE' },
+              { header: 'Thickness', key: 'THICKNESS' },
+              { header: 'Width', key: 'BALANCE_WIDTH', type: 'number' },
+              { header: 'Weight (kg)', key: 'BALANCE_WEIGHT', type: 'number' },
+              { header: 'Quantity', key: 'QUANTITY', type: 'number' },
+              {
+                header: 'Total Weight (kg)',
+                key: 'TOTAL_WEIGHT',
+                type: 'number',
+                render: (r: any) => (r.BALANCE_WEIGHT || 0) * (r.QUANTITY || 0),
+              },
+              { header: 'Status', key: 'STATUS_NAME' },
+              { header: 'Source', key: 'COIL_TYPE' },
+              { header: 'Latest Date', key: 'LATEST_DATE' },
+              { header: 'Rate (₹/kg, avg)', key: 'RATE_PER_KG', type: 'number' },
+              {
+                header: 'Value (₹)',
+                key: 'VALUE',
+                type: 'number',
+                render: (r: any) => (Number(r.RATE_PER_KG) || 0) * (Number(r.BALANCE_WEIGHT) || 0) * (Number(r.QUANTITY) || 0),
+              },
+            ],
+            rows: sortByDateDesc(DT_DATA, 'LATEST_DATE'),
+          },
+        ],
+        'RM_Stock',
+        'Raw Material Stock (as per applied filters), sorted by latest date - descending'
+      );
+    } catch (err) {
+      console.error('Export error:', err);
+      message.error('Failed to export RM Stock');
+    }
+  };
+
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <Layout.Content style={{ padding: '0 20px', marginTop: 64 }}>
@@ -254,13 +316,13 @@ const Dashboard = () => {
           <Col span={12}>
             <Card title="Raw Materials" bordered={false} style={{ height: '100%' }}>
               <Row gutter={16} style={{ marginBottom: 16 }}>
-                <Col span={8}>
+                <Col span={6}>
                   <Card>
                     <div style={{ fontSize: 14, color: '#888' }}>Total Records</div>
                     <div style={{ fontSize: 24, fontWeight: 600 }}>{DT_DATA.length}</div>
                   </Card>
                 </Col>
-                <Col span={8}>
+                <Col span={6}>
                   <Card>
                     <div style={{ fontSize: 14, color: '#888' }}>Total Quantity</div>
                     <div style={{ fontSize: 24, fontWeight: 600 }}>
@@ -268,11 +330,19 @@ const Dashboard = () => {
                     </div>
                   </Card>
                 </Col>
-                <Col span={8}>
+                <Col span={6}>
                   <Card>
                     <div style={{ fontSize: 14, color: '#888' }}>Total Weight (kg)</div>
                     <div style={{ fontSize: 24, fontWeight: 600 }}>
                       {DT_DATA.reduce((acc: number, item: any) => acc + item.BALANCE_WEIGHT * item.QUANTITY, 0).toFixed(2)}
+                    </div>
+                  </Card>
+                </Col>
+                <Col span={6}>
+                  <Card>
+                    <div style={{ fontSize: 14, color: '#888' }}>Total Value (₹)</div>
+                    <div style={{ fontSize: 24, fontWeight: 600 }}>
+                      {DT_DATA.reduce((acc: number, item: any) => acc + (Number(item.RATE_PER_KG) || 0) * item.BALANCE_WEIGHT * item.QUANTITY, 0).toFixed(2)}
                     </div>
                   </Card>
                 </Col>
@@ -281,7 +351,19 @@ const Dashboard = () => {
             </Card>
           </Col>
           <Col span={24} style={{ marginTop: 20 }}>
-            <Card title="Data Overview" bordered={false}>
+            <Card
+              title="Data Overview"
+              bordered={false}
+              extra={
+                <Button
+                  icon={<FileExcelOutlined />}
+                  onClick={handleExportRmStock}
+                  disabled={!DT_DATA || DT_DATA.length === 0}
+                >
+                  Export to Excel
+                </Button>
+              }
+            >
               {/* Displaying Table with Data */}
               <Table
                 dataSource={DT_DATA}
